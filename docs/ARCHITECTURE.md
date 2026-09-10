@@ -26,8 +26,9 @@
 ## GIF reference boundary
 
 - FFmpeg performs framing/Lanczos scaling and streams YUV4MPEG directly to gifski.
-- Do not force a GIF-path YUV pixel format unless a validated reference proves it is beneficial; the canonical standalone converter left the Y4M pixel format negotiated by FFmpeg.
+- The pinned Windows build explicitly uses `yuv420p` for the GIF Y4M stream. The standalone reference omitted `-pix_fmt`, but its working path effectively used 4:2:0; literal omission is not reliable on FFmpeg 9.0.1 after Polymorph's filter graph.
 - gifski receives the requested output width explicitly, quality 100, extra effort, infinite repeat, and explicit source FPS.
+- Post-encode validation requires the requested dimensions, exact frame count, and bounded timing drift.
 
 ## Resource policy
 

@@ -85,10 +85,11 @@ def verify(ffmpeg: Path, ffprobe: Path, gifski: Path, sample_out: Path | None = 
             "-fps_mode", "passthrough",
         ]
 
-        # Match Polymorph's canonical GIF handoff: let FFmpeg negotiate the Y4M
-        # pixel format, then tell gifski the already-resolved output width.
+        # The standalone reference effectively handed gifski a 4:2:0 Y4M stream.
+        # Pin that compatible format because FFmpeg 9.0.1 may otherwise retain RGB
+        # after filtering, which yuv4mpegpipe refuses.
         ffmpeg_proc = subprocess.Popen(
-            common + ["-f", "yuv4mpegpipe", "pipe:1"],
+            common + ["-pix_fmt", "yuv420p", "-f", "yuv4mpegpipe", "pipe:1"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
@@ -103,12 +104,13 @@ def verify(ffmpeg: Path, ffprobe: Path, gifski: Path, sample_out: Path | None = 
             stderr=subprocess.PIPE,
         )
         ffmpeg_proc.stdout.close()
-        _, ffmpeg_err = ffmpeg_proc.communicate()
         _, gifski_err = gifski_proc.communicate()
-        if ffmpeg_proc.returncode != 0 or gifski_proc.returncode != 0:
+        ffmpeg_err = ffmpeg_proc.stderr.read() if ffmpeg_proc.stderr else b""
+        ffmpeg_rc = ffmpeg_proc.wait()
+        if ffmpeg_rc != 0 or gifski_proc.returncode != 0:
             raise RuntimeError(
                 "GIF streaming smoke test failed\n"
-                f"ffmpeg={ffmpeg_proc.returncode}: {ffmpeg_err.decode(errors='replace')}\n"
+                f"ffmpeg={ffmpeg_rc}: {ffmpeg_err.decode(errors='replace')}\n"
                 f"gifski={gifski_proc.returncode}: {gifski_err.decode(errors='replace')}"
             )
 

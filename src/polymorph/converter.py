@@ -237,6 +237,11 @@ class Converter:
         ffmpeg_cmd = self._base_ffmpeg(info, filter_graph) + [
             "-fps_mode",
             "passthrough",
+            # The validated standalone pipeline negotiated a 4:2:0 Y4M handoff.
+            # Pin yuv420p here because the bundled FFmpeg 9.0.1 build can otherwise
+            # choose a non-Y4M-compatible source format and fail before gifski.
+            "-pix_fmt",
+            "yuv420p",
             "-progress",
             "pipe:2",
             "-f",
@@ -270,9 +275,6 @@ class Converter:
             "--extra",
             "--repeat",
             "0",
-            # Canonical standalone behavior: FFmpeg has already resolved the output
-            # dimensions, so tell gifski the width explicitly to prevent its default
-            # conservative automatic downsize (roughly 800x600 when unset).
             "--width",
             str(width),
             "-o",

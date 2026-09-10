@@ -1,5 +1,5 @@
 #define MyAppName "Polymorph"
-#define MyAppVersion "0.1.0-dev.2"
+#define MyAppVersion "0.1.0-dev.3"
 #define MyAppPublisher "Knight Witch"
 #define MyAppURL "https://github.com/Knight-Witch/Polymorph"
 #define MyAppExeName "Polymorph.exe"

@@ -1,5 +1,42 @@
 # Changelog
 
+## POLY-2026-09-10-013 — 2026-09-10 00:45 PDT — Pin GIF Y4M to yuv420p
+
+### Summary
+
+- Windows CI run #8 proved that literal removal of GIF `-pix_fmt` is not reliable on the pinned FFmpeg 9.0.1 Windows build: after Polymorph's filter graph, FFmpeg retained a non-Y4M-compatible intermediate and `yuv4mpegpipe` refused to write its header.
+- Replaced the failed auto-negotiation experiment with explicit `yuv420p`, reproducing the canonical standalone converter's effective 4:2:0 Y4M handoff deterministically.
+- Kept the validated GIF settings unchanged: source FPS handoff, gifski quality 100, extra effort, infinite repeat, explicit output width, and post-encode dimension/frame/timing verification.
+- Kept the file-size optimizer unchanged so the Viper retest isolates the pixel-format difference.
+- Kept the human-validated MP4 path unchanged.
+- Fixed the Windows smoke test's failure-cleanup pipe handling so it no longer asks `communicate()` to read an already closed FFmpeg stdout pipe.
+- Updated the durable GIF reference history with the failed no-pixel-format probe and deterministic `yuv420p` decision.
+- Incremented the development tester to `0.1.0-dev.3`; dev.2 never produced an installer because its smoke gate failed.
+
+### Touched files
+
+- `src/polymorph/converter.py`
+- `src/polymorph/__init__.py`
+- `src/polymorph/constants.py`
+- `build/verify_toolchain.py`
+- `pyproject.toml`
+- `installer/Polymorph.iss`
+- `HISTORY/REFERENCE_GIF_CONVERTER.md`
+- `docs/ARCHITECTURE.md`
+- `MASTER.md`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert this commit to return to the failed `0.1.0-dev.2` auto-negotiation experiment. The prior validated tester remains commit `3305139` / dev.1.
+
+### Test notes
+
+- Run #8 failure was diagnosed from the exact Windows job log before editing.
+- New unit/toolchain/frozen-EXE/installer gates must pass before dev.3 is handed to the user.
+- Human A/B validation remains pending on the same Viper HeroForge source: output dimensions, file size, color match, and smoothness.
+
 ## POLY-2026-09-10-012 — 2026-09-10 00:30 PDT — Restore canonical Y4M handoff for GIF
 
 ### Summary

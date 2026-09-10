@@ -1,5 +1,16 @@
 # Polymorph Pre-Flight Log
 
+## PFC-2026-09-10-013 — Pin GIF Y4M to yuv420p after failed auto-negotiation
+
+- Target files: GIF FFmpeg Y4M handoff, Windows toolchain smoke test, development version metadata, canonical GIF reference/history, architecture/status/tracking docs.
+- Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `HISTORY/REFERENCE_GIF_CONVERTER.md`, `docs/ARCHITECTURE.md`, current `src/polymorph/converter.py`, current `build/verify_toolchain.py`, version metadata, and Windows run #8 failure logs.
+- Connected modules reviewed: GIF size optimizer, gifski width/FPS/quality/repeat arguments, post-encode dimension/frame/timing integrity checks, MP4 path, installer metadata, Windows smoke pipeline.
+- Confirmed run #8 failure: literal omission of `-pix_fmt` caused pinned FFmpeg 9.0.1 to retain a non-Y4M-compatible format after filtering; `yuv4mpegpipe` refused its header before gifski received valid input. The smoke script also produced a closed-stdout reader warning during failure cleanup.
+- Conflict risks: changing optimizer thresholds at the same time would invalidate the controlled comparison; changing MP4 would disturb a human-validated path.
+- Recommended action: explicitly use `yuv420p` for GIF Y4M, matching the canonical reference's effective 4:2:0 handoff while remaining deterministic on the pinned Windows toolchain; fix only the smoke-test pipe cleanup; leave optimizer and MP4 untouched.
+- Versioning: increment tester from `0.1.0-dev.2` to `0.1.0-dev.3` because dev.2 never produced a valid installer.
+- Follow-up remains separate: normalize UI `MB` to decimal bytes and compare optimizer search behavior only after this 4:2:0 parity build is human-tested.
+
 ## PFC-2026-09-10-012 — Restore canonical Y4M handoff for GIF
 
 - Target files: GIF FFmpeg handoff, Windows toolchain smoke test, development version metadata, canonical GIF reference/history, architecture/status/tracking docs.
