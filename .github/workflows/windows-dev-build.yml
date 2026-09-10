@@ -69,6 +69,17 @@ jobs:
         shell: pwsh
         run: python build\verify_toolchain.py tools build-smoke\sample.webp
 
+      - name: Compare standalone GIF timing reference
+        shell: pwsh
+        run: python build\compare_gif_reference.py tools build-smoke\gif-reference
+
+      - name: Upload GIF reference diagnostic
+        uses: actions/upload-artifact@v4
+        with:
+          name: Polymorph-gif-reference-diagnostic
+          path: build-smoke/gif-reference/
+          if-no-files-found: error
+
       - name: Generate development placeholder icon
         shell: pwsh
         run: python build\make_placeholder_icon.py

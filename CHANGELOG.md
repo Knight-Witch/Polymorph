@@ -1,5 +1,42 @@
 # Changelog
 
+## POLY-2026-09-10-018 — 2026-09-10 03:20 PDT — Add controlled standalone GIF parity diagnostic
+
+### Summary
+
+- Reopened the `1756x1756` standalone-vs-Polymorph resolution gap as an active diagnostic question after the current decimal-MB/full-frame Viper conversion produced `1552x1552` with otherwise good quality/smoothness.
+- Re-read the user-supplied known-good standalone Python reference and recorded its exact visible behavior: Lanczos scaling, FFmpeg `-r <source fps>`, YUV4MPEG streaming, gifski quality 100/extra/repeat 0/explicit width, no gifski `--fps`, and 99,000,000/97,000,000/93,000,000-byte smart-fit thresholds.
+- Recorded the supplied SHA-256 for the separately shared `HeroForge_WebP_to_Reddit_GIF_v1.0.0.zip` as provenance, while explicitly not treating the checksum as evidence of the ZIP's internal FFmpeg/gifski builds or Y4M pixel format.
+- Corrected earlier documentation that overstated the standalone pixel format as definitely 4:2:0 and the omitted gifski `--fps` behavior as the fully proven cause of the `1756x1756` result.
+- Added `build/compare_gif_reference.py`, a CI-only 25 FPS animated-WebP diagnostic that holds output dimensions, gifski quality, extra effort, looping, and Y4M pixel format constant while comparing reference-style omission of gifski `--fps` against explicit 25 FPS.
+- The diagnostic also records literal automatic-pixel-format behavior plus explicit `yuv420p` and `yuv444p` pairs, along with FFmpeg/ffprobe/gifski versions, output frame count, duration, dimensions, byte size, and comparison ratios.
+- Added the diagnostic to the Windows dev workflow and upload its JSON/log/media output as `Polymorph-gif-reference-diagnostic` before packaging.
+- Updated current status to record that dev.7 updater hardening already passed the complete Windows CI pipeline.
+- No installed application version bump: production Polymorph remains `0.1.0-dev.7`.
+- No production converter, GIF/MP4 settings, file-size optimizer, framing, preview, UI, updater runtime, or installer behavior changed.
+
+### Touched files
+
+- `build/compare_gif_reference.py`
+- `.github/workflows/windows-dev-build.yml`
+- `build/README.md`
+- `MASTER.md`
+- `docs/ARCHITECTURE.md`
+- `HISTORY/REFERENCE_GIF_CONVERTER.md`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert this commit to remove only the CI/reference diagnostic and restore the previous documentation wording. Installed dev.7 behavior is unchanged either way.
+
+### Test notes
+
+- The new diagnostic intentionally requires the controlled `yuv420p` explicit-25-FPS variant to preserve all 50 synthetic source frames and requires the otherwise matched no-gifski-`--fps` variant to produce fewer than 50 frames.
+- Automatic pixel-format and `yuv444p` variants are recorded as evidence when supported but are not required for the timing-control assertion.
+- Windows CI must produce and upload `reference-timing.json` before its measurements are treated as confirmed.
+- Documentation/build-only update; no human media-quality retest is required for the commit itself.
+
 ## POLY-2026-09-10-017 — 2026-09-10 03:02 PDT — Harden verified update downloads
 
 ### Summary

@@ -5,7 +5,7 @@
 - Project: Polymorph
 - Repository: `Knight-Witch/Polymorph`
 - Platform target: Windows 10/11 x64
-- Status: functional scaffold on `dev`; MP4 human-validated; GIF quality/frame behavior human-validated; decimal-MB ceiling validated in Windows CI; updater hardening pending Windows CI; no public release
+- Status: functional scaffold on `dev`; MP4 human-validated; current GIF quality/smoothness human-validated; decimal-MB ceiling validated; updater hardening validated in Windows CI; standalone-reference parity diagnostic pending CI; no public release
 - Current development version: `0.1.0-dev.7`
 
 ## Canonical conversion behavior
@@ -18,8 +18,8 @@
 - gifski quality: 100.
 - gifski extra-effort mode enabled.
 - Explicitly pass the FFmpeg output width to gifski so gifski does not apply its conservative default automatic downsize.
-- Use explicit `yuv420p` for the Y4M stream on the pinned FFmpeg 9.0.1 Windows build.
-- Explicitly pass the source FPS to gifski so the Y4M stream is not silently resampled to gifski's default 20 FPS.
+- Production currently uses explicit `yuv420p` for the Y4M stream on the pinned FFmpeg 9.0.1 Windows build.
+- Explicitly pass the source FPS to gifski so the production path preserves the source frame sequence rather than relying on gifski's default video-input FPS.
 - Infinite GIF repeat.
 - Do not intentionally drop, duplicate, or lower frames to meet a size target.
 - In file-size mode, reduce spatial resolution only as needed to fit the user ceiling.
@@ -39,7 +39,9 @@
 - Width-corrected GIF is visually on par with the standalone converter and was reported slightly smoother.
 - `yuv420p` dev.3 retained the good smoothness and produced `1592x1592` on the Viper test under the earlier binary-MiB ceiling implementation.
 - gifski 1.34.0 dev.4 regressed the same test to `1532x1532`; 1.32.0 is restored from dev.5 onward.
-- Canonical standalone output was `1756x1756`, but the standalone timing pipeline was not frame-preserving: it omitted gifski `--fps`, causing Y4M/video input to be resampled toward gifski's default 20 FPS. That larger spatial resolution is therefore not a parity target for Polymorph's full-frame mode.
+- After correcting `99 MB` to the actual decimal 99,000,000-byte ceiling, the same Viper test produced `1552x1552`; quality/smoothness remained otherwise good.
+- The known-good standalone output remains `1756x1756`. Its supplied Python source uses FFmpeg `-r <source fps>` and omits gifski `--fps`, but the exact contribution of that timing difference to the 1756 result is being measured directly rather than treated as settled inference.
+- The supplied standalone Python source does not specify a YUV pixel format. The exact Y4M pixel format used by the separately packaged share build is not proven by the available package checksum alone, so standalone pixel-format provenance is currently marked unresolved.
 - Possible slight red/pink difference remains visually inconclusive and is not currently treated as a blocker.
 
 ## v1 UI scope
@@ -68,7 +70,9 @@
 
 ## Known follow-ups
 
-- A later optimizer pass may try to reclaim small amounts of spatial resolution, but must not alter source FPS/frame count or reduce GIF quality.
+- Run and inspect the CI-only standalone-reference timing diagnostic before making any further GIF parity or optimizer changes.
+- If the timing diagnostic does not account for the observed spatial-resolution gap, next compare the exact third-party binaries/toolchain used by the known-good packaged standalone build against the pinned Polymorph toolchain.
+- A later optimizer pass may try to reclaim small amounts of spatial resolution, but must not alter source FPS/frame count or reduce GIF quality unless the product explicitly exposes such a tradeoff.
 - The completion/status size readout still uses a binary MiB calculation while labeling it `MB`; correct that in a UI-only polish pass so display units match the decimal ceiling.
 - First public release still requires a deliberate project-license choice and final release packaging/release workflow review.
 

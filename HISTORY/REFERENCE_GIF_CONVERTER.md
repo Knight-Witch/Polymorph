@@ -1,31 +1,35 @@
 # Canonical GIF Converter Reference
 
-## Source
+## Source and provenance
 
-The validated standalone `HeroForge_WebP_to_Reddit_GIF.py` used immediately before Polymorph is the visual-quality reference for GIF output, but its timing behavior is not fully canonical because it did not preserve the source frame sequence through gifski.
+The known-good standalone `HeroForge_WebP_to_Reddit_GIF.py` supplied by the user is the visual-quality reference for GIF output. The separately shared Discord package is identified by SHA-256:
 
-## Proven behavior to preserve
+`f8f422ca350e32378979ec3110a69fa7daefdbd1005ac9937416f76e0bb71ecb  HeroForge_WebP_to_Reddit_GIF_v1.0.0.zip`
+
+The available checksum identifies that ZIP but does not expose or prove the exact third-party binaries or command line contained inside it. Do not infer packaged pixel-format/toolchain details from the checksum alone.
+
+## Exact behavior visible in the supplied Python reference
 
 - FFmpeg streams YUV4MPEG directly to gifski; no PNG frame folder.
+- FFmpeg performs Lanczos scaling.
+- FFmpeg uses `-r <source fps>` before the Y4M output.
+- The supplied Python reference does **not** specify `-pix_fmt`.
 - gifski quality `100`.
 - gifski `--extra` enabled.
 - GIF repeat `0` / infinite loop.
-- FFmpeg performs Lanczos scaling before gifski.
 - gifski is explicitly passed `--width <FFmpeg output width>` so it cannot apply its conservative automatic animation downsize.
-- The standalone FFmpeg command did not explicitly set a YUV pixel format. In the validated reference environment this effectively yielded the normal 4:2:0 Y4M handoff. The pinned Polymorph FFmpeg 9.0.1 Windows build uses explicit `yuv420p` because leaving the format unset can retain an RGB intermediate that `yuv4mpegpipe` rejects.
-- File-size fitting changes spatial resolution rather than hidden quality settings.
-- Fixed 99 MB reference constants were `LIMIT_BYTES = 99_000_000`, `TARGET_BYTES = 97_000_000`, `ACCEPT_LOW_BYTES = 93_000_000`, `MAX_ATTEMPTS = 6`, and `MIN_LONG_EDGE = 128`.
+- The supplied Python reference does **not** pass gifski `--fps`.
+- File-size fitting changes spatial resolution rather than a quality flag.
+- Fixed 99 MB reference constants are `LIMIT_BYTES = 99_000_000`, `TARGET_BYTES = 97_000_000`, `ACCEPT_LOW_BYTES = 93_000_000`, `MAX_ATTEMPTS = 6`, and `MIN_LONG_EDGE = 128`.
+- The reference smart-fit search uses measured byte size, square-root area prediction, a 0.985 safety factor, a forced 4% downward move after a failure, midpoint reclamation between known passing/failing scales, and an acceptable stop band beginning at 93,000,000 bytes.
 
-## Standalone timing behavior — important divergence
+## Timing divergence under investigation
 
-The standalone pipeline used:
+The supplied standalone command sends source FPS to FFmpeg with `-r` but gives gifski no explicit `--fps`. Polymorph explicitly supplies source FPS to gifski and verifies exact output frame count/timing.
 
-- FFmpeg `-r <source fps>` before `yuv4mpegpipe`.
-- gifski with no explicit `--fps` argument.
+gifski's Y4M/video path has a default target FPS when `--fps` is omitted, so frame-rate resampling is a strong supported explanation for why the standalone result can spend more of the same byte budget on spatial resolution. However, the earlier documentation overstated this as the fully confirmed cause of the `1756x1756` result without first running an otherwise-identical A/B through the exact bundled development toolchain.
 
-In gifski, `--fps` defaults to `20` for video/Y4M input. Its Y4M decoder compares source-frame timing with the requested target rate and skips frames as needed. Therefore the standalone converter's larger final spatial resolution was achieved in part because gifski resampled the Y4M animation toward 20 FPS rather than retaining every source frame.
-
-Polymorph intentionally does not reproduce this behavior. It explicitly supplies the source FPS to gifski and verifies output dimensions, exact frame count, and bounded duration drift after encoding. The user reported the Polymorph output as smoother than the standalone result, consistent with this difference.
+A CI-only diagnostic now performs that controlled A/B at 25 FPS and records output frame count, duration, byte size, and tool versions. Production behavior is unchanged until those measurements are inspected.
 
 ## Human validation history
 
@@ -40,27 +44,27 @@ Polymorph intentionally does not reproduce this behavior. It explicitly supplies
 - Remaining difference: Polymorph output was `1570x1570`; standalone output was `1756x1756` under the same nominal size target.
 - Possible very subtle red/pink color difference was observed but not considered confirmed.
 
-### 2026-09-10 — failed automatic Y4M negotiation probe
-
-- Dev `0.1.0-dev.2` removed the forced pixel format to mimic the standalone command literally.
-- Windows CI failed before packaging because FFmpeg 9.0.1 retained a non-Y4M-compatible format after filtering and `yuv4mpegpipe` refused to write its header.
-- Dev.3 therefore used explicit `yuv420p`, preserving the intended 4:2:0 handoff while keeping the rest of the validated pipeline unchanged.
-
 ### 2026-09-10 — yuv420p human retest
 
 - Smoothness remained good.
-- Viper output increased only from `1570x1570` to `1592x1592`, still below the standalone `1756x1756` result.
+- Viper output increased from `1570x1570` to `1592x1592` under the earlier binary-MiB ceiling implementation, still below standalone `1756x1756`.
 - Color remained too subtle to judge confidently.
 
 ### 2026-09-10 — gifski 1.34.0 human retest
 
 - Dev.4 changed only gifski from 1.32.0 to 1.34.0.
 - The same Viper conversion regressed to `1532x1532`.
-- Conclusion: 1.34.0 does not improve this workload's size efficiency; restore 1.32.0.
+- Conclusion: 1.34.0 does not improve this workload's size efficiency; 1.32.0 was restored.
 
-### 2026-09-10 — resolution-gap root cause confirmed from source
+### 2026-09-10 — decimal-MB human retest
 
-- Re-reading the exact standalone command exposed the important timing mismatch: FFmpeg was given source FPS with `-r`, but gifski was not passed `--fps`.
-- gifski's CLI defaults video/Y4M input to 20 FPS, and its Y4M decoder explicitly skips frames when the source rate exceeds the requested target rate.
-- This explains both observations at once: the standalone converter could afford a larger `1756x1756` spatial frame within the same byte budget, while Polymorph's full-frame output around `1592x1592` looked smoother.
-- Polymorph's design requirement is to preserve frames. The standalone `1756x1756` result is therefore no longer considered the correct spatial-resolution parity target unless a future optional frame-rate mode is explicitly added.
+- After the user-facing 99 MB ceiling was corrected to exactly 99,000,000 bytes, the same Viper conversion produced `1552x1552`.
+- Quality/smoothness was otherwise still good.
+- The result remains materially below the known-good standalone `1756x1756`, so spatial parity remains an active diagnostic question rather than being dismissed from the target solely on inference.
+
+## Current diagnostic boundary
+
+- Do not modify the production converter to mimic the standalone timing until the controlled A/B report is inspected.
+- Do not alter the file-size optimizer during the timing A/B.
+- If omitting gifski `--fps` produces the expected frame reduction and a corresponding byte reduction, quantify that effect before deciding whether any optional user-facing tradeoff belongs in Polymorph.
+- If the timing effect does not account for the observed Viper resolution gap, the next investigation is exact third-party toolchain/package provenance, followed by optimizer parity.
