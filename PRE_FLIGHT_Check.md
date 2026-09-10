@@ -1,5 +1,18 @@
 # Polymorph Pre-Flight Log
 
+## PFC-2026-09-10-019 — Port patched-Python GIF smart-fit optimizer
+
+- Target files: `src/polymorph/size_optimizer.py`, GIF file-size orchestration in `src/polymorph/converter.py`, optimizer tests, development version metadata, GIF reference/diagnostic/architecture/status docs, and required tracking files.
+- Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, `HISTORY/REFERENCE_GIF_CONVERTER.md`, the completed CI timing diagnostic, current converter/geometry/size-unit paths, and the full user-tested patched `HeroForge_WebP_to_Reddit_GIF.py`.
+- Canonical-source boundary: only the patched Python converter actually run by the user is behavioral evidence. The later Discord distribution package is unvalidated and excluded from parity decisions.
+- Confirmed timing result recorded: patched-Python timing retained 41/50 frames and used 82.1878% of the bytes of an otherwise matched full-frame 25 FPS path; the derived 1.10305x linear factor maps the comparable 1592px result to 1756.06px, matching the OG 1756px result.
+- Optimizer diagnosis: current Polymorph GIF search can stop at roughly 90.27 MB under a 99 MB ceiling because its current acceptance condition is based on `0.97 * 0.94`; the patched Python instead uses a 97 MB target and a 93 MB acceptance floor, plus different measured-size and pass/fail-bracketing logic.
+- Connected modules reviewed: GIF encoder/timing/integrity safeguards, shared size dispatcher, MP4 file-size search, geometry even-dimension handling, decimal-MB conversion, cancellation/progress behavior, installer/version metadata.
+- Conflict risks: replacing the shared size search would alter already-human-validated MP4 sizing; changing encoder/timing/color settings alongside the optimizer would make the Viper comparison ambiguous.
+- Recommended action: route GIF file-size mode through a pure port of the patched Python smart-fit search generalized by 97/99 and 93/99 threshold ratios; preserve six normal attempts and 128px emergency long-edge fallback without upscaling; retain the existing MP4 size search unchanged; add pure optimizer regression tests.
+- Versioning: increment development tester from `0.1.0-dev.7` to `0.1.0-dev.8`.
+- No GIF encoder-quality, source-FPS, frame-count, Y4M, MP4 encoder, framing, updater, or UI presentation change is included.
+
 ## PFC-2026-09-10-018 — Add controlled standalone GIF parity diagnostic
 
 - Target files: new CI-only GIF reference diagnostic, Windows development workflow, build/reference documentation, project status, and required tracking files.
@@ -38,7 +51,7 @@
 - Target files: Windows gifski build dependency, development version metadata, GIF architecture/history/status docs, third-party/build docs, required tracking files.
 - Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `HISTORY/REFERENCE_GIF_CONVERTER.md`, `docs/ARCHITECTURE.md`, current Windows workflow, current converter, current third-party/build docs, the exact standalone `HeroForge_WebP_to_Reddit_GIF.py`, and gifski 1.34.0 CLI/Y4M source handling.
 - Human validation: dev.4 changed only gifski 1.32.0 -> 1.34.0 and regressed the same Viper conversion from dev.3's `1592x1592` to `1532x1532`.
-- Confirmed root cause of the larger standalone `1756x1756` result: the standalone wrote source FPS into Y4M with FFmpeg `-r` but omitted gifski `--fps`; gifski defaults Y4M/video input to 20 FPS and its Y4M decoder skips frames to resample toward that target.
+- Confirmed root cause of the larger standalone `1756x1756` result: the standalone wrote source FPS into Y4M with FFmpeg `-r` but omitted gifski `--fps`; gifski defaults Y4M/video input to 20 FPS and its Y4M decoder skips frames when required to meet that target.
 - Connected modules reviewed: GIF invocation, `yuv420p` handoff, explicit source-FPS argument, exact frame-count/timing integrity guard, file-size optimizer, MP4 path, Windows toolchain smoke gate, installer/version metadata.
 - Conflict risks: chasing `1756x1756` as a spatial parity target would require sacrificing the user's explicit no-frame-loss requirement or changing another quality dimension; changing optimizer logic now would confuse the confirmed timing tradeoff.
 - Recommended action: restore gifski 1.32.0, keep dev.3's `yuv420p` + explicit source FPS + exact frame verification, record the standalone converter as visual-quality but not frame-preservation canonical, and do not alter optimizer or MP4 behavior in this update.
@@ -74,9 +87,9 @@
 - Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, current `converter.py`, current `build/verify_toolchain.py`, and the validated standalone `HeroForge_WebP_to_Reddit_GIF.py` from File Library.
 - Connected modules reviewed: GIF size optimizer, gifski width/FPS arguments, post-encode dimension/frame/timing integrity checks, MP4 path, installer version metadata, Windows smoke pipeline.
 - Human validation: width-corrected Polymorph GIF was reported fantastic and visually identical to the standalone result, possibly smoother; measured output remained `1570x1570` versus standalone `1756x1756`, with only a possible subtle red/pink difference.
-- Diagnosis: the current Polymorph GIF shown in Windows Explorer is already about `93.8 MB`, so the remaining scale difference is not plausibly explained by simple unused file-size headroom alone. The canonical standalone FFmpeg command does not force a YUV pixel format before `yuv4mpegpipe`; Polymorph uniquely forced `yuv444p`.
+- Diagnosis: the current Polymorph GIF shown in Windows Explorer is already about `93.8 MB`, so the remaining resolution gap is not plausibly explained by simple unused file-size headroom alone. The canonical standalone FFmpeg command does not force a YUV pixel format before `yuv4mpegpipe`; Polymorph uniquely forced `yuv444p`.
 - Conflict risks: changing optimizer thresholds simultaneously would make the A/B result ambiguous; changing MP4 would disturb an already-validated output path.
-- Recommended action: remove only the forced GIF-path `yuv444p`, preserve explicit source FPS, gifski quality/extra/repeat/width settings and integrity verification, update the smoke test to exercise the same handoff, and retest the same Viper source before touching optimizer logic.
+- Recommended action: remove only the forced GIF-path `yuv444p`, preserve explicit source FPS, gifski quality/extra/repeat/width settings and integrity verification, update the smoke test to exercise the same handoff, and retest the same HeroForge Viper source before touching optimizer logic.
 - Versioning: development tester incremented from `0.1.0-dev.1` to `0.1.0-dev.2` so the replacement installer is unambiguous.
 - Follow-up remains separate: normalize user-facing `MB` from binary MiB to decimal MB before release.
 
@@ -109,7 +122,7 @@
 - Connected modules reviewed: frozen tool discovery, packaged SVG resource lookup, `MainWindow` construction, Qt animated-WebP preview, linked-resolution controls, PyInstaller output path.
 - Confirmed gap: successful PyInstaller/installer builds did not yet prove the frozen executable itself could start and resolve its packaged runtime resources.
 - Conflict risks: hidden smoke path interfering with normal CLI file-open behavior; headless Qt platform issues; passing build despite missing WebP image plugin/assets/tools.
-- Recommended action: add a hidden `--smoke-test` path used only by CI, run the actual frozen EXE in Qt offscreen mode, and block installer compilation if the packaged-app smoke test fails.
+- Recommended action: add a hidden `--smoke-test` path used only by CI, run the actual frozen EXE in Qt offscreen mode, and block installer compilation if bundled tools/resources/live preview/linked sizing fail.
 
 ## PFC-2026-09-09-008 — First-pass UI usability polish
 

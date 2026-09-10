@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 APP_NAME = "Polymorph"
-APP_VERSION = "0.1.0-dev.7"
+APP_VERSION = "0.1.0-dev.8"
 APP_ORG = "Knight Witch"
 REPO_URL = "https://github.com/Knight-Witch/Polymorph"
 RELEASES_URL = f"{REPO_URL}/releases"

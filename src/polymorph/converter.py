@@ -15,6 +15,7 @@ from .geometry import native_geometry, scaled_dimensions, validate_requested_res
 from .integrity import IntegrityError, validate_output_integrity
 from .models import ConversionResult, ConversionSettings, MediaInfo, OutputFormat, SizingMode
 from .probe import ProbeError, probe_media
+from .size_optimizer import choose_reference_next_scale, minimum_scale_for_long_edge
 from .size_units import mb_to_bytes
 from .tools import Toolchain
 
@@ -92,9 +93,165 @@ class Converter:
         max_bytes = mb_to_bytes(settings.max_mb)
         if max_bytes <= 0:
             raise ConversionError("Maximum file size must be greater than zero")
-        return self._encode_to_size(info, settings, output, native.width, native.height, max_bytes, progress)
+        return self._encode_to_size(
+            info,
+            settings,
+            output,
+            native.width,
+            native.height,
+            max_bytes,
+            progress,
+        )
 
     def _encode_to_size(
+        self,
+        info: MediaInfo,
+        settings: ConversionSettings,
+        output: Path,
+        native_width: int,
+        native_height: int,
+        max_bytes: int,
+        progress: ProgressCallback | None,
+    ) -> ConversionResult:
+        if settings.output_format is OutputFormat.GIF:
+            return self._encode_gif_to_size(
+                info,
+                settings,
+                output,
+                native_width,
+                native_height,
+                max_bytes,
+                progress,
+            )
+
+        # MP4 sizing is already human-validated. Keep its existing search exactly
+        # as-is while GIF adopts the patched standalone's proven smart-fit logic.
+        return self._encode_mp4_to_size(
+            info,
+            settings,
+            output,
+            native_width,
+            native_height,
+            max_bytes,
+            progress,
+        )
+
+    def _encode_gif_to_size(
+        self,
+        info: MediaInfo,
+        settings: ConversionSettings,
+        output: Path,
+        native_width: int,
+        native_height: int,
+        max_bytes: int,
+        progress: ProgressCallback | None,
+    ) -> ConversionResult:
+        failed_scale: float | None = None
+        passed_scale: float | None = None
+        best: tuple[Path, int, int, float] | None = None
+        scale = 1.0
+        passes = 0
+        minimum_scale = minimum_scale_for_long_edge(native_width, native_height)
+
+        with tempfile.TemporaryDirectory(prefix="polymorph-") as temp_dir_str:
+            temp_dir = Path(temp_dir_str)
+
+            for pass_index in range(MAX_SIZE_PASSES):
+                if self._cancel.is_set():
+                    raise ConversionCancelled()
+
+                width = max(2, int(round(native_width * scale)))
+                height = max(2, int(round(native_height * scale)))
+                width -= width % 2
+                height -= height % 2
+
+                if max(width, height) < 128 and scale < 1.0:
+                    scale = max(scale, minimum_scale)
+                    width = max(2, int(round(native_width * scale)))
+                    height = max(2, int(round(native_height * scale)))
+                    width -= width % 2
+                    height -= height % 2
+
+                candidate = temp_dir / f"candidate-{pass_index}.gif"
+                label = "Encoding" if pass_index == 0 else "Optimizing size"
+                passes += 1
+                self._encode_once(info, settings, candidate, width, height, progress, label)
+                size = candidate.stat().st_size
+
+                if size <= max_bytes:
+                    passed_scale = scale
+                    if best is None or scale > best[3]:
+                        best = (candidate, width, height, scale)
+
+                    if scale >= 0.999:
+                        break
+                else:
+                    failed_scale = scale if failed_scale is None else min(failed_scale, scale)
+
+                next_scale = choose_reference_next_scale(
+                    current_scale=scale,
+                    current_size=size,
+                    max_bytes=max_bytes,
+                    failed_scale=failed_scale,
+                    passed_scale=passed_scale,
+                )
+                if next_scale is None:
+                    break
+
+                next_scale = max(0.01, min(1.0, next_scale))
+                next_width = max(2, int(round(native_width * next_scale)))
+                next_height = max(2, int(round(native_height * next_scale)))
+                next_width -= next_width % 2
+                next_height -= next_height % 2
+                if (next_width, next_height) == (width, height):
+                    break
+
+                scale = next_scale
+
+            # Preserve the standalone's emergency path for unusually large/long
+            # sources. This is only reached if none of the normal six passes fit.
+            if best is None:
+                scale = min(scale, minimum_scale)
+                emergency_index = 0
+                while scale > 0.01:
+                    if self._cancel.is_set():
+                        raise ConversionCancelled()
+
+                    width = max(2, int(round(native_width * scale)))
+                    height = max(2, int(round(native_height * scale)))
+                    width -= width % 2
+                    height -= height % 2
+                    candidate = temp_dir / f"emergency-{emergency_index}.gif"
+                    emergency_index += 1
+                    passes += 1
+                    self._encode_once(
+                        info,
+                        settings,
+                        candidate,
+                        width,
+                        height,
+                        progress,
+                        "Optimizing size",
+                    )
+                    if candidate.stat().st_size <= max_bytes:
+                        best = (candidate, width, height, scale)
+                        break
+                    scale *= 0.80
+
+            if best is None:
+                raise ConversionError(
+                    f"Could not fit output under {settings.max_mb:.1f} MB."
+                )
+
+            candidate, width, height, _ = best
+            output.parent.mkdir(parents=True, exist_ok=True)
+            if output.exists():
+                output.unlink()
+            shutil.copy2(candidate, output)
+
+        return self._result(info, output, width, height, passes)
+
+    def _encode_mp4_to_size(
         self,
         info: MediaInfo,
         settings: ConversionSettings,
@@ -238,9 +395,6 @@ class Converter:
         ffmpeg_cmd = self._base_ffmpeg(info, filter_graph) + [
             "-fps_mode",
             "passthrough",
-            # The validated standalone pipeline negotiated a 4:2:0 Y4M handoff.
-            # Pin yuv420p here because the bundled FFmpeg 9.0.1 build can otherwise
-            # choose a non-Y4M-compatible source format and fail before gifski.
             "-pix_fmt",
             "yuv420p",
             "-progress",

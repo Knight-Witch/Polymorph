@@ -1,5 +1,46 @@
 # Changelog
 
+## POLY-2026-09-10-019 — 2026-09-10 04:40 PDT — Port patched-Python GIF smart-fit optimizer
+
+### Summary
+
+- Recorded the completed Windows timing diagnostic against the only canonical OG source: the patched Python converter actually run by the user.
+- Controlled 25 FPS A/B retained 41/50 frames under patched-Python timing versus 50/50 with explicit full-frame gifski timing, while using 82.1878% of the bytes; the derived 1.10305x linear scale maps 1592px to 1756.06px and quantitatively explains the OG 1756px spatial advantage.
+- Explicitly removed the later, unvalidated Discord distribution package from behavioral parity decisions.
+- Diagnosed the remaining legitimate optimizer difference: current Polymorph can accept a GIF around 90.27 MB under a 99 MB ceiling, while the patched Python uses a 97 MB target and 93 MB acceptance floor plus a different pass/fail-bracketing search.
+- Added `src/polymorph/size_optimizer.py`, a pure port of the patched Python scale-selection math generalized to arbitrary user ceilings using the exact 97/99 target and 93/99 acceptance ratios.
+- GIF file-size mode now uses the patched Python measured-size square-root prediction, 0.985 safety factor, guaranteed 4% downward move after failure, pass/fail midpoint reclamation, six normal attempts, and 128px emergency long-edge fallback without source upscaling.
+- Kept GIF quality 100, gifski 1.32.0, `--extra`, infinite repeat, explicit output width, `yuv420p`, explicit source FPS, exact frame-count/timing verification, and framing behavior unchanged.
+- Preserved the previously validated MP4 file-size optimizer exactly by routing only GIF file-size mode through the new reference search.
+- Added unit tests for reference thresholds, downward prediction, midpoint reclamation, acceptance stopping, full-size stopping, and no-upscale emergency floor.
+- Incremented the development tester to `0.1.0-dev.8`.
+
+### Touched files
+
+- `src/polymorph/size_optimizer.py`
+- `src/polymorph/converter.py`
+- `tests/test_size_optimizer.py`
+- `src/polymorph/__init__.py`
+- `src/polymorph/constants.py`
+- `pyproject.toml`
+- `installer/Polymorph.iss`
+- `HISTORY/DIAGNOSTICS/GIF_REFERENCE_TIMING_2026-09-10.md`
+- `HISTORY/REFERENCE_GIF_CONVERTER.md`
+- `docs/ARCHITECTURE.md`
+- `MASTER.md`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert this commit to restore dev.7's GIF size search. MP4, encoder settings, updater hardening, framing, and UI behavior are independent of this optimizer change.
+
+### Test notes
+
+- Pure optimizer tests encode the patched Python's exact 99M -> 97M/93M thresholds and scale-selection rules.
+- Windows CI must pass unit tests, normal GIF/MP4 toolchain smoke, patched-Python timing diagnostic, frozen-EXE smoke, installer compilation, checksum generation, and artifact upload before dev.8 is handed to the user.
+- Human dev.8 validation should use the same Viper source at GIF / Original / 99 MB and compare final dimensions and decimal file size; expected result is only safe full-frame reclamation, not a return to the frame-resampled OG 1756px target.
+
 ## POLY-2026-09-10-018 — 2026-09-10 03:20 PDT — Add controlled standalone GIF parity diagnostic
 
 ### Summary
@@ -437,8 +478,8 @@
 
 ### Test notes
 
-- Windows run #1 passed unit tests, FFmpeg acquisition, gifski 1.32.0 compilation, and placeholder icon generation before failing at PyInstaller with `script 'D:\\a\\Polymorph\\run_polymorph.py' not found`.
-- The corrected root resolves to the checked-out repository directory `D:\\a\\Polymorph\\Polymorph`.
+- Windows run #1 passed unit tests, FFmpeg acquisition, gifski 1.32.0 compilation, and placeholder icon generation before failing at PyInstaller with `script 'D:\a\Polymorph\run_polymorph.py' not found`.
+- The corrected root resolves to the checked-out repository directory `D:\a\Polymorph\Polymorph`.
 - Windows run #3 subsequently passed all build, installer, checksum, and artifact-upload steps.
 
 ## POLY-2026-09-09-005 — 2026-09-09 19:09 PDT — Verify frame/timing integrity after encoding
@@ -478,7 +519,7 @@
 - Wired the canonical Ko-fi, Patreon, and Discord destinations into the footer.
 - Added PyInstaller one-directory packaging with bundled FFmpeg, ffprobe, and gifski binaries.
 - Added a deliberately temporary generated `.ico` for development builds.
-- Added a per-user Inno Setup installer targeting `%LOCALAPPDATA%\\Programs\\Polymorph` with optional desktop shortcut and no administrator requirement.
+- Added a per-user Inno Setup installer targeting `%LOCALAPPDATA%\Programs\Polymorph` with optional desktop shortcut and no administrator requirement.
 - Added a Windows GitHub Actions development build that runs tests, obtains the conversion toolchain, builds the app and installer, generates SHA-256, and uploads workflow artifacts.
 - Development workflow does not publish a GitHub Release.
 
