@@ -1,5 +1,13 @@
 # Polymorph Pre-Flight Log
 
+## PFC-2026-09-09-004 — Windows development packaging
+
+- Target files: build spec/icon generator, Inno Setup installer, GitHub Actions Windows workflow, canonical footer URLs, tracking docs.
+- Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, `docs/UX_SPEC.md` on `dev`.
+- Connected modules reviewed: frozen-tool discovery paths, app entrypoint, updater release expectations, third-party dependency notes, current dev version.
+- Conflict risks: bundling wrong tool binaries, requiring admin rights, publishing an unvalidated binary, updater mistaking a dev artifact for a release, placeholder icon being mistaken for final branding.
+- Recommended action: produce workflow artifacts only; install per-user under LocalAppData; generate a clearly temporary icon; do not create a public release yet.
+
 ## PFC-2026-09-09-003 — Functional desktop UI and updater scaffold
 
 - Target files: `src/polymorph/app.py`, `src/polymorph/ui/**`, `src/polymorph/update_service.py`, tests, tracking docs.

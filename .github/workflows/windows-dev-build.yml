@@ -1,0 +1,105 @@
+name: Windows Dev Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [dev]
+    paths:
+      - "src/**"
+      - "build/**"
+      - "installer/**"
+      - "pyproject.toml"
+      - "run_polymorph.py"
+      - ".github/workflows/windows-dev-build.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python build dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install . pyinstaller pillow
+
+      - name: Run unit tests
+        shell: pwsh
+        env:
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests -v
+
+      - name: Fetch FFmpeg Windows build
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force tools | Out-Null
+          $release = Invoke-RestMethod -Headers @{"User-Agent"="Polymorph-Build"} "https://api.github.com/repos/BtbN/FFmpeg-Builds/releases/latest"
+          $asset = $release.assets | Where-Object { $_.name -eq "ffmpeg-master-latest-win64-gpl.zip" } | Select-Object -First 1
+          if (-not $asset) { throw "Expected FFmpeg asset not found" }
+          Invoke-WebRequest $asset.browser_download_url -OutFile ffmpeg.zip
+          Expand-Archive ffmpeg.zip -DestinationPath ffmpeg-unpacked
+          $ffmpeg = Get-ChildItem ffmpeg-unpacked -Recurse -Filter ffmpeg.exe | Select-Object -First 1
+          $ffprobe = Get-ChildItem ffmpeg-unpacked -Recurse -Filter ffprobe.exe | Select-Object -First 1
+          if (-not $ffmpeg -or -not $ffprobe) { throw "FFmpeg binaries not found after extraction" }
+          Copy-Item $ffmpeg.FullName tools\ffmpeg.exe
+          Copy-Item $ffprobe.FullName tools\ffprobe.exe
+
+      - name: Build gifski 1.32.0
+        shell: pwsh
+        run: |
+          cargo install gifski --version 1.32.0 --locked --root "$PWD\gifski-root"
+          Copy-Item gifski-root\bin\gifski.exe tools\gifski.exe
+          .\tools\gifski.exe --version
+
+      - name: Generate development placeholder icon
+        shell: pwsh
+        run: python build\make_placeholder_icon.py
+
+      - name: Build Polymorph application
+        shell: pwsh
+        run: pyinstaller --noconfirm --clean build\Polymorph.spec
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup -y --no-progress
+
+      - name: Compile installer
+        shell: pwsh
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\Polymorph.iss
+
+      - name: Generate SHA-256
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem installer\Output\Polymorph_Setup_*.exe | Select-Object -First 1
+          if (-not $installer) { throw "Installer was not generated" }
+          $hash = (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLower()
+          "$hash  $($installer.Name)" | Set-Content "$($installer.FullName).sha256" -Encoding ascii
+
+      - name: Upload unpacked dev application
+        uses: actions/upload-artifact@v4
+        with:
+          name: Polymorph-dev-app
+          path: dist/Polymorph/
+          if-no-files-found: error
+
+      - name: Upload dev installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: Polymorph-dev-installer
+          path: |
+            installer/Output/Polymorph_Setup_*.exe
+            installer/Output/Polymorph_Setup_*.exe.sha256
+          if-no-files-found: error

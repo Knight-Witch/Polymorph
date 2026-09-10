@@ -1,5 +1,34 @@
 # Changelog
 
+## POLY-2026-09-09-004 — 2026-09-09 18:28 PDT — Windows development packaging
+
+### Summary
+
+- Wired the canonical Ko-fi, Patreon, and Discord destinations into the footer.
+- Added PyInstaller one-directory packaging with bundled FFmpeg, ffprobe, and gifski binaries.
+- Added a deliberately temporary generated `.ico` for development builds.
+- Added a per-user Inno Setup installer targeting `%LOCALAPPDATA%\\Programs\\Polymorph` with optional desktop shortcut and no administrator requirement.
+- Added a Windows GitHub Actions development build that runs tests, obtains the conversion toolchain, builds the app and installer, generates SHA-256, and uploads workflow artifacts.
+- Development workflow does not publish a GitHub Release.
+
+### Touched files
+
+- `src/polymorph/constants.py`
+- `build/**`
+- `installer/Polymorph.iss`
+- `.github/workflows/windows-dev-build.yml`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert the packaging commit; application/core dev code remains on the prior `dev` head.
+
+### Test notes
+
+- Packaging definitions reviewed for one-directory dependency placement and per-user install behavior.
+- Actual Windows build result pending GitHub Actions validation after commit.
+
 ## POLY-2026-09-09-003 — 2026-09-09 18:28 PDT — Functional desktop UI and updater scaffold
 
 ### Summary

@@ -9,11 +9,9 @@ REPO_URL = "https://github.com/Knight-Witch/Polymorph"
 RELEASES_URL = f"{REPO_URL}/releases"
 LATEST_RELEASE_API = "https://api.github.com/repos/Knight-Witch/Polymorph/releases/latest"
 
-# Social URLs are intentionally left unset until the canonical public destinations
-# are confirmed. The footer buttons remain disabled rather than guessing URLs.
-KOFI_URL = ""
-PATREON_URL = ""
-DISCORD_URL = ""
+KOFI_URL = "https://ko-fi.com/knightwitch"
+PATREON_URL = "https://www.patreon.com/TheKnightWitch"
+DISCORD_URL = "https://discord.gg/jZxncZuTRy"
 
 DEFAULT_MAX_MB = 99.0
 FILE_SIZE_HEADROOM = 0.97
