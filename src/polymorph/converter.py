@@ -237,8 +237,6 @@ class Converter:
         ffmpeg_cmd = self._base_ffmpeg(info, filter_graph) + [
             "-fps_mode",
             "passthrough",
-            "-pix_fmt",
-            "yuv444p",
             "-progress",
             "pipe:2",
             "-f",

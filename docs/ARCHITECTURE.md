@@ -23,6 +23,12 @@
 7. In file-size mode, inspect actual output size and retry at a lower/higher resolution as needed.
 8. Copy the best valid result to the chosen output folder.
 
+## GIF reference boundary
+
+- FFmpeg performs framing/Lanczos scaling and streams YUV4MPEG directly to gifski.
+- Do not force a GIF-path YUV pixel format unless a validated reference proves it is beneficial; the canonical standalone converter left the Y4M pixel format negotiated by FFmpeg.
+- gifski receives the requested output width explicitly, quality 100, extra effort, infinite repeat, and explicit source FPS.
+
 ## Resource policy
 
 - Queue can contain many files.

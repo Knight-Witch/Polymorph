@@ -1,5 +1,17 @@
 # Polymorph Pre-Flight Log
 
+## PFC-2026-09-10-012 — Restore canonical Y4M handoff for GIF
+
+- Target files: GIF FFmpeg handoff, Windows toolchain smoke test, development version metadata, canonical GIF reference/history, architecture/status/tracking docs.
+- Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, current `converter.py`, current `build/verify_toolchain.py`, and the validated standalone `HeroForge_WebP_to_Reddit_GIF.py` from File Library.
+- Connected modules reviewed: GIF size optimizer, gifski width/FPS arguments, post-encode dimension/frame/timing integrity checks, MP4 path, installer version metadata, Windows smoke pipeline.
+- Human validation: width-corrected Polymorph GIF was reported fantastic and visually identical to the standalone result, possibly smoother; measured output remained `1570x1570` versus standalone `1756x1756`, with only a possible subtle red/pink difference.
+- Diagnosis: the current Polymorph GIF shown in Windows Explorer is already about `93.8 MB`, so the remaining resolution gap is not plausibly explained by unused size headroom alone. The canonical standalone FFmpeg command does not force a YUV pixel format before `yuv4mpegpipe`; Polymorph uniquely forced `yuv444p`.
+- Conflict risks: changing optimizer thresholds simultaneously would make the A/B result ambiguous; changing MP4 would disturb an already-validated output path.
+- Recommended action: remove only the forced GIF-path `yuv444p`, preserve explicit source FPS, gifski quality/extra/repeat/width settings and integrity verification, update the smoke test to exercise the same handoff, and retest the same Viper source before touching optimizer logic.
+- Versioning: development tester incremented from `0.1.0-dev.1` to `0.1.0-dev.2` so the replacement installer is unambiguous.
+- Follow-up remains separate: normalize user-facing `MB` from binary MiB to decimal MB before release.
+
 ## PFC-2026-09-09-011 — Restore canonical gifski output width
 
 - Target files: GIF encode command, output-integrity validation, integrity tests, architecture/status/tracking docs.

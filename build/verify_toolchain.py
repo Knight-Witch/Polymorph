@@ -11,6 +11,7 @@ from PIL import Image, ImageDraw
 
 FRAME_COUNT = 6
 FPS = 25
+EXPECTED_SIZE = (80, 64)
 
 
 def run(cmd: list[str], **kwargs) -> subprocess.CompletedProcess:
@@ -22,16 +23,21 @@ def run(cmd: list[str], **kwargs) -> subprocess.CompletedProcess:
     return proc
 
 
-def frame_count(ffprobe: Path, path: Path) -> int:
+def stream_info(ffprobe: Path, path: Path) -> tuple[int, int, int]:
     proc = run([
         str(ffprobe), "-v", "error", "-count_frames", "-select_streams", "v:0",
-        "-show_entries", "stream=nb_read_frames", "-of", "json", str(path),
+        "-show_entries", "stream=width,height,nb_read_frames", "-of", "json", str(path),
     ])
     payload = json.loads(proc.stdout.decode("utf-8"))
     streams = payload.get("streams") or []
     if not streams:
         raise RuntimeError(f"ffprobe returned no video stream for {path.name}")
-    return int(streams[0].get("nb_read_frames") or 0)
+    stream = streams[0]
+    return (
+        int(stream.get("width") or 0),
+        int(stream.get("height") or 0),
+        int(stream.get("nb_read_frames") or 0),
+    )
 
 
 def make_animated_webp(path: Path) -> None:
@@ -65,9 +71,12 @@ def verify(ffmpeg: Path, ffprobe: Path, gifski: Path, sample_out: Path | None = 
             sample_out.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source, sample_out)
 
-        source_frames = frame_count(ffprobe, source)
-        if source_frames != FRAME_COUNT:
-            raise RuntimeError(f"Animated WebP decode mismatch: expected {FRAME_COUNT}, got {source_frames}")
+        source_w, source_h, source_frames = stream_info(ffprobe, source)
+        if source_frames != FRAME_COUNT or (source_w, source_h) != (96, 96):
+            raise RuntimeError(
+                f"Animated WebP decode mismatch: expected 96x96/{FRAME_COUNT} frames, "
+                f"got {source_w}x{source_h}/{source_frames}"
+            )
 
         common = [
             str(ffmpeg), "-hide_banner", "-loglevel", "error", "-i", str(source),
@@ -76,8 +85,10 @@ def verify(ffmpeg: Path, ffprobe: Path, gifski: Path, sample_out: Path | None = 
             "-fps_mode", "passthrough",
         ]
 
+        # Match Polymorph's canonical GIF handoff: let FFmpeg negotiate the Y4M
+        # pixel format, then tell gifski the already-resolved output width.
         ffmpeg_proc = subprocess.Popen(
-            common + ["-pix_fmt", "yuv444p", "-f", "yuv4mpegpipe", "pipe:1"],
+            common + ["-f", "yuv4mpegpipe", "pipe:1"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
@@ -85,7 +96,7 @@ def verify(ffmpeg: Path, ffprobe: Path, gifski: Path, sample_out: Path | None = 
         gifski_proc = subprocess.Popen(
             [
                 str(gifski), "--fps", str(FPS), "--quality", "100", "--extra",
-                "--repeat", "0", "-o", str(gif_out), "-",
+                "--repeat", "0", "--width", str(EXPECTED_SIZE[0]), "-o", str(gif_out), "-",
             ],
             stdin=ffmpeg_proc.stdout,
             stdout=subprocess.PIPE,
@@ -100,17 +111,29 @@ def verify(ffmpeg: Path, ffprobe: Path, gifski: Path, sample_out: Path | None = 
                 f"ffmpeg={ffmpeg_proc.returncode}: {ffmpeg_err.decode(errors='replace')}\n"
                 f"gifski={gifski_proc.returncode}: {gifski_err.decode(errors='replace')}"
             )
-        if not gif_out.exists() or frame_count(ffprobe, gif_out) != FRAME_COUNT:
-            raise RuntimeError("GIF smoke test did not preserve all frames")
+
+        gif_w, gif_h, gif_frames = stream_info(ffprobe, gif_out)
+        if (gif_w, gif_h) != EXPECTED_SIZE or gif_frames != FRAME_COUNT:
+            raise RuntimeError(
+                f"GIF smoke mismatch: expected {EXPECTED_SIZE[0]}x{EXPECTED_SIZE[1]}/{FRAME_COUNT} frames, "
+                f"got {gif_w}x{gif_h}/{gif_frames}"
+            )
 
         run(common + [
             "-c:v", "libx264", "-preset", "slow", "-crf", "16", "-pix_fmt", "yuv420p",
             "-movflags", "+faststart", "-y", str(mp4_out),
         ])
-        if not mp4_out.exists() or frame_count(ffprobe, mp4_out) != FRAME_COUNT:
-            raise RuntimeError("MP4 smoke test did not preserve all frames")
+        mp4_w, mp4_h, mp4_frames = stream_info(ffprobe, mp4_out)
+        if (mp4_w, mp4_h) != EXPECTED_SIZE or mp4_frames != FRAME_COUNT:
+            raise RuntimeError(
+                f"MP4 smoke mismatch: expected {EXPECTED_SIZE[0]}x{EXPECTED_SIZE[1]}/{FRAME_COUNT} frames, "
+                f"got {mp4_w}x{mp4_h}/{mp4_frames}"
+            )
 
-        print(f"Toolchain smoke test passed: {FRAME_COUNT}/{FRAME_COUNT} frames in GIF and MP4")
+        print(
+            f"Toolchain smoke test passed: {EXPECTED_SIZE[0]}x{EXPECTED_SIZE[1]}, "
+            f"{FRAME_COUNT}/{FRAME_COUNT} frames in GIF and MP4"
+        )
 
 
 def main() -> int:

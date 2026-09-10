@@ -1,5 +1,45 @@
 # Changelog
 
+## POLY-2026-09-10-012 — 2026-09-10 00:30 PDT — Restore canonical Y4M handoff for GIF
+
+### Summary
+
+- Recorded the successful human retest of the width-corrected GIF: visual quality now matches the standalone converter and may be slightly smoother framewise.
+- Recorded the remaining measured scale difference: Polymorph `1570x1570` versus standalone `1756x1756` at the same nominal size target, plus only a possible subtle red/pink color difference.
+- Rechecked the actual size context before editing: the Polymorph result shown in Windows Explorer is already about `93.8 MB`, so the remaining scale difference is not plausibly explained by simple unused file-size headroom.
+- Compared the GIF pixel handoff against the canonical standalone converter and found the remaining material difference: Polymorph forced `yuv444p`; the standalone FFmpeg command did not force a YUV pixel format before `yuv4mpegpipe`.
+- Removed only the forced GIF-path `yuv444p` so the Y4M handoff again matches the validated standalone pipeline.
+- Preserved Polymorph's explicit source-FPS handoff, gifski quality 100, extra effort, infinite repeat, explicit output width, post-encode dimensions, exact frame count, and timing verification.
+- Updated the Windows toolchain smoke test to exercise the same negotiated Y4M handoff and verify both dimensions and frame count.
+- Left file-size optimizer logic and the already human-validated MP4 path unchanged so the next Viper comparison isolates this variable.
+- Added `HISTORY/REFERENCE_GIF_CONVERTER.md` as the durable canonical standalone reference record.
+- Incremented the development tester to `0.1.0-dev.2` so the replacement installer is distinguishable from the prior build.
+
+### Touched files
+
+- `src/polymorph/converter.py`
+- `src/polymorph/__init__.py`
+- `src/polymorph/constants.py`
+- `build/verify_toolchain.py`
+- `pyproject.toml`
+- `installer/Polymorph.iss`
+- `HISTORY/REFERENCE_GIF_CONVERTER.md`
+- `docs/ARCHITECTURE.md`
+- `MASTER.md`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert this commit to restore the forced `yuv444p` GIF handoff and the `0.1.0-dev.1` tester metadata. MP4 behavior is unchanged by this commit.
+
+### Test notes
+
+- The canonical standalone script was re-read from File Library before editing.
+- Current dev conversion optimizer was reviewed and deliberately left unchanged for isolation.
+- Windows unit/toolchain/frozen-EXE/installer gates must pass before `0.1.0-dev.2` is handed back for the Viper retest.
+- Human validation of the negotiated Y4M result remains pending.
+
 ## POLY-2026-09-09-011 — 2026-09-09 23:57 PDT — Restore canonical gifski output width
 
 ### Summary

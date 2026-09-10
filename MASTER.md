@@ -5,8 +5,8 @@
 - Project: Polymorph
 - Repository: `Knight-Witch/Polymorph`
 - Platform target: Windows 10/11 x64
-- Status: functional scaffold on `dev`; MP4 passed first hands-on HeroForge media test; GIF quality regression diagnosed and fix pending Windows rebuild / no public release
-- Current development version: `0.1.0-dev.1`
+- Status: functional scaffold on `dev`; MP4 human-validated; GIF width regression fixed and human-validated; isolated Y4M parity retest pending / no public release
+- Current development version: `0.1.0-dev.2`
 
 ## Canonical conversion behavior
 
@@ -18,6 +18,7 @@
 - gifski quality: 100.
 - gifski extra-effort mode enabled.
 - Explicitly pass the FFmpeg output width to gifski so gifski does not apply its conservative default automatic downsize.
+- Preserve the canonical standalone Y4M handoff: do not force `yuv444p` unless a later controlled comparison proves it beneficial.
 - Infinite GIF repeat.
 - Do not intentionally drop frames or lower frame rate to meet a size target.
 - In file-size mode, reduce resolution only as needed to fit the user ceiling.
@@ -31,6 +32,12 @@
 - In file-size mode, resolution is the variable used to meet the ceiling; do not silently lower frame rate.
 - Produced video should be cleanly loop-ready; actual repeat playback is controlled by the player/platform.
 - First hands-on HeroForge media test reported no MP4 quality issues.
+
+## Human validation
+
+- Width-corrected GIF is visually on par with the standalone converter and may be slightly smoother.
+- Remaining measured difference before the Y4M parity test: Polymorph `1570x1570` vs standalone `1756x1756` at the same nominal size goal.
+- A possible slight red/pink shift was observed but is not confirmed.
 
 ## v1 UI scope
 
@@ -51,6 +58,7 @@
 ## Known follow-ups
 
 - File-size mode currently interprets the UI's `MB` value using binary MiB bytes. Before release, normalize the user-facing ceiling to decimal MB so `99 MB` means 99,000,000 bytes and cannot overshoot a platform's decimal 100 MB limit.
+- After Y4M parity is validated, compare file-size optimizer behavior against the standalone search before making any optimizer changes.
 
 ## Deferred
 
