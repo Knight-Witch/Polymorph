@@ -23,6 +23,11 @@
 7. In file-size mode, inspect actual output size and retry at a lower/higher resolution as needed.
 8. Copy the best valid result to the chosen output folder.
 
+## File-size units
+
+- User-entered `MB` ceilings are decimal: 1 MB = 1,000,000 bytes.
+- Internal optimizer headroom may target below the ceiling, but an accepted output may never exceed the requested decimal byte limit.
+
 ## GIF reference boundary
 
 - FFmpeg performs framing/Lanczos scaling and streams YUV4MPEG directly to gifski.

@@ -1,5 +1,15 @@
 # Polymorph Pre-Flight Log
 
+## PFC-2026-09-10-016 — Normalize file-size ceilings to decimal MB
+
+- Target files: file-size unit helper, converter ceiling calculation, unit tests, development version metadata, architecture/status docs, required tracking files.
+- Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, current `src/polymorph/converter.py`, `src/polymorph/models.py`, current sizing UI, and dev.5 Windows CI/artifact results.
+- Connected modules reviewed: file-size optimizer, user `MB` input, conversion result byte accounting, GIF frame/FPS safeguards, MP4 path, installer/version metadata.
+- Confirmed bug: the UI labels the ceiling in `MB`, but the converter multiplied by `1024 * 1024`, making `99 MB` equal 103,809,024 bytes and allowing a nominal 99 MB job to exceed a platform's decimal 100 MB limit.
+- Conflict risks: correcting the ceiling will slightly reduce spatial resolution for outputs that were previously using the extra binary-MiB allowance; altering optimizer thresholds at the same time would make that expected change harder to audit.
+- Recommended action: define decimal megabytes centrally as 1,000,000 bytes, use that helper only for the user-defined ceiling, add direct unit coverage, and leave optimizer search behavior, GIF quality/frame preservation, MP4 encoding, framing, and UI layout unchanged.
+- Versioning: increment development tester from `0.1.0-dev.5` to `0.1.0-dev.6`.
+
 ## PFC-2026-09-10-015 — Restore gifski 1.32.0 and document frame-preservation tradeoff
 
 - Target files: Windows gifski build dependency, development version metadata, GIF architecture/history/status docs, third-party/build docs, required tracking files.
@@ -41,7 +51,7 @@
 - Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, current `converter.py`, current `build/verify_toolchain.py`, and the validated standalone `HeroForge_WebP_to_Reddit_GIF.py` from File Library.
 - Connected modules reviewed: GIF size optimizer, gifski width/FPS arguments, post-encode dimension/frame/timing integrity checks, MP4 path, installer version metadata, Windows smoke pipeline.
 - Human validation: width-corrected Polymorph GIF was reported fantastic and visually identical to the standalone result, possibly smoother; measured output remained `1570x1570` versus standalone `1756x1756`, with only a possible subtle red/pink difference.
-- Diagnosis: the current Polymorph GIF shown in Windows Explorer is already about `93.8 MB`, so the remaining resolution gap is not plausibly explained by unused size headroom alone. The canonical standalone FFmpeg command does not force a YUV pixel format before `yuv4mpegpipe`; Polymorph uniquely forced `yuv444p`.
+- Diagnosis: the current Polymorph GIF shown in Windows Explorer is already about `93.8 MB`, so the remaining resolution gap is not plausibly explained by simple unused file-size headroom alone. The canonical standalone FFmpeg command does not force a YUV pixel format before `yuv4mpegpipe`; Polymorph uniquely forced `yuv444p`.
 - Conflict risks: changing optimizer thresholds simultaneously would make the A/B result ambiguous; changing MP4 would disturb an already-validated output path.
 - Recommended action: remove only the forced GIF-path `yuv444p`, preserve explicit source FPS, gifski quality/extra/repeat/width settings and integrity verification, update the smoke test to exercise the same handoff, and retest the same Viper source before touching optimizer logic.
 - Versioning: development tester incremented from `0.1.0-dev.1` to `0.1.0-dev.2` so the replacement installer is unambiguous.

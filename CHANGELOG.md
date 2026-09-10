@@ -1,5 +1,40 @@
 # Changelog
 
+## POLY-2026-09-10-016 — 2026-09-10 02:48 PDT — Normalize file-size ceilings to decimal MB
+
+### Summary
+
+- Corrected the user-defined file-size ceiling so `MB` now means decimal megabytes: 1 MB = 1,000,000 bytes.
+- The prior calculation used `1024 * 1024`, so a displayed `99 MB` ceiling actually allowed 103,809,024 bytes and could exceed a platform's decimal 100 MB upload limit.
+- Added a small centralized size-unit helper and direct unit tests for decimal MB conversion.
+- Kept the file-size optimizer search strategy unchanged; only the byte ceiling supplied to it changes.
+- Kept GIF quality 100, gifski 1.32.0, `yuv420p`, explicit source FPS/frame preservation, infinite looping, output-dimension verification, MP4 encoding, framing, and UI layout unchanged.
+- Incremented the development tester to `0.1.0-dev.6`.
+
+### Touched files
+
+- `src/polymorph/size_units.py`
+- `src/polymorph/converter.py`
+- `tests/test_size_units.py`
+- `src/polymorph/__init__.py`
+- `src/polymorph/constants.py`
+- `pyproject.toml`
+- `installer/Polymorph.iss`
+- `docs/ARCHITECTURE.md`
+- `MASTER.md`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert this commit to restore binary-MiB interpretation of the `MB` ceiling and the dev.5 version metadata.
+
+### Test notes
+
+- Pure unit conversion is covered directly: `99 MB -> 99,000,000 bytes` and fractional decimal MB values round deterministically.
+- Because the corrected ceiling is stricter than prior builds, size-constrained outputs may be slightly smaller in spatial resolution; that is expected and not a GIF-quality regression.
+- Windows unit/toolchain/frozen-EXE/installer gates must pass before dev.6 is treated as the current tester.
+
 ## POLY-2026-09-10-015 — 2026-09-10 02:20 PDT — Restore gifski 1.32.0 and confirm frame-preservation tradeoff
 
 ### Summary

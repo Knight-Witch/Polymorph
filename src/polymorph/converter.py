@@ -15,6 +15,7 @@ from .geometry import native_geometry, scaled_dimensions, validate_requested_res
 from .integrity import IntegrityError, validate_output_integrity
 from .models import ConversionResult, ConversionSettings, MediaInfo, OutputFormat, SizingMode
 from .probe import ProbeError, probe_media
+from .size_units import mb_to_bytes
 from .tools import Toolchain
 
 ProgressCallback = Callable[[float, str], None]
@@ -88,7 +89,7 @@ class Converter:
             self._encode_once(info, settings, output, width, height, progress, "Encoding")
             return self._result(info, output, width, height, 1)
 
-        max_bytes = int(settings.max_mb * 1024 * 1024)
+        max_bytes = mb_to_bytes(settings.max_mb)
         if max_bytes <= 0:
             raise ConversionError("Maximum file size must be greater than zero")
         return self._encode_to_size(info, settings, output, native.width, native.height, max_bytes, progress)
