@@ -101,7 +101,13 @@ def probe_media(ffprobe: Path, path: Path) -> MediaInfo:
         except ProbeError:
             pass
 
-    data = _ffprobe_json(ffprobe, path)
+    ffprobe_error: ProbeError | None = None
+    try:
+        data = _ffprobe_json(ffprobe, path)
+    except ProbeError as exc:
+        ffprobe_error = exc
+        data = {}
+
     streams = data.get("streams") or []
     stream = streams[0] if streams else {}
     fmt = data.get("format") or {}
@@ -133,16 +139,19 @@ def probe_media(ffprobe: Path, path: Path) -> MediaInfo:
             if duration_s > 0:
                 break
 
-    if duration_s <= 0 and frame_count:
-        fps = _parse_fraction(stream.get("avg_frame_rate")) or _parse_fraction(stream.get("r_frame_rate"))
-        if fps > 0:
-            duration_s = frame_count / fps
+    nominal_fps = _parse_fraction(stream.get("avg_frame_rate")) or _parse_fraction(stream.get("r_frame_rate"))
+    if duration_s <= 0 and frame_count and nominal_fps > 0:
+        duration_s = frame_count / nominal_fps
+    if nominal_fps <= 0 and frame_count > 0 and duration_s > 0:
+        nominal_fps = frame_count / duration_s
 
-    if width <= 0 or height <= 0:
-        raise ProbeError("Could not determine source dimensions")
-    if frame_count <= 0:
-        raise ProbeError("Could not determine source frame count")
-    if duration_s <= 0:
+    if width <= 0 or height <= 0 or frame_count <= 0 or duration_s <= 0:
+        if ffprobe_error and not (riff_width and riff_height and riff_durations):
+            raise ffprobe_error
+        if width <= 0 or height <= 0:
+            raise ProbeError("Could not determine source dimensions")
+        if frame_count <= 0:
+            raise ProbeError("Could not determine source frame count")
         raise ProbeError("Could not determine source duration")
 
     return MediaInfo(
@@ -152,4 +161,5 @@ def probe_media(ffprobe: Path, path: Path) -> MediaInfo:
         frame_count=frame_count,
         duration_s=duration_s,
         frame_durations_ms=riff_durations,
+        nominal_fps=nominal_fps,
     )

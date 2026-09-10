@@ -29,9 +29,12 @@ class MediaInfo:
     frame_count: int
     duration_s: float
     frame_durations_ms: list[int] = field(default_factory=list)
+    nominal_fps: float = 0.0
 
     @property
     def fps(self) -> float:
+        if self.nominal_fps > 0:
+            return self.nominal_fps
         if self.duration_s <= 0 or self.frame_count <= 0:
             return 0.0
         return self.frame_count / self.duration_s

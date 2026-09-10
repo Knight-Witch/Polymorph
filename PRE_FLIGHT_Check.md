@@ -1,5 +1,13 @@
 # Polymorph Pre-Flight Log
 
+## PFC-2026-09-09-005 — Post-encode temporal integrity guard
+
+- Target files: `models.py`, `probe.py`, new `integrity.py`, converter integration, tests, architecture/tracking docs.
+- Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, `docs/UX_SPEC.md` on `dev`.
+- Connected modules reviewed: source FPS handoff, RIFF metadata fallback, GIF/MP4 encoder paths, output probing.
+- Conflict risks: source ffprobe failure preventing otherwise-valid HeroForge WebP metadata reads; nominal FPS drift; encoder silently dropping/duplicating frames; tiny container/GIF timing quantization causing false failures.
+- Recommended action: retain RIFF metadata when ffprobe fails, carry nominal FPS explicitly, and verify exact output frame count plus a small duration tolerance after every encode candidate.
+
 ## PFC-2026-09-09-004 — Windows development packaging
 
 - Target files: build spec/icon generator, Inno Setup installer, GitHub Actions Windows workflow, canonical footer URLs, tracking docs.

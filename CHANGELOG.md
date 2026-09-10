@@ -1,5 +1,35 @@
 # Changelog
 
+## POLY-2026-09-09-005 — 2026-09-09 19:09 PDT — Verify frame/timing integrity after encoding
+
+### Summary
+
+- Made source probing tolerant of ffprobe decoder failure when animated WebP RIFF metadata already supplies valid dimensions, frame count, and duration.
+- Added explicit nominal FPS storage instead of relying only on frame-count/duration reconstruction.
+- Added post-encode integrity verification requiring exact frame-count preservation and bounded duration drift.
+- Added tests for RIFF-only fallback and temporal integrity rules.
+
+### Touched files
+
+- `src/polymorph/models.py`
+- `src/polymorph/probe.py`
+- `src/polymorph/integrity.py`
+- `src/polymorph/converter.py`
+- `tests/test_probe_fallback.py`
+- `tests/test_integrity.py`
+- `docs/ARCHITECTURE.md`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert this commit to return to pre-verification probing/encoding behavior.
+
+### Test notes
+
+- Pure integrity/probe logic is covered by unit tests.
+- Full output verification still requires the Windows dev build against real HeroForge animated WebPs.
+
 ## POLY-2026-09-09-004 — 2026-09-09 18:28 PDT — Windows development packaging
 
 ### Summary

@@ -12,8 +12,9 @@ from typing import Callable
 from .constants import FILE_SIZE_HEADROOM, MAX_SIZE_PASSES, MIN_SCALE
 from .filters import build_video_filter
 from .geometry import native_geometry, scaled_dimensions, validate_requested_resolution
+from .integrity import IntegrityError, validate_output_integrity
 from .models import ConversionResult, ConversionSettings, MediaInfo, OutputFormat, SizingMode
-from .probe import probe_media
+from .probe import ProbeError, probe_media
 from .tools import Toolchain
 
 ProgressCallback = Callable[[float, str], None]
@@ -184,6 +185,21 @@ class Converter:
         else:
             self._encode_mp4(info, settings, output, width, height, progress, label)
 
+        self._verify_output(info, output)
+        if progress:
+            progress(1.0, label)
+
+    def _verify_output(self, source_info: MediaInfo, output: Path) -> None:
+        try:
+            output_info = probe_media(self.tools.ffprobe, output)
+            validate_output_integrity(source_info, output_info)
+        except (ProbeError, IntegrityError) as exc:
+            try:
+                output.unlink(missing_ok=True)
+            except OSError:
+                pass
+            raise ConversionError(f"Output integrity verification failed. {exc}") from exc
+
     def _base_ffmpeg(self, info: MediaInfo, filter_graph: str) -> list[str]:
         return [
             str(self.tools.ffmpeg),
@@ -292,8 +308,6 @@ class Converter:
             if ffmpeg_rc != 0 or gifski_rc != 0 or not output.exists():
                 details = gifski_log_path.read_text(errors="replace").strip()
                 raise ConversionError(details or f"GIF encoding failed (ffmpeg={ffmpeg_rc}, gifski={gifski_rc})")
-            if progress:
-                progress(1.0, label)
         finally:
             try:
                 gifski_log_path.unlink(missing_ok=True)
@@ -347,8 +361,6 @@ class Converter:
             raise ConversionCancelled()
         if rc != 0 or not output.exists():
             raise ConversionError(f"MP4 encoding failed (ffmpeg={rc})")
-        if progress:
-            progress(1.0, label)
 
     def _consume_progress(
         self,
