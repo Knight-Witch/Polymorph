@@ -5,8 +5,8 @@
 - Project: Polymorph
 - Repository: `Knight-Witch/Polymorph`
 - Platform target: Windows 10/11 x64
-- Status: functional scaffold on `dev`; MP4 human-validated; GIF quality/frame behavior human-validated; decimal-MB ceiling correction pending Windows CI; no public release
-- Current development version: `0.1.0-dev.6`
+- Status: functional scaffold on `dev`; MP4 human-validated; GIF quality/frame behavior human-validated; decimal-MB ceiling validated in Windows CI; updater hardening pending Windows CI; no public release
+- Current development version: `0.1.0-dev.7`
 
 ## Canonical conversion behavior
 
@@ -58,10 +58,19 @@
 - Footer icon buttons: Check Updates, GitHub, Ko-fi, Patreon, Discord.
 - Automatic update check while the app is open; no service/daemon.
 
+## Update policy
+
+- Check only official GitHub releases from `Knight-Witch/Polymorph`.
+- Require the exact versioned installer and its matching `.sha256` companion before offering automatic installation.
+- Download assets only from the official repository's HTTPS release path.
+- Verify SHA-256 before launching the installer.
+- No background service, startup daemon, unattended updater, or silent install.
+
 ## Known follow-ups
 
 - A later optimizer pass may try to reclaim small amounts of spatial resolution, but must not alter source FPS/frame count or reduce GIF quality.
-- The completion/status size readout still uses a binary MiB calculation while labeling it `MB`; correct that in the next UI-only polish pass so display units match the now-correct decimal ceiling.
+- The completion/status size readout still uses a binary MiB calculation while labeling it `MB`; correct that in a UI-only polish pass so display units match the decimal ceiling.
+- First public release still requires a deliberate project-license choice and final release packaging/release workflow review.
 
 ## Deferred
 

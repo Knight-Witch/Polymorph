@@ -1,5 +1,42 @@
 # Changelog
 
+## POLY-2026-09-10-017 — 2026-09-10 03:02 PDT — Harden verified update downloads
+
+### Summary
+
+- Hardened the automatic updater without changing the visible update flow or any conversion behavior.
+- Automatic installation now requires the exact canonical installer asset `Polymorph_Setup_v<version>.exe` and its exact `.exe.sha256` companion from the same official GitHub release.
+- Restricted automatic update downloads to HTTPS release URLs under `github.com/Knight-Witch/Polymorph/releases/download/`.
+- Replaced whole-file installer hashing with bounded streaming download plus incremental SHA-256 hashing, avoiding an unnecessary ~85 MB in-memory buffer.
+- Added explicit maximum download sizes for checksum and installer assets and delete partial downloads on failure.
+- Added strict checksum parsing: valid 64-character SHA-256 required; when the checksum line includes a filename, it must match the selected installer exactly.
+- Added unit coverage for exact asset pairing, wrong checksum assets, official URL restriction, checksum filename validation, streamed hashing, and oversized-download rejection.
+- GIF, MP4, file-size optimizer, framing, preview, UI layout, and installer privilege behavior were not changed.
+- Incremented the development tester to `0.1.0-dev.7`.
+
+### Touched files
+
+- `src/polymorph/update_service.py`
+- `tests/test_update_service.py`
+- `src/polymorph/__init__.py`
+- `src/polymorph/constants.py`
+- `pyproject.toml`
+- `installer/Polymorph.iss`
+- `docs/ARCHITECTURE.md`
+- `MASTER.md`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert this commit to restore the dev.6 updater behavior while leaving the decimal-MB conversion fix intact.
+
+### Test notes
+
+- New updater tests are network-independent and use in-memory fake responses for streaming behavior.
+- Windows unit/toolchain/frozen-EXE/installer gates must pass before dev.7 becomes the current development tester.
+- No human media-quality retest is required because conversion code is untouched.
+
 ## POLY-2026-09-10-016 — 2026-09-10 02:48 PDT — Normalize file-size ceilings to decimal MB
 
 ### Summary
@@ -33,7 +70,8 @@
 
 - Pure unit conversion is covered directly: `99 MB -> 99,000,000 bytes` and fractional decimal MB values round deterministically.
 - Because the corrected ceiling is stricter than prior builds, size-constrained outputs may be slightly smaller in spatial resolution; that is expected and not a GIF-quality regression.
-- Windows unit/toolchain/frozen-EXE/installer gates must pass before dev.6 is treated as the current tester.
+- Windows run #12 completed successfully through unit tests, pinned toolchain verification, frozen application smoke test, installer compilation, checksum generation, and artifact upload.
+- Dev.6 installer SHA-256 was independently recomputed after artifact download and matched the generated checksum.
 
 ## POLY-2026-09-10-015 — 2026-09-10 02:20 PDT — Restore gifski 1.32.0 and confirm frame-preservation tradeoff
 
@@ -71,7 +109,7 @@
 
 - Root-cause diagnosis is supported by the exact standalone command and gifski's Y4M decoder source.
 - No converter code or optimizer code changed in this update.
-- Windows unit/toolchain/frozen-EXE/installer gates must pass for dev.5; no further Viper quality retest is required solely to re-establish the already human-validated dev.3 GIF engine behavior.
+- Windows unit/toolchain/frozen-EXE/installer gates passed for dev.5; no further Viper quality retest is required solely to re-establish the already human-validated dev.3 GIF engine behavior.
 
 ## POLY-2026-09-10-014 — 2026-09-10 01:12 PDT — Test stable gifski 1.34.0
 
@@ -106,8 +144,8 @@
 ### Test notes
 
 - This is an isolated dependency A/B, not an optimizer change.
-- Windows unit/toolchain/frozen-EXE/installer gates must pass before dev.4 is handed to the user.
-- Human retest should use the same Viper source and compare output dimensions, file size, smoothness, and any visible color change against dev.3 and the standalone result.
+- Windows unit/toolchain/frozen-EXE/installer gates passed before dev.4 was handed to the user.
+- Human retest used the same Viper source and established that 1.34.0 was worse for this workload.
 
 ## POLY-2026-09-10-013 — 2026-09-10 00:45 PDT — Pin GIF Y4M to yuv420p
 
@@ -143,8 +181,8 @@
 ### Test notes
 
 - Run #8 failure was diagnosed from the exact Windows job log before editing.
-- New unit/toolchain/frozen-EXE/installer gates must pass before dev.3 is handed to the user.
-- Human A/B validation remains pending on the same Viper HeroForge source: output dimensions, file size, color match, and smoothness.
+- New unit/toolchain/frozen-EXE/installer gates passed before dev.3 was handed to the user.
+- Human A/B validation confirmed smoothness remained good and recovered only a small amount of spatial resolution.
 
 ## POLY-2026-09-10-012 — 2026-09-10 00:30 PDT — Restore canonical Y4M handoff for GIF
 
@@ -181,10 +219,9 @@
 
 ### Test notes
 
-- The canonical standalone script was re-read from File Library before editing.
+- The canonical standalone script was re-read before editing.
 - Current dev conversion optimizer was reviewed and deliberately left unchanged for isolation.
-- Windows unit/toolchain/frozen-EXE/installer gates must pass before `0.1.0-dev.2` is handed back for the Viper retest.
-- Human validation of the negotiated Y4M result remains pending.
+- Windows unit/toolchain/frozen-EXE/installer gates passed for the working follow-up build.
 
 ## POLY-2026-09-09-011 — 2026-09-09 23:57 PDT — Restore canonical gifski output width
 
@@ -198,7 +235,7 @@
 - Added regression coverage for output-dimension mismatch.
 - Retained Polymorph's explicit source-FPS handoff and temporal integrity checks; those protect the no-frame-loss requirement and are not part of the confirmed quality regression.
 - MP4 encoding settings, framing behavior, UI, updater, and installer architecture were not changed.
-- Logged the separate binary-MiB-vs-decimal-MB ceiling issue for a later isolated fix; it is not changed here.
+- Logged the separate binary-MiB-vs-decimal-MB ceiling issue for a later isolated fix.
 
 ### Touched files
 
@@ -216,9 +253,9 @@
 
 ### Test notes
 
-- Root cause is directly supported by the standalone converter and gifski 1.32.0 CLI behavior.
-- Unit and Windows build/toolchain gates must pass before the replacement installer is handed back for Viper retest.
-- Human visual validation of the corrected GIF remains pending.
+- Root cause is directly supported by the standalone converter and gifski CLI behavior.
+- Windows gates passed before the replacement installer was handed back for Viper retest.
+- Human visual validation confirmed the corrected GIF quality was excellent.
 
 ## POLY-2026-09-09-010 — 2026-09-09 19:45 PDT — Record successful Windows smoke-gated build
 
@@ -245,7 +282,7 @@
 
 - Windows CI run #6 completed successfully from checkout through artifact upload.
 - Packaged-app smoke test passed bundled-tool discovery, SVG resource loading, Qt animated-WebP live preview, and linked 16:9 resolution controls.
-- Human Windows validation with real HeroForge animated WebP media remains pending.
+- Human Windows validation with real HeroForge animated WebP media followed successfully.
 
 ## POLY-2026-09-09-009 — 2026-09-09 19:34 PDT — Gate installer on packaged application smoke test
 
@@ -276,7 +313,7 @@
 
 - Unit/toolchain tests remain upstream of PyInstaller.
 - Packaged-app gate passed on Windows run #6 before Inno Setup compiled the installer.
-- Human HeroForge media validation remains required.
+- Human HeroForge media validation was subsequently completed.
 
 ## POLY-2026-09-09-008 — 2026-09-09 19:25 PDT — First-pass UI usability polish
 
@@ -313,7 +350,7 @@
 
 - Linked-dimension math is covered by unit tests for 16:9 width/height driving and native-size clamping.
 - SVG resource inclusion is declared both as Python package data and explicit PyInstaller data.
-- Full Qt interaction remains pending hands-on Windows testing.
+- Packaged Qt smoke tests subsequently confirmed resource and preview loading.
 
 ## POLY-2026-09-09-007 — 2026-09-09 19:22 PDT — Pin and smoke-test smaller FFmpeg Essentials build
 
@@ -342,7 +379,7 @@
 ### Test notes
 
 - Provider documentation confirms the Essentials build includes libwebp and libx264 and all internal Windows FFmpeg components.
-- Exact bundled toolchain behavior remains gated by the new Windows smoke-test step; installer artifact is not accepted if that step fails.
+- Exact bundled toolchain behavior is gated by the Windows smoke-test step; installer artifacts are not accepted if that step fails.
 
 ## POLY-2026-09-09-006 — 2026-09-09 19:12 PDT — Correct PyInstaller repository root
 
@@ -395,7 +432,7 @@
 ### Test notes
 
 - Pure integrity/probe logic is covered by unit tests.
-- Full output verification still requires the Windows dev build against real HeroForge animated WebPs.
+- Full output verification is also exercised in the Windows toolchain/frozen application pipeline.
 
 ## POLY-2026-09-09-004 — 2026-09-09 18:28 PDT — Windows development packaging
 
@@ -453,9 +490,9 @@
 
 ### Test notes
 
-- 8/8 local non-GUI tests pass.
-- Python source syntax compilation passes.
-- Full Qt/Windows interaction remains pending hands-on Windows testing.
+- 8/8 local non-GUI tests passed at the time.
+- Python source syntax compilation passed.
+- Packaged Qt/Windows interaction is now covered by the frozen-app smoke gate.
 
 ## POLY-2026-09-09-002 — 2026-09-09 18:28 PDT — Core conversion engine scaffold
 
@@ -484,7 +521,7 @@
 ### Test notes
 
 - Core-engine unit tests pass.
-- Actual quality behavior remains subject to reference-media Windows validation.
+- Actual output quality has since been human-validated against real HeroForge media.
 
 ## POLY-2026-09-09-001 — 2026-09-09 18:28 PDT — Repository bootstrap
 

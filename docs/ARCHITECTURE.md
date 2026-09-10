@@ -8,7 +8,7 @@
 - `src/polymorph/geometry.py`: deterministic Crop/Fit geometry and no-upscale validation.
 - `src/polymorph/filters.py`: FFmpeg filter construction.
 - `src/polymorph/ui/`: novice-facing desktop UI and live preview.
-- `src/polymorph/update_service.py`: release check, checksum verification, installer launch.
+- `src/polymorph/update_service.py`: official-release discovery, exact asset pairing, bounded streaming download, checksum verification, installer launch.
 - `build/`: executable packaging.
 - `installer/`: per-user Windows installer.
 
@@ -36,6 +36,16 @@
 - Explicit source FPS is an intentional divergence from the original standalone script. That script sent the source FPS to FFmpeg with `-r` but omitted gifski `--fps`; gifski therefore used its default 20 FPS target for Y4M/video input and resampled by dropping/duplicating frames.
 - Polymorph must not reproduce that larger-resolution result by silently reducing frame count. Spatial resolution is optimized only after frame preservation is fixed.
 - Post-encode validation requires the requested dimensions, exact frame count, and bounded timing drift.
+
+## Update safety
+
+- Update discovery uses only the official `Knight-Witch/Polymorph` GitHub latest-release endpoint.
+- Automatic installation requires the exact canonical installer asset `Polymorph_Setup_v<version>.exe` and its exact companion `.sha256` asset.
+- Release download URLs must be HTTPS GitHub release URLs for the Polymorph repository.
+- Downloads are streamed to disk with explicit size bounds; the installer is hashed incrementally rather than loaded into memory as one buffer.
+- The checksum file must contain a valid SHA-256 digest and, when it names a file, that filename must match the installer exactly.
+- A failed or mismatched update is deleted and never launched.
+- No updater daemon, startup task, background service, or unattended installer execution is used.
 
 ## Resource policy
 
