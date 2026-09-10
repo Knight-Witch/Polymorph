@@ -1,5 +1,43 @@
 # Changelog
 
+## POLY-2026-09-10-015 — 2026-09-10 02:20 PDT — Restore gifski 1.32.0 and confirm frame-preservation tradeoff
+
+### Summary
+
+- Human dev.4 retest produced `1532x1532`, regressing from dev.3's `1592x1592`; gifski 1.34.0 is therefore not retained for this workload.
+- Re-read the exact standalone converter and gifski's Y4M implementation. The standalone used FFmpeg `-r <source fps>` but omitted gifski `--fps`; gifski defaults Y4M/video input to 20 FPS and its Y4M decoder skips frames when required to meet that target.
+- This confirms the main reason the standalone converter could produce a larger `1756x1756` GIF under the same byte ceiling: it was not preserving the complete source frame sequence.
+- Preserving source FPS/frame count is a hard Polymorph requirement, so the standalone `1756x1756` result is no longer treated as the correct spatial-resolution parity target.
+- Restored the bundled development gifski dependency from 1.34.0 to the better-performing, previously human-validated 1.32.0 build.
+- Kept `yuv420p`, explicit source FPS, gifski quality 100, extra effort, infinite repeat, explicit width, post-encode dimension/frame/timing verification, file-size optimizer, and MP4 path unchanged.
+- Updated architecture/history/status documentation to distinguish standalone visual-quality parity from Polymorph's stricter frame-preservation requirement.
+- Incremented the development tester to `0.1.0-dev.5`.
+
+### Touched files
+
+- `.github/workflows/windows-dev-build.yml`
+- `src/polymorph/__init__.py`
+- `src/polymorph/constants.py`
+- `pyproject.toml`
+- `installer/Polymorph.iss`
+- `THIRD_PARTY.md`
+- `build/README.md`
+- `docs/ARCHITECTURE.md`
+- `HISTORY/REFERENCE_GIF_CONVERTER.md`
+- `MASTER.md`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert this commit to return to the gifski 1.34.0 dev.4 experiment. Converter and MP4 logic are identical across dev.4 and dev.5.
+
+### Test notes
+
+- Root-cause diagnosis is supported by the exact standalone command and gifski's Y4M decoder source.
+- No converter code or optimizer code changed in this update.
+- Windows unit/toolchain/frozen-EXE/installer gates must pass for dev.5; no further Viper quality retest is required solely to re-establish the already human-validated dev.3 GIF engine behavior.
+
 ## POLY-2026-09-10-014 — 2026-09-10 01:12 PDT — Test stable gifski 1.34.0
 
 ### Summary

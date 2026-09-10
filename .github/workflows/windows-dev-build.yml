@@ -58,10 +58,10 @@ jobs:
           Copy-Item $ffprobe.FullName tools\ffprobe.exe
           .\tools\ffmpeg.exe -version | Select-Object -First 1
 
-      - name: Build gifski 1.34.0
+      - name: Build gifski 1.32.0
         shell: pwsh
         run: |
-          cargo install gifski --version 1.34.0 --locked --root "$PWD\gifski-root"
+          cargo install gifski --version 1.32.0 --locked --root "$PWD\gifski-root"
           Copy-Item gifski-root\bin\gifski.exe tools\gifski.exe
           .\tools\gifski.exe --version
 

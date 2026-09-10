@@ -1,5 +1,17 @@
 # Polymorph Pre-Flight Log
 
+## PFC-2026-09-10-015 — Restore gifski 1.32.0 and document frame-preservation tradeoff
+
+- Target files: Windows gifski build dependency, development version metadata, GIF architecture/history/status docs, third-party/build docs, required tracking files.
+- Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `HISTORY/REFERENCE_GIF_CONVERTER.md`, `docs/ARCHITECTURE.md`, current Windows workflow, current converter, current third-party/build docs, the exact standalone `HeroForge_WebP_to_Reddit_GIF.py`, and gifski 1.34.0 CLI/Y4M source handling.
+- Human validation: dev.4 changed only gifski 1.32.0 -> 1.34.0 and regressed the same Viper conversion from dev.3's `1592x1592` to `1532x1532`.
+- Confirmed root cause of the larger standalone `1756x1756` result: the standalone wrote source FPS into Y4M with FFmpeg `-r` but omitted gifski `--fps`; gifski defaults Y4M/video input to 20 FPS and its Y4M decoder skips frames to resample toward that target.
+- Connected modules reviewed: GIF invocation, `yuv420p` handoff, explicit source-FPS argument, exact frame-count/timing integrity guard, file-size optimizer, MP4 path, Windows toolchain smoke gate, installer/version metadata.
+- Conflict risks: chasing `1756x1756` as a spatial parity target would require sacrificing the user's explicit no-frame-loss requirement or changing another quality dimension; changing optimizer logic now would confuse the confirmed timing tradeoff.
+- Recommended action: restore gifski 1.32.0, keep dev.3's `yuv420p` + explicit source FPS + exact frame verification, record the standalone converter as visual-quality but not frame-preservation canonical, and do not alter optimizer or MP4 behavior in this update.
+- Versioning: increment development tester to `0.1.0-dev.5`; dev.5 returns to the best human-validated GIF dependency behavior while retaining the current safeguards.
+- Follow-up remains separate: normalize UI `MB` from binary MiB to decimal MB before release; later optimizer work may reclaim small spatial gains but may not drop frames or lower GIF quality.
+
 ## PFC-2026-09-10-014 — Test stable gifski 1.34.0 against canonical GIF output
 
 - Target files: Windows gifski build dependency, development version metadata, third-party/build docs, canonical GIF reference/history, status/tracking docs.
@@ -120,7 +132,7 @@
 
 ## PFC-2026-09-09-002 — Core conversion engine scaffold
 
-- Target files: `src/polymorph/{constants,models,probe,geometry,filters,tools,converter}.py`, tests, `pyproject.toml`, tracking docs.
+- Target files: `src/polymorph/{__init__,constants,models,probe,geometry,filters,tools,converter}.py`, tests, `pyproject.toml`, tracking docs.
 - Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, `docs/UX_SPEC.md`.
 - Reference behavior checked: validated FFmpeg -> YUV4MPEG -> gifski behavior, including explicit source FPS handoff to prevent gifski's default 20 FPS resampling.
 - Connected modules reviewed: WebP probe fallback, framing geometry, filter construction, tool discovery, size optimizer.

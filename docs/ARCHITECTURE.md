@@ -28,6 +28,8 @@
 - FFmpeg performs framing/Lanczos scaling and streams YUV4MPEG directly to gifski.
 - The pinned Windows build explicitly uses `yuv420p` for the GIF Y4M stream. The standalone reference omitted `-pix_fmt`, but its working path effectively used 4:2:0; literal omission is not reliable on FFmpeg 9.0.1 after Polymorph's filter graph.
 - gifski receives the requested output width explicitly, quality 100, extra effort, infinite repeat, and explicit source FPS.
+- Explicit source FPS is an intentional divergence from the original standalone script. That script sent the source FPS to FFmpeg with `-r` but omitted gifski `--fps`; gifski therefore used its default 20 FPS target for Y4M/video input and resampled by dropping/duplicating frames.
+- Polymorph must not reproduce that larger-resolution result by silently reducing frame count. Spatial resolution is optimized only after frame preservation is fixed.
 - Post-encode validation requires the requested dimensions, exact frame count, and bounded timing drift.
 
 ## Resource policy
