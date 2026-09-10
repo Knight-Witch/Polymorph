@@ -1,5 +1,14 @@
 # Polymorph Pre-Flight Log
 
+## PFC-2026-09-09-009 — Packaged application smoke gate
+
+- Target files: application entrypoint, new packaged smoke-test module, toolchain sample retention, Windows workflow, build/tracking docs.
+- Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, `docs/UX_SPEC.md`, current build workflow, resource loader, resolution linker, and app entrypoint on `dev`.
+- Connected modules reviewed: frozen tool discovery, packaged SVG resource lookup, `MainWindow` construction, Qt animated-WebP preview, linked-resolution controls, PyInstaller output path.
+- Confirmed gap: successful PyInstaller/installer builds did not yet prove the frozen executable itself could start and resolve its packaged runtime resources.
+- Conflict risks: hidden smoke path interfering with normal CLI file-open behavior; headless Qt platform issues; passing build despite missing WebP image plugin/assets/tools.
+- Recommended action: add a hidden `--smoke-test` path used only by CI, run the actual frozen EXE in Qt offscreen mode, and block installer compilation if bundled tools/resources/live preview/linked sizing fail.
+
 ## PFC-2026-09-09-008 — First-pass UI usability polish
 
 - Target files: live preview, linked-resolution helper, footer icon resources/loading, UI stylesheet, tests, packaging data declaration, UX/dependency/tracking docs.

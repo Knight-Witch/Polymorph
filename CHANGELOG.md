@@ -1,5 +1,36 @@
 # Changelog
 
+## POLY-2026-09-09-009 — 2026-09-09 19:34 PDT — Gate installer on packaged application smoke test
+
+### Summary
+
+- Added a hidden CI-only `--smoke-test` application path.
+- The actual frozen `Polymorph.exe` now must prove it can resolve bundled FFmpeg/ffprobe/gifski, load packaged footer SVGs, construct the main window, decode an animated WebP into the live preview, and maintain linked 16:9 resolution controls.
+- Reused the synthetic animated WebP from the existing toolchain smoke test rather than introducing a second media generator.
+- Installer compilation is blocked if the packaged-app smoke test fails.
+- Normal GUI/drag-to-open behavior is unchanged unless the hidden smoke-test flag is explicitly supplied.
+
+### Touched files
+
+- `src/polymorph/app.py`
+- `src/polymorph/smoke_test.py`
+- `build/verify_toolchain.py`
+- `.github/workflows/windows-dev-build.yml`
+- `build/README.md`
+- `MASTER.md`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert this commit to remove the packaged-EXE gate and restore the prior build workflow.
+
+### Test notes
+
+- Unit/toolchain tests remain upstream of PyInstaller.
+- New packaged-app gate will run on the Windows CI artifact before Inno Setup compiles the installer.
+- Human HeroForge media validation remains required after the CI gate passes.
+
 ## POLY-2026-09-09-008 — 2026-09-09 19:25 PDT — First-pass UI usability polish
 
 ### Summary

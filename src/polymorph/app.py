@@ -12,6 +12,15 @@ def main() -> int:
     app = QApplication(sys.argv)
     app.setApplicationName("Polymorph")
     app.setOrganizationName("Knight Witch")
+
+    if "--smoke-test" in sys.argv:
+        index = sys.argv.index("--smoke-test")
+        if index + 1 >= len(sys.argv):
+            return 2
+        from .smoke_test import run_packaged_smoke_test
+
+        return run_packaged_smoke_test(app, Path(sys.argv[index + 1]))
+
     window = MainWindow()
     window.show()
 

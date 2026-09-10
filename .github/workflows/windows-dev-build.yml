@@ -67,7 +67,7 @@ jobs:
 
       - name: Verify bundled conversion toolchain
         shell: pwsh
-        run: python build\verify_toolchain.py tools
+        run: python build\verify_toolchain.py tools build-smoke\sample.webp
 
       - name: Generate development placeholder icon
         shell: pwsh
@@ -76,6 +76,20 @@ jobs:
       - name: Build Polymorph application
         shell: pwsh
         run: pyinstaller --noconfirm --clean build\Polymorph.spec
+
+      - name: Verify packaged Polymorph application
+        shell: pwsh
+        run: |
+          $env:QT_QPA_PLATFORM = "offscreen"
+          $env:POLYMORPH_SMOKE_LOG = "$PWD\build-smoke\packaged-app-smoke.txt"
+          $sample = "$PWD\build-smoke\sample.webp"
+          $proc = Start-Process -FilePath "$PWD\dist\Polymorph\Polymorph.exe" -ArgumentList @("--smoke-test", "`"$sample`"") -Wait -PassThru
+          if (Test-Path $env:POLYMORPH_SMOKE_LOG) {
+            Get-Content $env:POLYMORPH_SMOKE_LOG
+          }
+          if ($proc.ExitCode -ne 0) {
+            throw "Packaged Polymorph smoke test failed with exit code $($proc.ExitCode)"
+          }
 
       - name: Install Inno Setup
         shell: pwsh

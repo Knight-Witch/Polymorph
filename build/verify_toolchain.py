@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -52,13 +53,17 @@ def make_animated_webp(path: Path) -> None:
     )
 
 
-def verify(ffmpeg: Path, ffprobe: Path, gifski: Path) -> None:
+def verify(ffmpeg: Path, ffprobe: Path, gifski: Path, sample_out: Path | None = None) -> None:
     with tempfile.TemporaryDirectory(prefix="polymorph-toolchain-") as tmp:
         root = Path(tmp)
         source = root / "source.webp"
         gif_out = root / "out.gif"
         mp4_out = root / "out.mp4"
         make_animated_webp(source)
+
+        if sample_out is not None:
+            sample_out.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, sample_out)
 
         source_frames = frame_count(ffprobe, source)
         if source_frames != FRAME_COUNT:
@@ -110,8 +115,14 @@ def verify(ffmpeg: Path, ffprobe: Path, gifski: Path) -> None:
 
 def main() -> int:
     tools = Path(sys.argv[1] if len(sys.argv) > 1 else "tools")
+    sample_out = Path(sys.argv[2]) if len(sys.argv) > 2 else None
     suffix = ".exe" if sys.platform.startswith("win") else ""
-    verify(tools / f"ffmpeg{suffix}", tools / f"ffprobe{suffix}", tools / f"gifski{suffix}")
+    verify(
+        tools / f"ffmpeg{suffix}",
+        tools / f"ffprobe{suffix}",
+        tools / f"gifski{suffix}",
+        sample_out,
+    )
     return 0
 
 
