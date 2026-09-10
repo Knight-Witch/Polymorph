@@ -1,5 +1,15 @@
 # Polymorph Pre-Flight Log
 
+## PFC-2026-09-09-010 — Record packaged-app validation
+
+- Target files: `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md` only.
+- Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, and Windows run #6 results for commit `b3cfdda`.
+- Connected modules reviewed: packaged-EXE smoke result, installer build result, artifact metadata, and locally recomputed installer SHA-256.
+- Confirmed result: Windows run #6 passed unit tests, pinned toolchain verification, PyInstaller, the frozen `Polymorph.exe` smoke gate, Inno Setup, checksum generation, and both artifact uploads.
+- Conflict risks: prematurely calling the application publicly validated before a real HeroForge animated WebP is tested by a human on Windows.
+- Recommended action: hand the `b3cfdda` dev installer to the user for hands-on validation; keep `main` and public releases unchanged.
+- Documentation-only update: no Python, workflow, installer definition, JavaScript, manifest, or runtime behavior changed.
+
 ## PFC-2026-09-09-009 — Packaged application smoke gate
 
 - Target files: application entrypoint, new packaged smoke-test module, toolchain sample retention, Windows workflow, build/tracking docs.

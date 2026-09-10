@@ -1,5 +1,32 @@
 # Changelog
 
+## POLY-2026-09-09-010 — 2026-09-09 19:45 PDT — Record successful Windows smoke-gated build
+
+### Summary
+
+- Recorded successful Windows run #6 for commit `b3cfdda`.
+- The frozen `Polymorph.exe` smoke gate passed before installer compilation.
+- Inno Setup, SHA-256 generation, and artifact uploads also passed.
+- The dev installer is 88,997,108 bytes and its recomputed local SHA-256 matches the generated checksum: `ef1ba4562be7d81ac70a4b261ad204e98f8da2c114cdc836b0ee972df1675177`.
+- Marked the current dev build ready for hands-on HeroForge animated-WebP testing.
+- Documentation-only update; no Python, workflow, installer definition, JavaScript, manifest, or runtime behavior changed.
+
+### Touched files
+
+- `MASTER.md`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert this documentation commit only; the validated `b3cfdda` tester binary remains unchanged.
+
+### Test notes
+
+- Windows CI run #6 completed successfully from checkout through artifact upload.
+- Packaged-app smoke test passed bundled-tool discovery, SVG resource loading, Qt animated-WebP live preview, and linked 16:9 resolution controls.
+- Human Windows validation with real HeroForge animated WebP media remains pending.
+
 ## POLY-2026-09-09-009 — 2026-09-09 19:34 PDT — Gate installer on packaged application smoke test
 
 ### Summary
@@ -28,8 +55,8 @@
 ### Test notes
 
 - Unit/toolchain tests remain upstream of PyInstaller.
-- New packaged-app gate will run on the Windows CI artifact before Inno Setup compiles the installer.
-- Human HeroForge media validation remains required after the CI gate passes.
+- Packaged-app gate passed on Windows run #6 before Inno Setup compiled the installer.
+- Human HeroForge media validation remains required.
 
 ## POLY-2026-09-09-008 — 2026-09-09 19:25 PDT — First-pass UI usability polish
 

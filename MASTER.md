@@ -5,7 +5,7 @@
 - Project: Polymorph
 - Repository: `Knight-Witch/Polymorph`
 - Platform target: Windows 10/11 x64
-- Status: functional scaffold on `dev`; Windows installer/toolchain pipeline validated; packaged-EXE smoke validation pending / no public release
+- Status: functional scaffold on `dev`; Windows toolchain, frozen-EXE smoke gate, installer, checksum, and artifact pipeline validated; ready for hands-on HeroForge media testing / no public release
 - Current development version: `0.1.0-dev.1`
 
 ## Canonical conversion behavior
