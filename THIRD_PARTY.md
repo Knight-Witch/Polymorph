@@ -5,13 +5,18 @@ Polymorph invokes third-party executables and uses third-party Python libraries.
 ## FFmpeg / ffprobe
 
 - Project: https://ffmpeg.org/
-- Purpose: media decode, filtering, scaling, padding/cropping, and MP4 encode.
-- License: depends on the exact distributed build configuration. The release process must record the bundled build and provide the corresponding license/source information.
+- Windows development bundle: FFmpeg 9.0.1 Essentials build by Gyan Doshi.
+- Build archive: `ffmpeg-9.0.1-essentials_build.7z`.
+- Archive SHA-256: `49a73bdf0850092a252ac4641d922f3048d63ed113e196cc65ce1e4f7fb33e85`.
+- FFmpeg source commit referenced by the build provider: `bf1b838f2a`.
+- Purpose: animated WebP decode, filtering, scaling, padding/cropping, YUV4MPEG output, probing, and H.264/MP4 encode.
+- Build license: GPLv3 as documented by the build provider.
+- The exact release bundle and corresponding license/source notices must be retained for a public release.
 
 ## gifski
 
 - Project: https://github.com/ImageOptim/gifski
-- Minimum required version for the streaming pipeline: 1.32.0
+- Bundled development version: 1.32.0.
 - Purpose: high-quality GIF encoding from YUV4MPEG data streamed by FFmpeg.
 - License: AGPL-3.0-or-later.
 

@@ -1,5 +1,34 @@
 # Changelog
 
+## POLY-2026-09-09-007 — 2026-09-09 19:22 PDT — Pin and smoke-test smaller FFmpeg Essentials build
+
+### Summary
+
+- Replaced the mutable/latest full BtbN FFmpeg download in the dev build workflow with the exact Gyan FFmpeg 9.0.1 Essentials archive.
+- Added verification against the provider-published SHA-256 before extraction.
+- Added a build-time animated WebP smoke test covering ffprobe frame counting, Crop/Scale/Pad filters, YUV4MPEG streaming into gifski, infinite-loop GIF encoding, H.264 MP4 encoding, and output frame-count preservation.
+- Recorded the exact development FFmpeg bundle/source reference in third-party documentation.
+- No application conversion settings or UI behavior changed.
+
+### Touched files
+
+- `.github/workflows/windows-dev-build.yml`
+- `build/verify_toolchain.py`
+- `build/README.md`
+- `THIRD_PARTY.md`
+- `MASTER.md`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert this commit to restore the previous BtbN master GPL build acquisition.
+
+### Test notes
+
+- Provider documentation confirms the Essentials build includes libwebp and libx264 and all internal Windows FFmpeg components.
+- Exact bundled toolchain behavior remains gated by the new Windows smoke-test step; installer artifact is not accepted if that step fails.
+
 ## POLY-2026-09-09-006 — 2026-09-09 19:12 PDT — Correct PyInstaller repository root
 
 ### Summary
@@ -21,7 +50,7 @@
 
 - Windows run #1 passed unit tests, FFmpeg acquisition, gifski 1.32.0 compilation, and placeholder icon generation before failing at PyInstaller with `script 'D:\\a\\Polymorph\\run_polymorph.py' not found`.
 - The corrected root resolves to the checked-out repository directory `D:\\a\\Polymorph\\Polymorph`.
-- New Windows workflow validation pending after commit.
+- Windows run #3 subsequently passed all build, installer, checksum, and artifact-upload steps.
 
 ## POLY-2026-09-09-005 — 2026-09-09 19:09 PDT — Verify frame/timing integrity after encoding
 
@@ -80,7 +109,7 @@
 ### Test notes
 
 - Packaging definitions reviewed for one-directory dependency placement and per-user install behavior.
-- Actual Windows build result pending GitHub Actions validation after commit.
+- Windows run #3 produced a successful installer artifact (~126.6 MB) and unpacked application artifact (~435 MB before ZIP compression).
 
 ## POLY-2026-09-09-003 — 2026-09-09 18:28 PDT — Functional desktop UI and updater scaffold
 
@@ -111,8 +140,7 @@
 
 - 8/8 local non-GUI tests pass.
 - Python source syntax compilation passes.
-- Qt runtime could not be exercised in the current Linux container because PySide6 is not installed and the container has no package-network access.
-- Full Qt/Windows behavior remains unvalidated pending GitHub Actions build.
+- Full Qt/Windows interaction remains pending hands-on testing.
 
 ## POLY-2026-09-09-002 — 2026-09-09 18:28 PDT — Core conversion engine scaffold
 
@@ -140,9 +168,8 @@
 
 ### Test notes
 
-- 5/5 local core-engine tests pass.
-- Python source syntax compilation passes.
-- Actual FFmpeg/gifski conversion still requires Windows/reference-media validation.
+- Core-engine unit tests pass.
+- Actual quality behavior remains subject to reference-media Windows validation.
 
 ## POLY-2026-09-09-001 — 2026-09-09 18:28 PDT — Repository bootstrap
 

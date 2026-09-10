@@ -1,5 +1,15 @@
 # Polymorph Pre-Flight Log
 
+## PFC-2026-09-09-007 — Pin and validate smaller FFmpeg Essentials toolchain
+
+- Target files: Windows build workflow, `build/verify_toolchain.py`, build/dependency docs, project status/tracking docs.
+- Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, `docs/UX_SPEC.md`, `THIRD_PARTY.md`, and the current Windows workflow on `dev`.
+- Connected modules reviewed: tool discovery paths, GIF YUV4MPEG/gifski path, MP4 libx264 path, framing filter requirements, PyInstaller bundle paths.
+- Confirmed size issue: successful dev app was ~435 MB unpacked; FFmpeg and ffprobe alone were ~313 MB. Successful installer artifact was ~126.6 MB.
+- Candidate verified from provider documentation: Gyan FFmpeg 9.0.1 Essentials is a 64-bit static GPLv3 build, includes libwebp/libx264, and retains all FFmpeg internal Windows components.
+- Conflict risks: smaller build missing a conversion capability, mutable third-party downloads, supply-chain mismatch, silent frame loss.
+- Recommended action: pin the exact 9.0.1 Essentials archive and SHA-256; run an animated-WebP-to-GIF/MP4 smoke test against the exact bundled binaries before packaging.
+
 ## PFC-2026-09-09-006 — Correct PyInstaller repository root
 
 - Target files: `build/Polymorph.spec`, tracking docs.

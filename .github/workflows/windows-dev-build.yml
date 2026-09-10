@@ -41,20 +41,22 @@ jobs:
           PYTHONPATH: src
         run: python -m unittest discover -s tests -v
 
-      - name: Fetch FFmpeg Windows build
+      - name: Fetch pinned FFmpeg 9.0.1 Essentials build
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force tools | Out-Null
-          $release = Invoke-RestMethod -Headers @{"User-Agent"="Polymorph-Build"} "https://api.github.com/repos/BtbN/FFmpeg-Builds/releases/latest"
-          $asset = $release.assets | Where-Object { $_.name -eq "ffmpeg-master-latest-win64-gpl.zip" } | Select-Object -First 1
-          if (-not $asset) { throw "Expected FFmpeg asset not found" }
-          Invoke-WebRequest $asset.browser_download_url -OutFile ffmpeg.zip
-          Expand-Archive ffmpeg.zip -DestinationPath ffmpeg-unpacked
+          $url = "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-9.0.1-essentials_build.7z"
+          $expected = "49a73bdf0850092a252ac4641d922f3048d63ed113e196cc65ce1e4f7fb33e85"
+          Invoke-WebRequest $url -OutFile ffmpeg.7z
+          $actual = (Get-FileHash ffmpeg.7z -Algorithm SHA256).Hash.ToLower()
+          if ($actual -ne $expected) { throw "FFmpeg archive checksum mismatch: $actual" }
+          & "C:\Program Files\7-Zip\7z.exe" x ffmpeg.7z -offmpeg-unpacked -y | Out-Null
           $ffmpeg = Get-ChildItem ffmpeg-unpacked -Recurse -Filter ffmpeg.exe | Select-Object -First 1
           $ffprobe = Get-ChildItem ffmpeg-unpacked -Recurse -Filter ffprobe.exe | Select-Object -First 1
           if (-not $ffmpeg -or -not $ffprobe) { throw "FFmpeg binaries not found after extraction" }
           Copy-Item $ffmpeg.FullName tools\ffmpeg.exe
           Copy-Item $ffprobe.FullName tools\ffprobe.exe
+          .\tools\ffmpeg.exe -version | Select-Object -First 1
 
       - name: Build gifski 1.32.0
         shell: pwsh
@@ -62,6 +64,10 @@ jobs:
           cargo install gifski --version 1.32.0 --locked --root "$PWD\gifski-root"
           Copy-Item gifski-root\bin\gifski.exe tools\gifski.exe
           .\tools\gifski.exe --version
+
+      - name: Verify bundled conversion toolchain
+        shell: pwsh
+        run: python build\verify_toolchain.py tools
 
       - name: Generate development placeholder icon
         shell: pwsh
