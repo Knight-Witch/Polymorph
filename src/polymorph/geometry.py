@@ -87,6 +87,32 @@ def scaled_dimensions(native: FrameGeometry, scale: float) -> tuple[int, int]:
     return even(native.width * scale), even(native.height * scale)
 
 
+def linked_dimensions(native_width: int, native_height: int, value: int, driver: str) -> tuple[int, int]:
+    """Return no-upscale even dimensions locked to the framed native ratio."""
+    native_width = even(native_width)
+    native_height = even(native_height)
+    if native_width <= 0 or native_height <= 0:
+        raise ValueError("Native dimensions must be positive")
+
+    if driver == "width":
+        width = even(min(max(2, value), native_width))
+        height = even(width * native_height / native_width)
+        if height > native_height:
+            height = native_height
+            width = even(height * native_width / native_height)
+        return width, height
+
+    if driver == "height":
+        height = even(min(max(2, value), native_height))
+        width = even(height * native_width / native_height)
+        if width > native_width:
+            width = native_width
+            height = even(width * native_height / native_width)
+        return width, height
+
+    raise ValueError("driver must be 'width' or 'height'")
+
+
 def validate_requested_resolution(native: FrameGeometry, width: int, height: int) -> float:
     if width <= 0 or height <= 0:
         raise ValueError("Resolution must be positive")

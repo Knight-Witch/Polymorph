@@ -1,7 +1,7 @@
 import unittest
 from pathlib import Path
 
-from polymorph.geometry import native_geometry, validate_requested_resolution
+from polymorph.geometry import linked_dimensions, native_geometry, validate_requested_resolution
 from polymorph.models import FramingMode, FramingSettings, MediaInfo
 
 
@@ -30,6 +30,15 @@ class GeometryTests(unittest.TestCase):
         g = native_geometry(self.info, FramingSettings())
         scale = validate_requested_resolution(g, 700, 700)
         self.assertLess(scale, 1.0)
+
+    def test_linked_width_preserves_16_9(self):
+        self.assertEqual(linked_dimensions(2048, 1152, 700, "width"), (700, 394))
+
+    def test_linked_height_preserves_16_9(self):
+        self.assertEqual(linked_dimensions(2048, 1152, 700, "height"), (1244, 700))
+
+    def test_linked_resolution_clamps_upscale(self):
+        self.assertEqual(linked_dimensions(2048, 2048, 4096, "width"), (2048, 2048))
 
 
 if __name__ == "__main__":

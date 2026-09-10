@@ -135,8 +135,9 @@ class AnimatedPreview(QWidget):
             return
         delta = event.position().toPoint() - self._drag_origin
         ox, oy = self._drag_start_offsets
-        nx = max(-1.0, min(1.0, ox + delta.x() / max(80, self.width() / 3)))
-        ny = max(-1.0, min(1.0, oy + delta.y() / max(80, self.height() / 3)))
+        direction = -1.0 if self._framing.mode is FramingMode.CROP else 1.0
+        nx = max(-1.0, min(1.0, ox + direction * delta.x() / max(80, self.width() / 3)))
+        ny = max(-1.0, min(1.0, oy + direction * delta.y() / max(80, self.height() / 3)))
         self._framing.offset_x = nx
         self._framing.offset_y = ny
         self.framingChanged.emit(nx, ny)

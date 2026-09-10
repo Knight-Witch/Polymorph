@@ -1,5 +1,14 @@
 # Polymorph Pre-Flight Log
 
+## PFC-2026-09-09-008 — First-pass UI usability polish
+
+- Target files: live preview, linked-resolution helper, footer icon resources/loading, UI stylesheet, tests, packaging data declaration, UX/dependency/tracking docs.
+- Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, `docs/UX_SPEC.md`, current UI files and PyInstaller spec on `dev`.
+- Connected modules reviewed: framed native dimensions, fixed-resolution validation, Crop/Fit offset semantics, frozen-resource path, footer destinations.
+- Confirmed UX issues: width/height could be entered independently and conflict with framing; Crop preview dragging moved the crop window rather than the visible image; footer still used letter/text placeholders.
+- Conflict risks: introducing hidden upscaling through linked dimensions, preview/backend offset disagreement, SVG assets missing from packaged build.
+- Recommended action: link dimensions deterministically to framed native ratio, invert only Crop drag semantics, package monochrome SVG resources explicitly, leave final app emblem separate.
+
 ## PFC-2026-09-09-007 — Pin and validate smaller FFmpeg Essentials toolchain
 
 - Target files: Windows build workflow, `build/verify_toolchain.py`, build/dependency docs, project status/tracking docs.

@@ -32,6 +32,15 @@ QPushButton#Primary {
     padding: 10px 18px;
 }
 QPushButton#Primary:hover { background: #ffffff; }
+QToolButton#FooterIcon {
+    background: transparent;
+    border: 1px solid transparent;
+    padding: 5px;
+}
+QToolButton#FooterIcon:hover {
+    background: #24282e;
+    border-color: rgba(255,255,255,0.10);
+}
 QLineEdit {
     background: #14161a;
     border: 1px solid rgba(255,255,255,0.10);

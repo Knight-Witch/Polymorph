@@ -15,6 +15,7 @@ a = Analysis(
     ],
     datas=[
         (str(root / "THIRD_PARTY.md"), "."),
+        (str(root / "src" / "polymorph" / "assets"), "polymorph/assets"),
     ],
     hiddenimports=[],
     hookspath=[],

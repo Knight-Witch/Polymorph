@@ -4,9 +4,8 @@ import copy
 import threading
 from pathlib import Path
 
-from PySide6.QtCore import QSettings, QThread, QTimer, Qt, Signal, Slot
-from PySide6.QtGui import QColor, QDesktopServices, QDragEnterEvent, QDropEvent
-from PySide6.QtCore import QUrl
+from PySide6.QtCore import QSettings, QSize, QThread, QTimer, Qt, QUrl, Signal, Slot
+from PySide6.QtGui import QColor, QDesktopServices, QDragEnterEvent, QDropEvent, QIcon
 from PySide6.QtWidgets import (
     QApplication,
     QButtonGroup,
@@ -47,11 +46,13 @@ from ..constants import (
 from ..converter import ConversionCancelled, Converter
 from ..geometry import native_geometry
 from ..models import ConversionSettings, FramingMode, FramingSettings, OutputFormat, SizingMode
+from ..resources import asset_path
 from ..tools import find_toolchain
 from ..update_service import download_and_verify_installer, fetch_latest_release, is_newer, launch_installer
 from .dialogs import AspectGuideDialog
 from .preview import AnimatedPreview
 from .progress_ring import ArcaneProgress
+from .resolution_linker import ResolutionLinker
 from .styles import BASE_STYLESHEET
 
 
@@ -212,6 +213,7 @@ class MainWindow(QMainWindow):
             spin.setSingleStep(2)
         self.width_spin.setValue(700)
         self.height_spin.setValue(700)
+        self.resolution_linker = ResolutionLinker(self.width_spin, self.height_spin, self)
         res_row.addWidget(self.width_spin)
         res_row.addWidget(QLabel("×"))
         res_row.addWidget(self.height_spin)
@@ -297,11 +299,11 @@ class MainWindow(QMainWindow):
         version.setObjectName("Muted")
         footer.addWidget(version)
         footer.addStretch(1)
-        footer.addWidget(self._footer_button("↻", "Check for updates", self._manual_check_updates))
-        footer.addWidget(self._footer_button("⌂", "View source on GitHub", lambda: self._open_url(REPO_URL)))
-        footer.addWidget(self._footer_button("K", "Support me on Ko-fi", lambda: self._open_url(KOFI_URL), bool(KOFI_URL)))
-        footer.addWidget(self._footer_button("P", "Support me on Patreon", lambda: self._open_url(PATREON_URL), bool(PATREON_URL)))
-        footer.addWidget(self._footer_button("D", "Join the Discord", lambda: self._open_url(DISCORD_URL), bool(DISCORD_URL)))
+        footer.addWidget(self._footer_button("update.svg", "Check for updates", self._manual_check_updates))
+        footer.addWidget(self._footer_button("github.svg", "View source on GitHub", lambda: self._open_url(REPO_URL)))
+        footer.addWidget(self._footer_button("kofi.svg", "Support me on Ko-fi", lambda: self._open_url(KOFI_URL), bool(KOFI_URL)))
+        footer.addWidget(self._footer_button("patreon.svg", "Support me on Patreon", lambda: self._open_url(PATREON_URL), bool(PATREON_URL)))
+        footer.addWidget(self._footer_button("discord.svg", "Join the Discord", lambda: self._open_url(DISCORD_URL), bool(DISCORD_URL)))
         outer.addLayout(footer)
 
         self.setCentralWidget(root)
@@ -318,9 +320,11 @@ class MainWindow(QMainWindow):
         label.setObjectName("Section")
         return label
 
-    def _footer_button(self, text: str, tooltip: str, slot, enabled: bool = True) -> QToolButton:
+    def _footer_button(self, icon_name: str, tooltip: str, slot, enabled: bool = True) -> QToolButton:
         button = QToolButton()
-        button.setText(text)
+        button.setObjectName("FooterIcon")
+        button.setIcon(QIcon(str(asset_path(icon_name))))
+        button.setIconSize(QSize(17, 17))
         button.setToolTip(tooltip)
         button.setAccessibleName(tooltip)
         button.setFixedSize(32, 30)
@@ -329,7 +333,10 @@ class MainWindow(QMainWindow):
         return button
 
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
-        if event.mimeData().hasUrls() and any(Path(u.toLocalFile()).suffix.lower() in SUPPORTED_INPUT_EXTENSIONS for u in event.mimeData().urls()):
+        if event.mimeData().hasUrls() and any(
+            Path(u.toLocalFile()).suffix.lower() in SUPPORTED_INPUT_EXTENSIONS
+            for u in event.mimeData().urls()
+        ):
             event.acceptProposedAction()
 
     def dropEvent(self, event: QDropEvent) -> None:
@@ -337,13 +344,19 @@ class MainWindow(QMainWindow):
         event.acceptProposedAction()
 
     def _choose_files(self) -> None:
-        paths, _ = QFileDialog.getOpenFileNames(self, "Add animated WebP files", str(Path.home()), "Animated WebP (*.webp)")
+        paths, _ = QFileDialog.getOpenFileNames(
+            self, "Add animated WebP files", str(Path.home()), "Animated WebP (*.webp)"
+        )
         self._add_files([Path(p) for p in paths])
 
     def _add_files(self, paths: list[Path]) -> None:
         for path in paths:
             path = path.resolve()
-            if path.suffix.lower() not in SUPPORTED_INPUT_EXTENSIONS or not path.is_file() or path in self.files:
+            if (
+                path.suffix.lower() not in SUPPORTED_INPUT_EXTENSIONS
+                or not path.is_file()
+                or path in self.files
+            ):
                 continue
             self.files.append(path)
             self.file_list.addItem(QListWidgetItem(path.name))
@@ -371,21 +384,29 @@ class MainWindow(QMainWindow):
 
     def _update_probe_label(self, path: Path) -> None:
         if not self.converter:
-            self.dimensions_label.setText("Preview loaded • conversion components not installed in this dev environment")
+            self.dimensions_label.setText(
+                "Preview loaded • conversion components not installed in this dev environment"
+            )
             return
         try:
             info = self.media_cache.get(path) or self.converter.probe(path)
             self.media_cache[path] = info
             native = native_geometry(info, self.framing)
-            self.dimensions_label.setText(f"Source {info.width}×{info.height} • {info.frame_count} frames • framed max {native.width}×{native.height}")
-            self.width_spin.setMaximum(native.width)
-            self.height_spin.setMaximum(native.height)
+            self.dimensions_label.setText(
+                f"Source {info.width}×{info.height} • {info.frame_count} frames • "
+                f"framed max {native.width}×{native.height}"
+            )
+            self.resolution_linker.set_native(native.width, native.height)
         except Exception as exc:
             self.dimensions_label.setText(str(exc))
 
     def _framing_changed(self) -> None:
         self.framing.mode = self.frame_mode.currentData()
-        self.framing.ratio = self.ratio_combo.currentData() if self.framing.mode is not FramingMode.ORIGINAL else None
+        self.framing.ratio = (
+            self.ratio_combo.currentData()
+            if self.framing.mode is not FramingMode.ORIGINAL
+            else None
+        )
         self.preview.set_framing(self.framing)
         self._sync_enabled_state()
         row = self.file_list.currentRow()
@@ -402,7 +423,9 @@ class MainWindow(QMainWindow):
         self.preview.set_framing(self.framing)
 
     def _choose_background(self) -> None:
-        chosen = QColorDialog.getColor(QColor(self.framing.background), self, "Fit background color")
+        chosen = QColorDialog.getColor(
+            QColor(self.framing.background), self, "Fit background color"
+        )
         if chosen.isValid():
             self.framing.background = chosen.name()
             self.preview.set_framing(self.framing)
@@ -411,7 +434,9 @@ class MainWindow(QMainWindow):
         AspectGuideDialog(self).exec()
 
     def _choose_output_folder(self) -> None:
-        folder = QFileDialog.getExistingDirectory(self, "Choose output folder", self.output_path.text())
+        folder = QFileDialog.getExistingDirectory(
+            self, "Choose output folder", self.output_path.text()
+        )
         if folder:
             self.output_path.setText(folder)
 
@@ -423,15 +448,24 @@ class MainWindow(QMainWindow):
         framing_enabled = self.frame_mode.currentData() is not FramingMode.ORIGINAL
         self.ratio_combo.setEnabled(framing_enabled and not busy)
         self.center_btn.setEnabled(framing_enabled and not busy)
-        self.color_btn.setEnabled(self.frame_mode.currentData() is FramingMode.FIT and not busy)
-        self.convert_btn.setEnabled(bool(self.files) and not busy and self.converter is not None)
+        self.color_btn.setEnabled(
+            self.frame_mode.currentData() is FramingMode.FIT and not busy
+        )
+        self.convert_btn.setEnabled(
+            bool(self.files) and not busy and self.converter is not None
+        )
         if self.converter is None and not busy:
-            self.status_label.setText("Conversion components not found — use the packaged Windows build or install FFmpeg/ffprobe/gifski for development")
+            self.status_label.setText(
+                "Conversion components not found — use the packaged Windows build or "
+                "install FFmpeg/ffprobe/gifski for development"
+            )
 
     def _make_settings(self) -> ConversionSettings:
         return ConversionSettings(
             output_format=OutputFormat.GIF if self.gif_radio.isChecked() else OutputFormat.MP4,
-            sizing_mode=SizingMode.FILE_SIZE if self.size_radio.isChecked() else SizingMode.RESOLUTION,
+            sizing_mode=(
+                SizingMode.FILE_SIZE if self.size_radio.isChecked() else SizingMode.RESOLUTION
+            ),
             max_mb=self.max_mb.value(),
             requested_width=self.width_spin.value() if self.res_radio.isChecked() else None,
             requested_height=self.height_spin.value() if self.res_radio.isChecked() else None,
@@ -442,9 +476,13 @@ class MainWindow(QMainWindow):
     def _start_conversion(self) -> None:
         if not self.converter or not self.files:
             return
-        self.worker = ConversionWorker(self.converter, list(self.files), self._make_settings(), self)
+        self.worker = ConversionWorker(
+            self.converter, list(self.files), self._make_settings(), self
+        )
         self.worker.progressChanged.connect(self._progress_changed)
-        self.worker.fileStarted.connect(lambda p: self.status_label.setText(f"Polymorphing {Path(p).name}…"))
+        self.worker.fileStarted.connect(
+            lambda p: self.status_label.setText(f"Polymorphing {Path(p).name}…")
+        )
         self.worker.fileFinished.connect(self._file_finished)
         self.worker.failed.connect(self._file_failed)
         self.worker.finished.connect(self._conversion_finished)
@@ -497,16 +535,21 @@ class MainWindow(QMainWindow):
         def task() -> None:
             release = fetch_latest_release()
             self.updateCheckCompleted.emit(release, manual)
+
         threading.Thread(target=task, daemon=True).start()
 
     def _handle_release(self, release, manual: bool) -> None:
         if not release:
             if manual:
-                QMessageBox.information(self, "Updates", "No Polymorph release information is available yet.")
+                QMessageBox.information(
+                    self, "Updates", "No Polymorph release information is available yet."
+                )
             return
         if not is_newer(release.version):
             if manual:
-                QMessageBox.information(self, "Updates", f"Polymorph v{APP_VERSION} is up to date.")
+                QMessageBox.information(
+                    self, "Updates", f"Polymorph v{APP_VERSION} is up to date."
+                )
             return
         skipped = self.settings_store.value("updates/skipped_version", "", str)
         if not manual and skipped == release.version:
@@ -534,6 +577,7 @@ class MainWindow(QMainWindow):
                 self.updateDownloadCompleted.emit(installer, None)
             except Exception as exc:
                 self.updateDownloadCompleted.emit(None, str(exc))
+
         threading.Thread(target=task, daemon=True).start()
 
     @Slot(object, object)

@@ -1,5 +1,42 @@
 # Changelog
 
+## POLY-2026-09-09-008 — 2026-09-09 19:25 PDT — First-pass UI usability polish
+
+### Summary
+
+- Linked fixed-resolution width and height automatically to the active framed aspect ratio, while retaining no-upscale limits.
+- Changed Crop preview dragging so the visible image follows the user's drag direction; Fit offset semantics remain unchanged.
+- Replaced development footer text placeholders with monochrome GitHub, Ko-fi, Patreon, Discord, and update icons plus hover tooltips.
+- Added packaged SVG resource lookup for source and frozen builds and documented Simple Icons attribution.
+- Final Polymorph application emblem remains deferred; the generated development app icon is unchanged.
+
+### Touched files
+
+- `src/polymorph/geometry.py`
+- `src/polymorph/resources.py`
+- `src/polymorph/assets/*.svg`
+- `src/polymorph/ui/main_window.py`
+- `src/polymorph/ui/preview.py`
+- `src/polymorph/ui/resolution_linker.py`
+- `src/polymorph/ui/styles.py`
+- `tests/test_geometry.py`
+- `pyproject.toml`
+- `build/Polymorph.spec`
+- `THIRD_PARTY.md`
+- `docs/UX_SPEC.md`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert this commit to restore independent resolution fields, prior Crop drag semantics, and text-placeholder footer controls.
+
+### Test notes
+
+- Linked-dimension math is covered by unit tests for 16:9 width/height driving and native-size clamping.
+- SVG resource inclusion is declared both as Python package data and explicit PyInstaller data.
+- Full Qt interaction remains pending hands-on Windows testing.
+
 ## POLY-2026-09-09-007 — 2026-09-09 19:22 PDT — Pin and smoke-test smaller FFmpeg Essentials build
 
 ### Summary

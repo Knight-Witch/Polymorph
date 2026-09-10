@@ -31,4 +31,10 @@ Polymorph invokes third-party executables and uses third-party Python libraries.
 - Project: https://pyinstaller.org/
 - Purpose: Windows executable bundle creation.
 
+## Simple Icons
+
+- Project: https://github.com/simple-icons/simple-icons
+- Purpose: monochrome GitHub, Ko-fi, Patreon, and Discord footer glyphs.
+- License: CC0 1.0 Universal for the icon artwork repository. Brand names/logos may remain subject to their respective trademark rules.
+
 No public binary release should be published until the exact bundled dependency versions and license notices are finalized.
