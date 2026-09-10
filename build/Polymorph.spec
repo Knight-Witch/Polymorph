@@ -1,7 +1,8 @@
 # -*- mode: python ; coding: utf-8 -*-
 from pathlib import Path
 
-root = Path(SPECPATH).parent.parent
+# PyInstaller exposes SPECPATH as the directory containing this spec file.
+root = Path(SPECPATH).parent
 icon = root / "build" / "polymorph_placeholder.ico"
 
 a = Analysis(

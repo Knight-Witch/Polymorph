@@ -1,5 +1,28 @@
 # Changelog
 
+## POLY-2026-09-09-006 — 2026-09-09 19:12 PDT — Correct PyInstaller repository root
+
+### Summary
+
+- Fixed the Windows build failure in `build/Polymorph.spec` by resolving the repository root from PyInstaller's `SPECPATH` directory correctly.
+- No converter, UI, dependency, installer, or runtime behavior changed.
+
+### Touched files
+
+- `build/Polymorph.spec`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert this commit to restore the previous spec path calculation.
+
+### Test notes
+
+- Windows run #1 passed unit tests, FFmpeg acquisition, gifski 1.32.0 compilation, and placeholder icon generation before failing at PyInstaller with `script 'D:\\a\\Polymorph\\run_polymorph.py' not found`.
+- The corrected root resolves to the checked-out repository directory `D:\\a\\Polymorph\\Polymorph`.
+- New Windows workflow validation pending after commit.
+
 ## POLY-2026-09-09-005 — 2026-09-09 19:09 PDT — Verify frame/timing integrity after encoding
 
 ### Summary

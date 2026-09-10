@@ -1,5 +1,14 @@
 # Polymorph Pre-Flight Log
 
+## PFC-2026-09-09-006 — Correct PyInstaller repository root
+
+- Target files: `build/Polymorph.spec`, tracking docs.
+- Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, `docs/UX_SPEC.md` on `dev`.
+- Connected modules reviewed: Windows Actions checkout path, `run_polymorph.py` entrypoint, bundled tool paths, installer input directory.
+- Confirmed regression: first Windows build reached PyInstaller after tests/FFmpeg/gifski succeeded, then failed because `SPECPATH` was treated as a file path and traversed one parent too far.
+- Conflict risks: changing dependency/tool placement unnecessarily while fixing only repository-root resolution.
+- Recommended action: change only the spec root from `Path(SPECPATH).parent.parent` to `Path(SPECPATH).parent`; retain all other packaging behavior.
+
 ## PFC-2026-09-09-005 — Post-encode temporal integrity guard
 
 - Target files: `models.py`, `probe.py`, new `integrity.py`, converter integration, tests, architecture/tracking docs.
