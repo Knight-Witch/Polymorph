@@ -1,5 +1,17 @@
 # Polymorph Pre-Flight Log
 
+## PFC-2026-09-09-011 — Restore canonical gifski output width
+
+- Target files: GIF encode command, output-integrity validation, integrity tests, architecture/status/tracking docs.
+- Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, current converter/integrity tests, the validated standalone `HeroForge_WebP_to_Reddit_GIF.py`, and gifski 1.32.0 CLI/Y4M source behavior.
+- Human validation: MP4 output was reported visually excellent with no issue; GIF output was reported substantially blurrier, grainier in gradients, and much smaller in actual pixel dimensions than the standalone result.
+- Confirmed regression: the standalone converter explicitly passed `--width <FFmpeg output width>` to gifski; Polymorph omitted it. gifski 1.32.0 documents a default animation size limit of about 800x600 when width is unset.
+- Intentional behavior retained: explicit source FPS handoff and post-encode temporal integrity checks remain because gifski's video/Y4M path otherwise defaults to 20 FPS and may resample frames.
+- Connected modules reviewed: FFmpeg framing/scale filter, gifski CLI invocation, media probe, output integrity validation, file-size optimizer.
+- Conflict risks: changing multiple GIF-quality variables at once would hide the root cause; MP4 is already human-validated and must remain untouched.
+- Recommended action: restore only explicit gifski width control, require actual output dimensions to equal requested dimensions, rebuild, and retest the same HeroForge Viper source before changing any other GIF color/timing settings.
+- Follow-up logged separately: user-facing `MB` currently uses binary MiB bytes and should be normalized to decimal MB before release; not changed in this regression-isolation patch.
+
 ## PFC-2026-09-09-010 — Record packaged-app validation
 
 - Target files: `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md` only.

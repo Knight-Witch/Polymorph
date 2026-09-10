@@ -1,5 +1,39 @@
 # Changelog
 
+## POLY-2026-09-09-011 — 2026-09-09 23:57 PDT — Restore canonical gifski output width
+
+### Summary
+
+- First hands-on HeroForge media comparison validated MP4 visually with no reported issue.
+- The same test found the Polymorph GIF substantially blurrier, grainier in gradients, and much smaller in actual pixel dimensions than the immediately preceding standalone converter result.
+- Compared Polymorph against the validated standalone `HeroForge_WebP_to_Reddit_GIF.py` and confirmed Polymorph had omitted the reference converter's explicit gifski `--width` argument.
+- Restored explicit gifski width control so gifski cannot apply its default conservative automatic animation downsize.
+- Extended output integrity validation to require actual encoded dimensions to exactly match the dimensions Polymorph requested, in addition to existing exact frame-count and bounded-duration checks.
+- Added regression coverage for output-dimension mismatch.
+- Retained Polymorph's explicit source-FPS handoff and temporal integrity checks; those protect the no-frame-loss requirement and are not part of the confirmed quality regression.
+- MP4 encoding settings, framing behavior, UI, updater, and installer architecture were not changed.
+- Logged the separate binary-MiB-vs-decimal-MB ceiling issue for a later isolated fix; it is not changed here.
+
+### Touched files
+
+- `src/polymorph/converter.py`
+- `src/polymorph/integrity.py`
+- `tests/test_integrity.py`
+- `docs/ARCHITECTURE.md`
+- `MASTER.md`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert this commit to restore the pre-fix GIF path; MP4 remains unaffected either way.
+
+### Test notes
+
+- Root cause is directly supported by the standalone converter and gifski 1.32.0 CLI behavior.
+- Unit and Windows build/toolchain gates must pass before the replacement installer is handed back for Viper retest.
+- Human visual validation of the corrected GIF remains pending.
+
 ## POLY-2026-09-09-010 — 2026-09-09 19:45 PDT — Record successful Windows smoke-gated build
 
 ### Summary
@@ -235,7 +269,7 @@
 
 - 8/8 local non-GUI tests pass.
 - Python source syntax compilation passes.
-- Full Qt/Windows interaction remains pending hands-on testing.
+- Full Qt/Windows interaction remains pending hands-on Windows testing.
 
 ## POLY-2026-09-09-002 — 2026-09-09 18:28 PDT — Core conversion engine scaffold
 

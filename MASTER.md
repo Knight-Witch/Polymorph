@@ -5,7 +5,7 @@
 - Project: Polymorph
 - Repository: `Knight-Witch/Polymorph`
 - Platform target: Windows 10/11 x64
-- Status: functional scaffold on `dev`; Windows toolchain, frozen-EXE smoke gate, installer, checksum, and artifact pipeline validated; ready for hands-on HeroForge media testing / no public release
+- Status: functional scaffold on `dev`; MP4 passed first hands-on HeroForge media test; GIF quality regression diagnosed and fix pending Windows rebuild / no public release
 - Current development version: `0.1.0-dev.1`
 
 ## Canonical conversion behavior
@@ -17,6 +17,7 @@
 - Stream FFmpeg output as YUV4MPEG directly to gifski 1.32.0+.
 - gifski quality: 100.
 - gifski extra-effort mode enabled.
+- Explicitly pass the FFmpeg output width to gifski so gifski does not apply its conservative default automatic downsize.
 - Infinite GIF repeat.
 - Do not intentionally drop frames or lower frame rate to meet a size target.
 - In file-size mode, reduce resolution only as needed to fit the user ceiling.
@@ -29,6 +30,7 @@
 - High-quality encoder settings are internal and hidden from normal UI.
 - In file-size mode, resolution is the variable used to meet the ceiling; do not silently lower frame rate.
 - Produced video should be cleanly loop-ready; actual repeat playback is controlled by the player/platform.
+- First hands-on HeroForge media test reported no MP4 quality issues.
 
 ## v1 UI scope
 
@@ -45,6 +47,10 @@
 - Conversion progress percentage.
 - Footer icon buttons: Check Updates, GitHub, Ko-fi, Patreon, Discord.
 - Automatic update check while the app is open; no service/daemon.
+
+## Known follow-ups
+
+- File-size mode currently interprets the UI's `MB` value using binary MiB bytes. Before release, normalize the user-facing ceiling to decimal MB so `99 MB` means 99,000,000 bytes and cannot overshoot a platform's decimal 100 MB limit.
 
 ## Deferred
 

@@ -4,7 +4,7 @@
 
 - `src/polymorph/converter.py`: conversion orchestration only.
 - `src/polymorph/probe.py`: media metadata and WebP RIFF fallback parsing.
-- `src/polymorph/integrity.py`: post-encode frame-count/timing verification.
+- `src/polymorph/integrity.py`: post-encode dimension/frame-count/timing verification.
 - `src/polymorph/geometry.py`: deterministic Crop/Fit geometry and no-upscale validation.
 - `src/polymorph/filters.py`: FFmpeg filter construction.
 - `src/polymorph/ui/`: novice-facing desktop UI and live preview.
@@ -19,7 +19,7 @@
 3. Resolve user sizing constraint.
 4. Decode/filter via FFmpeg.
 5. Encode via gifski (GIF) or H.264 (MP4).
-6. Probe the candidate output and verify exact frame count plus bounded timing drift.
+6. Probe the candidate output and verify exact requested dimensions, exact frame count, and bounded timing drift.
 7. In file-size mode, inspect actual output size and retry at a lower/higher resolution as needed.
 8. Copy the best valid result to the chosen output folder.
 

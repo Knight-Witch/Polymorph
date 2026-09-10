@@ -128,7 +128,6 @@ class Converter:
                 if size <= max_bytes:
                     low_good = max(low_good, scale)
                     best = (candidate, width, height, scale)
-                    # Close enough to the quality headroom target or scale cannot improve meaningfully.
                     if size >= target_bytes * 0.94 or high_fail - scale < 0.025:
                         break
                     next_scale = min(high_fail * 0.995, (scale + high_fail) / 2)
@@ -138,8 +137,6 @@ class Converter:
                     continue
 
                 high_fail = min(high_fail, scale)
-                # Resolution/area is the only automatic quality lever. Estimate a safe first step,
-                # then refine upward if the result leaves too much headroom.
                 estimated = scale * math.sqrt(target_bytes / max(size, 1)) * 0.985
                 if low_good > 0:
                     estimated = max(estimated, (low_good + high_fail) / 2)
@@ -185,14 +182,25 @@ class Converter:
         else:
             self._encode_mp4(info, settings, output, width, height, progress, label)
 
-        self._verify_output(info, output)
+        self._verify_output(info, output, width, height)
         if progress:
             progress(1.0, label)
 
-    def _verify_output(self, source_info: MediaInfo, output: Path) -> None:
+    def _verify_output(
+        self,
+        source_info: MediaInfo,
+        output: Path,
+        expected_width: int,
+        expected_height: int,
+    ) -> None:
         try:
             output_info = probe_media(self.tools.ffprobe, output)
-            validate_output_integrity(source_info, output_info)
+            validate_output_integrity(
+                source_info,
+                output_info,
+                expected_width=expected_width,
+                expected_height=expected_height,
+            )
         except (ProbeError, IntegrityError) as exc:
             try:
                 output.unlink(missing_ok=True)
@@ -240,9 +248,6 @@ class Converter:
         if info.frame_durations_ms:
             shortest = min(info.frame_durations_ms)
             longest = max(info.frame_durations_ms)
-            # 30fps WebPs commonly alternate 33/34ms because durations are integer ms.
-            # Larger variation is genuinely variable timing, which the Y4M CLI path cannot
-            # represent without resampling. Refuse rather than silently alter timing/frames.
             if longest - shortest > 1:
                 raise ConversionError(
                     "This animated WebP uses variable frame durations. The current GIF path "
@@ -267,6 +272,11 @@ class Converter:
             "--extra",
             "--repeat",
             "0",
+            # Canonical standalone behavior: FFmpeg has already resolved the output
+            # dimensions, so tell gifski the width explicitly to prevent its default
+            # conservative automatic downsize (roughly 800x600 when unset).
+            "--width",
+            str(width),
             "-o",
             str(output),
             "-",
@@ -388,7 +398,6 @@ class Converter:
             if key not in {"out_time_us", "out_time_ms"}:
                 continue
             try:
-                # ffmpeg's historical out_time_ms field is also expressed in microseconds.
                 seconds = int(value) / 1_000_000.0
             except ValueError:
                 continue
