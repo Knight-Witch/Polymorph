@@ -5,7 +5,7 @@
 - Project: Polymorph
 - Repository: `Knight-Witch/Polymorph`
 - Platform target: Windows 10/11 x64
-- Status: early development / no public release
+- Status: functional scaffold on `dev`; Windows runtime validation pending / no public release
 - Current development version: `0.1.0-dev.1`
 
 ## Canonical conversion behavior

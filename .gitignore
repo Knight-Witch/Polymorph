@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+*.log
+.venv/
+venv/
+build-out/
+dist/
+*.spec.tmp
+*.tmp
+*.gif
+*.mp4
+*.webp
+!docs/**/*.webp
+/tools/
+installer/Output/
+ASSETS/polymorph.ico
