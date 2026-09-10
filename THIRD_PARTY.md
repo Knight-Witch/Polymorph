@@ -16,9 +16,10 @@ Polymorph invokes third-party executables and uses third-party Python libraries.
 ## gifski
 
 - Project: https://github.com/ImageOptim/gifski
-- Bundled development version: 1.32.0.
+- Bundled development version: 1.34.0.
 - Purpose: high-quality GIF encoding from YUV4MPEG data streamed by FFmpeg.
 - License: AGPL-3.0-or-later.
+- Development rationale: `1.34.0` is the current stable release and includes palette-quality improvements from a newer `libimagequant`; dev.4 isolates this dependency change against the previously pinned 1.32.0 build.
 
 ## PySide6 / Qt for Python
 

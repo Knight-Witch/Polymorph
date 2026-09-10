@@ -1,5 +1,41 @@
 # Changelog
 
+## POLY-2026-09-10-014 — 2026-09-10 01:12 PDT — Test stable gifski 1.34.0
+
+### Summary
+
+- Human dev.3 retest reported good animation smoothness and a `1592x1592` Viper GIF, only slightly above the prior `1570x1570` result and still materially below the canonical standalone `1756x1756` output.
+- Color remained too subtle to judge reliably.
+- Re-read the standalone converter and confirmed it only enforces gifski `>=1.32.0`; it does not establish that the successful standalone output used exactly 1.32.0.
+- Identified Polymorph's exact 1.32.0 pin as the next isolated upstream mismatch.
+- Updated only the bundled development gifski dependency to stable 1.34.0. The 1.34.0 release notes document palette-quality improvements from a newer `libimagequant`.
+- Converter code, GIF command line, `yuv420p` Y4M handoff, source-FPS safeguard, explicit gifski width, quality 100, extra effort, repeat behavior, post-encode integrity checks, size optimizer, and MP4 path were not changed.
+- Updated development packaging/documentation and incremented the tester to `0.1.0-dev.4`.
+
+### Touched files
+
+- `.github/workflows/windows-dev-build.yml`
+- `src/polymorph/__init__.py`
+- `src/polymorph/constants.py`
+- `pyproject.toml`
+- `installer/Polymorph.iss`
+- `THIRD_PARTY.md`
+- `build/README.md`
+- `HISTORY/REFERENCE_GIF_CONVERTER.md`
+- `MASTER.md`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert this commit to restore gifski 1.32.0 and the dev.3 tester metadata. Converter/MP4 code is identical across the two builds.
+
+### Test notes
+
+- This is an isolated dependency A/B, not an optimizer change.
+- Windows unit/toolchain/frozen-EXE/installer gates must pass before dev.4 is handed to the user.
+- Human retest should use the same Viper source and compare output dimensions, file size, smoothness, and any visible color change against dev.3 and the standalone result.
+
 ## POLY-2026-09-10-013 — 2026-09-10 00:45 PDT — Pin GIF Y4M to yuv420p
 
 ### Summary

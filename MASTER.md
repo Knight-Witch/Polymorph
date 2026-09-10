@@ -5,8 +5,8 @@
 - Project: Polymorph
 - Repository: `Knight-Witch/Polymorph`
 - Platform target: Windows 10/11 x64
-- Status: functional scaffold on `dev`; MP4 human-validated; GIF width regression fixed and human-validated; `yuv420p` parity tester pending Windows build / no public release
-- Current development version: `0.1.0-dev.3`
+- Status: functional scaffold on `dev`; MP4 human-validated; GIF quality/frame behavior human-validated; gifski 1.34.0 parity tester pending Windows build / no public release
+- Current development version: `0.1.0-dev.4`
 
 ## Canonical conversion behavior
 
@@ -14,7 +14,7 @@
 
 - Input focus: animated WebP.
 - Decode/process through FFmpeg.
-- Stream FFmpeg output as YUV4MPEG directly to gifski 1.32.0+.
+- Stream FFmpeg output as YUV4MPEG directly to gifski.
 - gifski quality: 100.
 - gifski extra-effort mode enabled.
 - Explicitly pass the FFmpeg output width to gifski so gifski does not apply its conservative default automatic downsize.
@@ -36,8 +36,9 @@
 ## Human validation
 
 - Width-corrected GIF is visually on par with the standalone converter and may be slightly smoother.
-- Remaining measured difference before the 4:2:0 parity test: Polymorph `1570x1570` vs standalone `1756x1756` at the same nominal size goal.
-- A possible slight red/pink shift was observed but is not confirmed.
+- `yuv420p` dev.3 preserved smoothness and moved the Viper result only from `1570x1570` to `1592x1592`; the canonical standalone result remains `1756x1756`.
+- The possible slight red/pink shift remains visually inconclusive.
+- Next isolated parity variable is the bundled gifski version: dev.3 used 1.32.0; dev.4 tests stable 1.34.0 without changing converter logic.
 
 ## v1 UI scope
 
@@ -58,7 +59,7 @@
 ## Known follow-ups
 
 - File-size mode currently interprets the UI's `MB` value using binary MiB bytes. Before release, normalize the user-facing ceiling to decimal MB so `99 MB` means 99,000,000 bytes and cannot overshoot a platform's decimal 100 MB limit.
-- After the `yuv420p` parity test is human-validated, compare file-size optimizer behavior against the standalone search before making any optimizer changes.
+- If gifski 1.34.0 does not materially recover the remaining Viper resolution gap, compare the standalone timing/encoder invocation and then the optimizer search exactly; do not change multiple variables at once.
 
 ## Deferred
 

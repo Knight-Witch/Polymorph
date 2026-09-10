@@ -1,5 +1,17 @@
 # Polymorph Pre-Flight Log
 
+## PFC-2026-09-10-014 — Test stable gifski 1.34.0 against canonical GIF output
+
+- Target files: Windows gifski build dependency, development version metadata, third-party/build docs, canonical GIF reference/history, status/tracking docs.
+- Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `HISTORY/REFERENCE_GIF_CONVERTER.md`, `docs/ARCHITECTURE.md`, current Windows workflow, `THIRD_PARTY.md`, `build/README.md`, current converter, and the validated standalone `HeroForge_WebP_to_Reddit_GIF.py` from File Library.
+- Human validation: dev.3 retained good animation smoothness and produced `1592x1592`, only 22 px above dev.1's `1570x1570` and still materially below the standalone `1756x1756`; color difference remains inconclusive.
+- Confirmed reference gap: the standalone script requires only gifski `>=1.32.0` and does not record the exact encoder version used for the successful output; Polymorph had pinned the minimum 1.32.0 exactly.
+- External dependency check: gifski 1.34.0 is the current stable release and documents palette-quality improvements from a newer `libimagequant`.
+- Connected modules reviewed: GIF invocation, `yuv420p` Y4M handoff, size optimizer, post-encode integrity checks, MP4 path, Windows toolchain smoke test, packaging and installer version metadata.
+- Conflict risks: altering encoder version and optimizer/timing behavior simultaneously would make the A/B result ambiguous.
+- Recommended action: change only bundled gifski `1.32.0 -> 1.34.0`, leave converter code/optimizer/MP4 untouched, rebuild as `0.1.0-dev.4`, then retest the same Viper source.
+- Follow-up remains separate: if 1.34.0 does not materially recover the gap, compare standalone timing/encoder invocation before editing optimizer behavior.
+
 ## PFC-2026-09-10-013 — Pin GIF Y4M to yuv420p after failed auto-negotiation
 
 - Target files: GIF FFmpeg Y4M handoff, Windows toolchain smoke test, development version metadata, canonical GIF reference/history, architecture/status/tracking docs.

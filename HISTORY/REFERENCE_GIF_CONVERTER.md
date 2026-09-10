@@ -13,6 +13,7 @@ The validated standalone `HeroForge_WebP_to_Reddit_GIF.py` used immediately befo
 - FFmpeg performs Lanczos scaling before gifski.
 - gifski is explicitly passed `--width <FFmpeg output width>` so it cannot apply its conservative automatic animation downsize.
 - The standalone FFmpeg command did not explicitly set a YUV pixel format. In the validated reference environment this effectively yielded the normal 4:2:0 Y4M handoff. The pinned Polymorph FFmpeg 9.0.1 Windows build must use explicit `yuv420p` because leaving the format unset can retain an RGB intermediate that `yuv4mpegpipe` rejects.
+- The standalone only enforces gifski `>=1.32.0`; it does not record the exact gifski build used for the successful 1756x1756 output.
 - File-size fitting changes resolution rather than hidden quality settings.
 - Fixed 99 MB reference constants were `LIMIT_BYTES = 99_000_000`, `TARGET_BYTES = 97_000_000`, `ACCEPT_LOW_BYTES = 93_000_000`, `MAX_ATTEMPTS = 6`, and `MIN_LONG_EDGE = 128`.
 
@@ -40,4 +41,12 @@ Polymorph explicitly supplies the source FPS to gifski and verifies output dimen
 - Dev `0.1.0-dev.2` removed the forced pixel format to mimic the standalone command literally.
 - Windows CI run #8 failed before packaging because FFmpeg 9.0.1 retained a non-Y4M-compatible format after filtering and `yuv4mpegpipe` refused to write its header.
 - The failure confirmed that literal omission is not deterministic on the pinned Windows build.
-- Next isolated tester uses explicit `yuv420p`, which preserves the intended 4:2:0 handoff while keeping the rest of the validated pipeline unchanged.
+- Dev.3 therefore used explicit `yuv420p`, preserving the intended 4:2:0 handoff while keeping the rest of the validated pipeline unchanged.
+
+### 2026-09-10 — yuv420p human retest
+
+- Smoothness remained good.
+- Viper output increased only from `1570x1570` to `1592x1592`, still materially below the standalone `1756x1756` result.
+- Color remained too subtle to judge confidently.
+- Conclusion: 4:4:4 vs 4:2:0 explained only a small part of the file-size-per-pixel difference.
+- Next isolated variable: bundled gifski version. Polymorph had pinned the minimum-compatible 1.32.0 even though the standalone script only requires 1.32.0 or newer. Dev.4 tests stable 1.34.0, whose release notes report palette-quality improvements from a newer `libimagequant`, without changing converter logic.
