@@ -1,5 +1,37 @@
 # Changelog
 
+## POLY-2026-09-09-003 — 2026-09-09 18:28 PDT — Functional desktop UI and updater scaffold
+
+### Summary
+
+- Added PySide6 main window with multi-file queue, drag/drop, animated WebP preview, GIF/MP4 selection, mutually exclusive sizing modes, framing controls, output folder selection, and conversion progress.
+- Added live Original / Crop / Fit preview with drag repositioning and Fit background color.
+- Added aspect-ratio guide dialog and development footer controls for updates, GitHub, Ko-fi, Patreon, and Discord.
+- Added automatic update checks while the app is open and verified installer download support; no background service/daemon.
+- Added a lightweight placeholder arcane progress animation so final sigil styling can be swapped in without restructuring the UI.
+- Preview uses non-caching animation playback so large source animations are not intentionally retained frame-by-frame in RAM.
+
+### Touched files
+
+- `src/polymorph/app.py`
+- `src/polymorph/ui/**`
+- `src/polymorph/update_service.py`
+- `run_polymorph.py`
+- `tests/test_update_service.py`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert the UI/updater commit; core conversion modules remain independently testable.
+
+### Test notes
+
+- 8/8 local non-GUI tests pass.
+- Python source syntax compilation passes.
+- Qt runtime could not be exercised in the current Linux container because PySide6 is not installed and the container has no package-network access.
+- Full Qt/Windows behavior remains unvalidated pending GitHub Actions build.
+
 ## POLY-2026-09-09-002 — 2026-09-09 18:28 PDT — Core conversion engine scaffold
 
 ### Summary
