@@ -20,7 +20,7 @@ Files -> Output Format -> Sizing Constraint -> GIF Priority -> Framing -> Polymo
 - Encoder quality remains fixed.
 - Resolution is automatically adjusted to fit.
 - Preserve motion keeps source timing/frame sequence fixed.
-- Favor resolution may intentionally reduce GIF FPS only through uniform motion interpolation when real encoded measurements show that doing so buys a worthwhile spatial gain.
+- Favor resolution may intentionally reduce GIF FPS only through uniform temporal resampling when real encoded measurements show that doing so buys a worthwhile spatial gain.
 
 ### Set resolution
 
@@ -42,17 +42,17 @@ Visible only as meaningful controls for GIF + Fit under file size.
 
 ### Favor resolution
 
-- Experimental in dev.11 pending validation of the deeper clean cadence selected when higher candidates are not worthwhile.
+- Experimental in dev.12.
 - The user does not enter an FPS or target pixel size.
 - Polymorph first creates the normal Preserve-motion fitted result.
-- It then tests lower uniform GIF cadences at that exact spatial size and measures the real gifski byte cost of the interpolated frames.
+- It then tests lower uniform GIF cadences at that exact spatial size and measures the real gifski byte cost of the resampled frames.
 - The first/highest lower FPS that predicts at least about 8% real linear-resolution gain is eligible for a full adaptive size search.
 - For a 25 FPS source, the automatic clean-cadence ladder is 20 FPS (50 ms), 16.67 FPS (60 ms), 14.29 FPS (70 ms), then 12.5 FPS (80 ms).
 - Lower rates are restricted to uniform GIF-centisecond cadences (`100 / N` FPS) so every output frame has the same duration.
-- Frame reduction is produced with motion interpolation, not uneven deletion.
+- Dev.12 uses exact-timestamp linear temporal blending rather than optical-flow interpolation or uneven periodic source-frame deletion.
 - A final measured-gain guard discards the lower-FPS result and returns the Preserve-motion output if the completed adaptive fit does not actually gain at least about 8% linear resolution.
 - Preferred spatial target remains native resolution capped at 2048 px; Polymorph never upscales above native framed geometry.
-- Dev.10 human validation on Viper returned `1552x1552 • 93.6 MB • 25 FPS`, proving the fallback correctly preserves original motion when 20 FPS and 16.67 FPS do not buy enough resolution.
+- Dev.10 and dev.11 human validation on Viper both returned `1552x1552 • 93.6 MB • 25 FPS`, proving the fallback correctly preserves original motion when the tested optical-flow cadences do not buy enough resolution.
 
 ## Completion readout
 
