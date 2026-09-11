@@ -81,25 +81,32 @@ The dev.9 planner assumed that reducing 25 FPS to 20 FPS would lower encoded cos
 
 As a result, dev.9 made a temporal sacrifice without earning a measurable spatial gain on Viper. The interpolation method itself passed the visual test; the planning heuristic did not.
 
-## Dev.10 planning correction
+## Dev.10 measured-planning validation
 
-Favor resolution now uses measured encoded cost rather than frame-count math as the authority:
+Dev.10 changed Favor resolution so real encoded sample cost, not frame-count math, decides whether a lower clean cadence is worth keeping. For a 25 FPS source it measured 20 FPS / 50 ms first and then 16.67 FPS / 60 ms.
 
-1. produce the normal Preserve-motion fitted GIF;
-2. consider lower uniform GIF cadences nearest the source FPS first;
-3. encode each candidate once at the Preserve-motion dimensions;
-4. measure the actual gifski byte cost of those interpolated frames;
-5. project achievable spatial size against the patched-Python 97/99 byte target;
-6. accept the first/highest candidate that predicts at least about 8% linear-resolution gain;
-7. run the full adaptive size search only for that candidate;
-8. discard the reduced-FPS output if the finished result still fails to achieve about 8% actual linear gain.
+The user retested the same Viper source and the final completion line was:
 
-For a 25 FPS source, the current clean-cadence ladder is:
+- `1552x1552`
+- `93.6 MB` decimal
+- `25 FPS`
+
+This is the intended Preserve-motion fallback. Neither 20 FPS nor 16.67 FPS demonstrated enough measured byte savings to justify at least about 8% linear spatial gain, so Polymorph kept the original frame rate instead of sacrificing motion for no meaningful resolution benefit.
+
+This validates the dev.10 guard behavior on the Viper workload: the adaptive mode no longer lowers FPS simply because the user selected Favor resolution.
+
+## Dev.11 deeper clean-cadence search
+
+The Viper result also proves that the dev.10 automatic floor was too shallow to answer the user's full Favor-resolution request. Dev.11 keeps the same measured-cost authority and final actual-gain veto, but extends the clean uniform cadence ladder before giving up.
+
+For a 25 FPS source the candidates are now tried in this order:
 
 - 20 FPS / 50 ms;
-- 16.67 FPS / 60 ms.
+- 16.67 FPS / 60 ms;
+- 14.29 FPS / 70 ms;
+- 12.5 FPS / 80 ms.
 
-The automatic floor is therefore 16.67 FPS in dev.10. The 20 FPS candidate is still preferred whenever its real encoded byte cost earns the required gain; Polymorph only steps lower when 20 FPS demonstrably does not.
+The first/highest cadence whose real encoded sample predicts at least about 8% linear spatial gain is selected for the full adaptive size fit. If none earns the gain, the 25 FPS Preserve-motion output remains final. This preserves the user's stated priority: stay as close to source FPS as possible, move lower only when the measured spatial reward is actually worthwhile, and keep all reduced-FPS output on an even GIF cadence.
 
 ## Release boundary
 
@@ -107,4 +114,5 @@ The automatic floor is therefore 16.67 FPS in dev.10. The 20 FPS candidate is st
 - Favor resolution remains experimental.
 - No automatic mode may use uneven frame deletion.
 - Full-resolution 20 FPS interpolation quality is human-validated on Viper.
-- The next human validation target is dev.10's measured cadence selection, especially whether Viper chooses 16.67 FPS and whether that lower clean cadence remains visually acceptable while finally increasing spatial resolution.
+- Dev.10's no-benefit fallback is human-validated on Viper.
+- Dev.11 requires human validation only if it actually selects 14.29 FPS or 12.5 FPS; if it again returns 25 FPS, that confirms this interpolation strategy cannot buy a worthwhile spatial increase for this workload under the current 99 MB / quality-100 constraints.

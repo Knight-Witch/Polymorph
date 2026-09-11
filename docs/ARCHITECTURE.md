@@ -54,15 +54,16 @@
 - Preserve motion remains default and keeps source FPS/frame count.
 - Favor resolution applies only to GIF + file-size mode.
 - Preferred spatial target is the native framed long edge capped at 2048 px.
-- Current automatic FPS floor is 16.67 FPS (60 ms/frame).
+- Current automatic FPS floor is 12.5 FPS (80 ms/frame), but the floor is never selected blindly.
 - Candidate reduced rates must have an integer GIF centisecond delay: `fps = 100 / delay_cs`.
-- Candidates are tried nearest the source FPS first. For a 25 FPS source the ladder is 20 FPS, then 16.67 FPS.
+- Candidates are tried nearest the source FPS first. For a 25 FPS source the ladder is 20 FPS, 16.67 FPS, 14.29 FPS, then 12.5 FPS.
 - The frame-count-only relationship `linear_scale ~= sqrt(source_fps / target_fps)` is retained only as an optimistic cheap screen; it is not trusted to select the final cadence.
 - Actual selection is based on a real gifski encode at the baseline spatial dimensions because motion-interpolated frames can cost materially more bytes per frame than untouched source frames.
 - The measured sample projects achievable spatial size against the patched-Python 97/99 target. A candidate must predict at least about 8% linear gain.
 - The first/highest FPS that earns the gain wins, minimizing temporal sacrifice.
 - The planner never requests dimensions above native framed geometry or the 2048 px soft target.
 - Final adaptive output must independently realize the same minimum gain or it is discarded in favor of Preserve motion.
+- Human dev.10 validation on Viper returned `1552x1552 • 93.6 MB • 25 FPS`, confirming that 20 FPS and 16.67 FPS were correctly rejected when they could not buy worthwhile spatial gain.
 
 ## Uniform motion resampling
 
@@ -72,7 +73,7 @@
 - A cloned end pad supplies interpolation lookahead.
 - Output is trimmed to the exact mathematically expected frame count and timestamps are reset.
 - gifski receives the same explicit target FPS used by the interpolation stage.
-- Windows toolchain smoke coverage requires the bundled FFmpeg build to support the current 16.67 FPS lower clean cadence and exact planned reduced frame count.
+- Windows toolchain smoke coverage requires the bundled FFmpeg build to support the current 12.5 FPS deepest clean cadence and exact planned reduced frame count.
 
 ## GIF reference boundary
 

@@ -5,8 +5,8 @@
 - Project: Polymorph
 - Repository: `Knight-Witch/Polymorph`
 - Platform target: Windows 10/11 x64
-- Status: functional scaffold on `dev`; MP4 human-validated; Preserve-motion GIF quality/smoothness human-validated; decimal-MB ceiling validated; updater hardening validated; dev.9 full-resolution motion interpolation visually validated but failed to gain spatial resolution; dev.10 measured adaptive cadence selection pending Windows CI + Viper retest / no public release
-- Current development version: `0.1.0-dev.10`
+- Status: functional scaffold on `dev`; MP4 human-validated; Preserve-motion GIF quality/smoothness human-validated; decimal-MB ceiling validated; updater hardening validated; dev.9 full-resolution interpolation visually validated; dev.10 measured fallback human-validated; dev.11 deeper measured cadence search pending Windows CI + Viper retest / no public release
+- Current development version: `0.1.0-dev.11`
 
 ## Canonical conversion behavior
 
@@ -36,7 +36,7 @@
 - The patched-Python 97/99 byte target is used to project how much spatial resolution that measured cost can realistically buy.
 - A candidate must predict roughly 8% or greater linear spatial gain.
 - The first/highest candidate that earns the gain is selected, minimizing temporal sacrifice.
-- For a 25 FPS source, the current automatic cadence ladder is 20 FPS (50 ms) then 16.67 FPS (60 ms); automatic floor is 16.67 FPS.
+- For a 25 FPS source, the current automatic cadence ladder is 20 FPS (50 ms), 16.67 FPS (60 ms), 14.29 FPS (70 ms), then 12.5 FPS (80 ms).
 - Uses FFmpeg motion interpolation rather than uneven frame deletion.
 - Pads the final source frame for interpolation lookahead and trims to the exact planned output frame count.
 - Keeps gifski quality 100, `--extra`, explicit width, infinite repeat, and post-encode integrity verification.
@@ -71,7 +71,9 @@
 - Dev.9 still produced `1552x1552`, i.e. no spatial gain over Preserve motion.
 - User-reported dev.9 completion size was `89.2 MB` under the then-existing binary-MiB display bug, corresponding to roughly 93.5 decimal MB and the optimizer's 93 MB acceptance region.
 - Diagnosis: interpolated frames are materially more expensive for gifski than the naive 25/20 frame-count ratio predicted; frame-count math is therefore unsuitable as the authority for adaptive cadence selection.
-- Dev.10 measures real encoded candidate cost before choosing FPS and adds a final actual-gain veto.
+- Dev.10 switched to measured candidate cost and final actual-gain veto.
+- Human dev.10 Viper result was `1552x1552 • 93.6 MB • 25 FPS`, confirming both 20 FPS and 16.67 FPS were correctly rejected when they could not buy a meaningful spatial increase.
+- Dev.11 extends the same measured search to 14.29 FPS and 12.5 FPS before falling back, preserving nearest-to-source-FPS selection order.
 
 ## v1 UI scope
 
@@ -101,9 +103,10 @@
 
 ## Known follow-ups
 
-- Run full Windows CI for dev.10, including the 16.67 FPS `minterpolate` smoke path and packaged adaptive UI smoke checks.
-- Retest real Viper at GIF / Original / 99 MB / Favor resolution. The completion line now reports the actual selected FPS and decimal MB directly.
-- If dev.10 selects 16.67 FPS, validate whether the lower clean cadence remains visually acceptable and whether it finally earns a meaningful spatial increase; if it does not, the measured-gain guard should return the 25 FPS Preserve-motion result instead.
+- Run full Windows CI for dev.11, including the 12.5 FPS `minterpolate` smoke path and packaged adaptive UI smoke checks.
+- Retest real Viper at GIF / Original / 99 MB / Favor resolution. Completion already exposes final dimensions, decimal MB, and selected effective FPS.
+- If dev.11 selects 14.29 or 12.5 FPS, validate whether the lower clean cadence remains visually acceptable and whether the spatial gain is actually worthwhile.
+- If dev.11 again returns 25 FPS, treat that as evidence that motion-compensated interpolation cannot buy meaningful spatial resolution for this Viper workload under quality-100 / 99 MB constraints; do not keep lowering FPS automatically without a new design decision.
 - If adaptive behavior is validated, test at least one harder HeroForge spin with thin geometry/hair/transparent or overlapping elements before stable promotion.
 - Favor resolution performs extra measurement encodes by design; optimize conversion time only after cadence/result behavior is validated.
 - First public release still requires a deliberate project-license choice and final release packaging/release-workflow review.

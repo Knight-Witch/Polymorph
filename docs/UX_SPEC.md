@@ -42,16 +42,17 @@ Visible only as meaningful controls for GIF + Fit under file size.
 
 ### Favor resolution
 
-- Experimental in dev.10 pending validation of the lower clean cadence selected when 20 FPS is not worthwhile.
+- Experimental in dev.11 pending validation of the deeper clean cadence selected when higher candidates are not worthwhile.
 - The user does not enter an FPS or target pixel size.
 - Polymorph first creates the normal Preserve-motion fitted result.
 - It then tests lower uniform GIF cadences at that exact spatial size and measures the real gifski byte cost of the interpolated frames.
 - The first/highest lower FPS that predicts at least about 8% real linear-resolution gain is eligible for a full adaptive size search.
-- For a 25 FPS source, the automatic clean-cadence ladder is 20 FPS (50 ms) then 16.67 FPS (60 ms). The current automatic floor is 16.67 FPS.
+- For a 25 FPS source, the automatic clean-cadence ladder is 20 FPS (50 ms), 16.67 FPS (60 ms), 14.29 FPS (70 ms), then 12.5 FPS (80 ms).
 - Lower rates are restricted to uniform GIF-centisecond cadences (`100 / N` FPS) so every output frame has the same duration.
 - Frame reduction is produced with motion interpolation, not uneven deletion.
 - A final measured-gain guard discards the lower-FPS result and returns the Preserve-motion output if the completed adaptive fit does not actually gain at least about 8% linear resolution.
 - Preferred spatial target remains native resolution capped at 2048 px; Polymorph never upscales above native framed geometry.
+- Dev.10 human validation on Viper returned `1552x1552 • 93.6 MB • 25 FPS`, proving the fallback correctly preserves original motion when 20 FPS and 16.67 FPS do not buy enough resolution.
 
 ## Completion readout
 

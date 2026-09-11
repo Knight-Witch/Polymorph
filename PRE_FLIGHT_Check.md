@@ -1,5 +1,17 @@
 # Polymorph Pre-Flight Log
 
+## PFC-2026-09-11-022 — Extend measured Favor resolution cadence ladder
+
+- Target files: adaptive motion planner tests, Windows adaptive toolchain smoke coverage, development version metadata, adaptive architecture/UX/status/diagnostic docs, and required tracking files.
+- Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, `docs/UX_SPEC.md`, `HISTORY/REFERENCE_GIF_CONVERTER.md`, `HISTORY/DIAGNOSTICS/GIF_ADAPTIVE_MOTION_2026-09-10.md`, current `motion_planner.py`, `adaptive_converter.py`, current tests/build smoke, version metadata, and completed dev.10 Windows + Viper validation.
+- Human validation incorporated: dev.10 Favor resolution completed the real Viper workload at `1552x1552 • 93.6 MB • 25 FPS`, proving the measured 20 FPS and 16.67 FPS candidates were correctly rejected and Preserve motion was retained when neither earned the required spatial gain.
+- Diagnosis: dev.10 behaved correctly, but its 16.67 FPS automatic floor was an arbitrary search boundary. It did not answer whether the user's explicit Favor-resolution preference could earn a worthwhile result at a slightly deeper but still perfectly uniform GIF cadence.
+- Connected modules reviewed: measured candidate gate, final actual-gain veto, uniform `minterpolate` path, exact frame-count integrity checks, GIF smart-fit search, Preserve-motion boundary, MP4 path, framing, packaged app/UI readout, and Windows toolchain smoke.
+- Conflict risks: longer Favor-resolution conversion time from two additional measurement probes; 14.29/12.5 FPS may be visually less smooth despite even cadence; accidentally lowering FPS without a real spatial payoff.
+- Recommended action: keep all dev.10 measured-cost and final-gain safeguards unchanged; extend only the clean candidate floor to 12.5 FPS so a 25 FPS source tries `20 -> 16.67 -> 14.29 -> 12.5`, selecting the first/highest cadence that demonstrably predicts >=8% linear spatial gain; otherwise preserve 25 FPS.
+- Versioning: increment development tester from `0.1.0-dev.10` to `0.1.0-dev.11`.
+- Unchanged: Preserve-motion GIF encoder/optimizer, gifski 1.32.0/quality 100/Y4M behavior, adaptive interpolation settings, 8% measured-gain threshold, 2048 px soft target, MP4, framing, updater, preview, visual skin, and public release state.
+
 ## PFC-2026-09-10-021 — Measure adaptive GIF byte cost before sacrificing FPS
 
 - Target files: adaptive motion planner/converter/tests, adaptive UI completion readout, Windows adaptive smoke coverage, development version metadata, architecture/UX/status/adaptive-diagnostic docs, and required tracking files.
