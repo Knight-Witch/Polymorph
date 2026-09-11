@@ -3,10 +3,11 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
+from .size_optimizer import reference_thresholds
+
 PREFERRED_LONG_EDGE = 2048
-MIN_ADAPTIVE_FPS = 20.0
+MIN_ADAPTIVE_FPS = 100.0 / 6.0  # 16.666... FPS / 60 ms GIF cadence.
 MIN_LINEAR_GAIN = 0.08
-SOFT_TARGET_RATIO = 0.95
 
 
 @dataclass(frozen=True, slots=True)
@@ -16,13 +17,23 @@ class GifMotionPlan:
     delay_centiseconds: int | None
     preferred_long_edge: int
     predicted_long_edge: int
+    sample_size_bytes: int | None = None
 
     @property
     def resample(self) -> bool:
         return self.delay_centiseconds is not None and self.target_fps < self.source_fps - 1e-6
 
 
-def uniform_gif_fps_candidates(source_fps: float, min_fps: float = MIN_ADAPTIVE_FPS) -> list[tuple[float, int]]:
+def preferred_long_edge(native_long_edge: int, preferred: int = PREFERRED_LONG_EDGE) -> int:
+    if native_long_edge <= 0:
+        return 0
+    return min(native_long_edge, preferred)
+
+
+def uniform_gif_fps_candidates(
+    source_fps: float,
+    min_fps: float = MIN_ADAPTIVE_FPS,
+) -> list[tuple[float, int]]:
     """Return lower, uniform GIF-friendly rates ordered nearest the source first.
 
     GIF frame delays are centiseconds. Restricting adaptive candidates to 100/N FPS
@@ -51,65 +62,78 @@ def predicted_long_edge(
     target_fps: float,
     native_long_edge: int,
 ) -> int:
+    """Ideal frame-count-only spatial prediction used only as a cheap upper bound."""
     if full_fps_long_edge <= 0 or source_fps <= 0 or target_fps <= 0:
         return max(0, full_fps_long_edge)
     predicted = full_fps_long_edge * math.sqrt(source_fps / target_fps)
     return min(native_long_edge, max(full_fps_long_edge, int(round(predicted))))
 
 
-def choose_favor_resolution_plan(
+def evaluate_measured_candidate(
     *,
     source_fps: float,
-    full_fps_long_edge: int,
+    target_fps: float,
+    delay_centiseconds: int,
+    baseline_long_edge: int,
     native_long_edge: int,
-    preferred_long_edge: int = PREFERRED_LONG_EDGE,
-    min_fps: float = MIN_ADAPTIVE_FPS,
+    sample_size_bytes: int,
+    max_bytes: int,
+    preferred: int = PREFERRED_LONG_EDGE,
     min_linear_gain: float = MIN_LINEAR_GAIN,
-    soft_target_ratio: float = SOFT_TARGET_RATIO,
-) -> GifMotionPlan:
-    preferred = min(native_long_edge, preferred_long_edge)
-    preserve = GifMotionPlan(
+) -> GifMotionPlan | None:
+    """Accept a reduced-FPS candidate only when a real encoded sample earns it.
+
+    The sample is encoded at the already-fitted Preserve-motion dimensions. This
+    measures the actual gifski cost of motion-interpolated frames, which can differ
+    substantially from the naive frame-count ratio. The patched-Python 97/99 target
+    is then used to estimate how much spatial resolution that measured byte cost can
+    realistically buy before a full adaptive size search is attempted.
+    """
+    if (
+        source_fps <= 0
+        or target_fps <= 0
+        or target_fps >= source_fps - 1e-6
+        or baseline_long_edge <= 0
+        or native_long_edge <= 0
+        or sample_size_bytes <= 0
+        or max_bytes <= 0
+    ):
+        return None
+
+    spatial_target = preferred_long_edge(native_long_edge, preferred)
+    if baseline_long_edge >= spatial_target:
+        return None
+
+    target_bytes, _ = reference_thresholds(max_bytes)
+    predicted = baseline_long_edge * math.sqrt(target_bytes / sample_size_bytes)
+    predicted_edge = min(
+        spatial_target,
+        native_long_edge,
+        max(baseline_long_edge, int(round(predicted))),
+    )
+    gain = predicted_edge / baseline_long_edge - 1.0
+    if gain + 1e-9 < min_linear_gain:
+        return None
+
+    return GifMotionPlan(
         source_fps=source_fps,
-        target_fps=source_fps,
-        delay_centiseconds=None,
-        preferred_long_edge=preferred,
-        predicted_long_edge=full_fps_long_edge,
+        target_fps=target_fps,
+        delay_centiseconds=delay_centiseconds,
+        preferred_long_edge=spatial_target,
+        predicted_long_edge=predicted_edge,
+        sample_size_bytes=sample_size_bytes,
     )
 
-    if source_fps <= 0 or full_fps_long_edge <= 0 or native_long_edge <= 0:
-        return preserve
-    if full_fps_long_edge >= preferred:
-        return preserve
 
-    viable: list[GifMotionPlan] = []
-    for fps, delay_cs in uniform_gif_fps_candidates(source_fps, min_fps):
-        predicted = predicted_long_edge(
-            full_fps_long_edge,
-            source_fps,
-            fps,
-            native_long_edge,
-        )
-        gain = predicted / full_fps_long_edge - 1.0
-        if gain + 1e-9 < min_linear_gain:
-            continue
-
-        plan = GifMotionPlan(
-            source_fps=source_fps,
-            target_fps=fps,
-            delay_centiseconds=delay_cs,
-            preferred_long_edge=preferred,
-            predicted_long_edge=predicted,
-        )
-        viable.append(plan)
-
-        # Prefer the highest FPS that gets reasonably close to the soft spatial
-        # target. We only move farther down the cadence ladder when necessary.
-        if predicted >= preferred * soft_target_ratio:
-            return plan
-
-    # If no candidate reaches the soft target, the lowest permitted viable FPS
-    # gives the best spatial recovery while respecting the automatic floor.
-    return viable[-1] if viable else preserve
+def actual_gain_is_worthwhile(
+    *,
+    baseline_long_edge: int,
+    adaptive_long_edge: int,
+    min_linear_gain: float = MIN_LINEAR_GAIN,
+) -> bool:
+    if baseline_long_edge <= 0 or adaptive_long_edge <= baseline_long_edge:
+        return False
+    return adaptive_long_edge / baseline_long_edge - 1.0 + 1e-9 >= min_linear_gain
 
 
 def expected_uniform_frame_count(duration_s: float, fps: float) -> int:
