@@ -4,14 +4,14 @@
 
 - `src/polymorph/converter.py`: proven conversion orchestration.
 - `src/polymorph/adaptive_converter.py`: experimental GIF motion/resolution balancing layered over the proven converter; preserve-motion calls the base behavior unchanged.
-- `src/polymorph/motion_planner.py`: pure adaptive-FPS planning math.
+- `src/polymorph/motion_planner.py`: pure adaptive-FPS candidate and measured-gain planning math.
 - `src/polymorph/probe.py`: media metadata and WebP RIFF fallback parsing.
 - `src/polymorph/integrity.py`: post-encode dimension/frame-count/timing verification, including explicit expected frame count for intentional uniform resampling.
 - `src/polymorph/geometry.py`: deterministic Crop/Fit geometry and no-upscale validation.
 - `src/polymorph/size_optimizer.py`: pure GIF smart-fit scale selection ported from the user-tested patched Python reference.
 - `src/polymorph/filters.py`: proven spatial FFmpeg filter construction.
 - `src/polymorph/ui/main_window.py`: existing novice-facing desktop UI and live preview.
-- `src/polymorph/ui/adaptive_main_window.py`: minimal dev.9 UI extension for GIF priority controls; avoids restructuring the validated base window during experimental validation.
+- `src/polymorph/ui/adaptive_main_window.py`: development UI extension for GIF priority plus decimal-MB/effective-FPS completion reporting.
 - `src/polymorph/update_service.py`: official-release discovery, exact asset pairing, bounded streaming download, checksum verification, installer launch.
 - `build/`: executable packaging and CI-only diagnostics.
 - `installer/`: per-user Windows installer.
@@ -22,16 +22,21 @@
 2. Resolve framing geometry.
 3. Resolve user sizing constraint.
 4. For Preserve motion, use the proven converter path unchanged.
-5. For Favor resolution in GIF file-size mode, first obtain the full-frame fitted result as the spatial baseline.
-6. Use pure planning math to decide whether a uniform lower FPS produces a worthwhile spatial gain.
-7. If no reduction is worthwhile, return the baseline full-frame result.
-8. If reduction is worthwhile, re-run GIF smart-fit with evenly motion-interpolated frames at the selected uniform FPS.
-9. Probe output and verify requested dimensions, exact planned frame count, and bounded duration drift.
+5. For Favor resolution in GIF file-size mode, first obtain the full-frame fitted result as the spatial/byte baseline.
+6. Build lower uniform GIF-cadence candidates nearest the source FPS first.
+7. Reject candidates whose ideal frame-count-only ceiling cannot possibly meet the minimum useful spatial gain.
+8. Encode each surviving candidate once at the already-fitted baseline dimensions and measure its actual gifski byte cost.
+9. Select the first/highest candidate whose measured byte cost predicts at least about 8% linear spatial gain toward the patched-Python 97/99 byte target.
+10. If no candidate earns that gain, return the Preserve-motion baseline unchanged.
+11. If a candidate is worthwhile, run the normal GIF smart-fit search at that uniform interpolated FPS.
+12. Probe output and verify requested dimensions, exact planned frame count, and bounded duration drift.
+13. Apply a final measured-gain veto: if the finished adaptive result is not at least about 8% larger linearly than the Preserve-motion baseline, discard it and return the baseline.
 
 ## File-size units
 
 - User-entered `MB` ceilings are decimal: 1 MB = 1,000,000 bytes.
 - Accepted output may never exceed the requested byte ceiling.
+- The adaptive development completion readout also reports decimal MB rather than binary MiB mislabeled as MB.
 
 ## GIF file-size search
 
@@ -49,13 +54,15 @@
 - Preserve motion remains default and keeps source FPS/frame count.
 - Favor resolution applies only to GIF + file-size mode.
 - Preferred spatial target is the native framed long edge capped at 2048 px.
-- Automatic FPS floor is 20 FPS.
+- Current automatic FPS floor is 16.67 FPS (60 ms/frame).
 - Candidate reduced rates must have an integer GIF centisecond delay: `fps = 100 / delay_cs`.
-- A candidate must predict at least about 8% linear-resolution gain before FPS is sacrificed.
-- Candidate order is highest FPS first; the first rate reaching at least 95% of the soft spatial target wins.
-- If no viable rate reaches the target, the lowest permitted viable candidate is selected.
-- Spatial prediction uses the first-order relation `linear_scale ~= sqrt(source_fps / target_fps)` and is only a planning heuristic; the real encoder still measures actual bytes.
-- The planner never requests dimensions above native framed geometry.
+- Candidates are tried nearest the source FPS first. For a 25 FPS source the ladder is 20 FPS, then 16.67 FPS.
+- The frame-count-only relationship `linear_scale ~= sqrt(source_fps / target_fps)` is retained only as an optimistic cheap screen; it is not trusted to select the final cadence.
+- Actual selection is based on a real gifski encode at the baseline spatial dimensions because motion-interpolated frames can cost materially more bytes per frame than untouched source frames.
+- The measured sample projects achievable spatial size against the patched-Python 97/99 target. A candidate must predict at least about 8% linear gain.
+- The first/highest FPS that earns the gain wins, minimizing temporal sacrifice.
+- The planner never requests dimensions above native framed geometry or the 2048 px soft target.
+- Final adaptive output must independently realize the same minimum gain or it is discarded in favor of Preserve motion.
 
 ## Uniform motion resampling
 
@@ -65,7 +72,7 @@
 - A cloned end pad supplies interpolation lookahead.
 - Output is trimmed to the exact mathematically expected frame count and timestamps are reset.
 - gifski receives the same explicit target FPS used by the interpolation stage.
-- Windows toolchain smoke coverage requires the bundled FFmpeg build to support this path and requires the exact planned reduced frame count.
+- Windows toolchain smoke coverage requires the bundled FFmpeg build to support the current 16.67 FPS lower clean cadence and exact planned reduced frame count.
 
 ## GIF reference boundary
 
@@ -80,7 +87,7 @@
 ## Diagnostic evidence
 
 - Patched-Python timing measurements: `HISTORY/DIAGNOSTICS/GIF_REFERENCE_TIMING_2026-09-10.md`.
-- Adaptive cadence probe on real Viper source: `HISTORY/DIAGNOSTICS/GIF_ADAPTIVE_MOTION_2026-09-10.md`.
+- Adaptive cadence probe and human validation: `HISTORY/DIAGNOSTICS/GIF_ADAPTIVE_MOTION_2026-09-10.md`.
 
 ## Update safety
 
@@ -95,7 +102,7 @@
 
 - Queue can contain many files.
 - Only one conversion runs at a time in v1.
-- Favor resolution may require an additional baseline encode before its reduced-FPS optimization and is expected to take longer.
+- Favor resolution intentionally does extra work: one Preserve-motion baseline fit plus one or more measured cadence probes and, only when justified, an adaptive size fit.
 - No background service.
 - No cloud processing.
 - No telemetry.
