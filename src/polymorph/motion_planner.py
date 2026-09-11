@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from .size_optimizer import reference_thresholds
 
 PREFERRED_LONG_EDGE = 2048
-MIN_ADAPTIVE_FPS = 12.5  # 80 ms GIF cadence; Favor resolution only.
+MIN_ADAPTIVE_FPS = 8.0
 MIN_LINEAR_GAIN = 0.08
 
 
@@ -18,10 +18,24 @@ class GifMotionPlan:
     preferred_long_edge: int
     predicted_long_edge: int
     sample_size_bytes: int | None = None
+    stride: int | None = None
+    final_delay_centiseconds: int | None = None
+    expected_frames: int | None = None
+    effective_fps: float | None = None
 
     @property
     def resample(self) -> bool:
         return self.delay_centiseconds is not None and self.target_fps < self.source_fps - 1e-6
+
+
+@dataclass(frozen=True, slots=True)
+class DecimationCandidate:
+    stride: int
+    nominal_fps: float
+    delay_centiseconds: int
+    final_delay_centiseconds: int
+    expected_frames: int
+    effective_fps: float
 
 
 def preferred_long_edge(native_long_edge: int, preferred: int = PREFERRED_LONG_EDGE) -> int:
@@ -32,16 +46,9 @@ def preferred_long_edge(native_long_edge: int, preferred: int = PREFERRED_LONG_E
 
 def uniform_gif_fps_candidates(
     source_fps: float,
-    min_fps: float = MIN_ADAPTIVE_FPS,
+    min_fps: float = 12.5,
 ) -> list[tuple[float, int]]:
-    """Return lower, uniform GIF-friendly rates ordered nearest the source first.
-
-    GIF frame delays are centiseconds. Restricting adaptive candidates to 100/N FPS
-    gives every output frame the same duration instead of alternating short/long
-    delays that create a visible cadence wobble. Favor resolution keeps stepping
-    down this clean ladder only until real encoded measurements prove a worthwhile
-    spatial gain; it never blindly selects the floor.
-    """
+    """Legacy synthetic-frame cadence candidates retained for diagnostics/history."""
     if source_fps <= 0 or min_fps <= 0 or source_fps <= min_fps + 1e-6:
         return []
 
@@ -58,6 +65,56 @@ def uniform_gif_fps_candidates(
     return candidates
 
 
+def source_decimation_candidates(
+    *,
+    source_fps: float,
+    source_frame_count: int,
+    source_delay_centiseconds: int,
+    min_fps: float = MIN_ADAPTIVE_FPS,
+) -> list[DecimationCandidate]:
+    """Return exact source-frame decimation plans, nearest motion retention first.
+
+    Every candidate keeps frame 0 and then retains every Nth original frame. Most
+    retained-frame delays are N * source_delay. If the source frame count is not a
+    multiple of N, the final GIF frame gets the exact shorter remainder delay needed
+    to close the loop at the original angular speed instead of introducing a periodic
+    motion jump or a synthetic intermediate frame.
+    """
+    if (
+        source_fps <= 0
+        or source_frame_count <= 1
+        or source_delay_centiseconds <= 0
+        or min_fps <= 0
+    ):
+        return []
+
+    candidates: list[DecimationCandidate] = []
+    stride = 2
+    while source_fps / stride >= min_fps - 1e-9:
+        expected_frames = (source_frame_count + stride - 1) // stride
+        last_index = (expected_frames - 1) * stride
+        remainder_steps = source_frame_count - last_index
+        if not 1 <= remainder_steps <= stride:
+            break
+
+        delay_cs = source_delay_centiseconds * stride
+        final_delay_cs = source_delay_centiseconds * remainder_steps
+        duration_cs = (expected_frames - 1) * delay_cs + final_delay_cs
+        effective_fps = expected_frames / (duration_cs / 100.0)
+        candidates.append(
+            DecimationCandidate(
+                stride=stride,
+                nominal_fps=source_fps / stride,
+                delay_centiseconds=delay_cs,
+                final_delay_centiseconds=final_delay_cs,
+                expected_frames=expected_frames,
+                effective_fps=effective_fps,
+            )
+        )
+        stride += 1
+    return candidates
+
+
 def predicted_long_edge(
     full_fps_long_edge: int,
     source_fps: float,
@@ -68,6 +125,18 @@ def predicted_long_edge(
     if full_fps_long_edge <= 0 or source_fps <= 0 or target_fps <= 0:
         return max(0, full_fps_long_edge)
     predicted = full_fps_long_edge * math.sqrt(source_fps / target_fps)
+    return min(native_long_edge, max(full_fps_long_edge, int(round(predicted))))
+
+
+def predicted_decimated_long_edge(
+    full_fps_long_edge: int,
+    source_frame_count: int,
+    output_frame_count: int,
+    native_long_edge: int,
+) -> int:
+    if full_fps_long_edge <= 0 or source_frame_count <= 0 or output_frame_count <= 0:
+        return max(0, full_fps_long_edge)
+    predicted = full_fps_long_edge * math.sqrt(source_frame_count / output_frame_count)
     return min(native_long_edge, max(full_fps_long_edge, int(round(predicted))))
 
 
@@ -83,14 +152,7 @@ def evaluate_measured_candidate(
     preferred: int = PREFERRED_LONG_EDGE,
     min_linear_gain: float = MIN_LINEAR_GAIN,
 ) -> GifMotionPlan | None:
-    """Accept a reduced-FPS candidate only when a real encoded sample earns it.
-
-    The sample is encoded at the already-fitted Preserve-motion dimensions. This
-    measures the actual gifski cost of motion-interpolated frames, which can differ
-    substantially from the naive frame-count ratio. The patched-Python 97/99 target
-    is then used to estimate how much spatial resolution that measured byte cost can
-    realistically buy before a full adaptive size search is attempted.
-    """
+    """Legacy synthetic-candidate measured gate retained for regression history."""
     if (
         source_fps <= 0
         or target_fps <= 0
@@ -124,6 +186,57 @@ def evaluate_measured_candidate(
         preferred_long_edge=spatial_target,
         predicted_long_edge=predicted_edge,
         sample_size_bytes=sample_size_bytes,
+    )
+
+
+def evaluate_measured_decimation(
+    *,
+    source_fps: float,
+    candidate: DecimationCandidate,
+    baseline_long_edge: int,
+    native_long_edge: int,
+    sample_size_bytes: int,
+    max_bytes: int,
+    preferred: int = PREFERRED_LONG_EDGE,
+    min_linear_gain: float = MIN_LINEAR_GAIN,
+) -> GifMotionPlan | None:
+    if (
+        source_fps <= 0
+        or candidate.nominal_fps <= 0
+        or candidate.nominal_fps >= source_fps - 1e-6
+        or baseline_long_edge <= 0
+        or native_long_edge <= 0
+        or sample_size_bytes <= 0
+        or max_bytes <= 0
+    ):
+        return None
+
+    spatial_target = preferred_long_edge(native_long_edge, preferred)
+    if baseline_long_edge >= spatial_target:
+        return None
+
+    target_bytes, _ = reference_thresholds(max_bytes)
+    predicted = baseline_long_edge * math.sqrt(target_bytes / sample_size_bytes)
+    predicted_edge = min(
+        spatial_target,
+        native_long_edge,
+        max(baseline_long_edge, int(round(predicted))),
+    )
+    gain = predicted_edge / baseline_long_edge - 1.0
+    if gain + 1e-9 < min_linear_gain:
+        return None
+
+    return GifMotionPlan(
+        source_fps=source_fps,
+        target_fps=candidate.nominal_fps,
+        delay_centiseconds=candidate.delay_centiseconds,
+        preferred_long_edge=spatial_target,
+        predicted_long_edge=predicted_edge,
+        sample_size_bytes=sample_size_bytes,
+        stride=candidate.stride,
+        final_delay_centiseconds=candidate.final_delay_centiseconds,
+        expected_frames=candidate.expected_frames,
+        effective_fps=candidate.effective_fps,
     )
 
 
