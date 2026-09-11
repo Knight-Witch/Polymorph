@@ -1,5 +1,45 @@
 # Changelog
 
+## POLY-2026-09-11-023 — 2026-09-11 03:05 PDT — Test lower-complexity uniform temporal blending
+
+### Summary
+
+- Recorded the dev.11 Viper human result: `1552x1552 • 93.6 MB • 25 FPS` with Favor resolution selected.
+- Independently inspected the supplied dev.11 GIF and confirmed it is 1552x1552, 93,630,962 bytes, 375 frames, exactly 40 ms per frame, and 15.0 s total; Preserve motion was retained exactly after every measured 20/16.67/14.29/12.5 FPS optical-flow candidate failed the existing ~8% spatial-gain gate.
+- Stopped extending the optical-flow FPS ladder. The evidence now shows that motion-compensated synthesized frames remain too expensive for gifski on this workload even after a 50% nominal frame-rate reduction.
+- Ran an isolated local comparison using the dev.11 Viper output as a 25 FPS source surrogate. At 20 FPS, `minterpolate=mi_mode=blend` produced essentially the same uniform adjacent-frame cadence energy as the prior MCI path, and 768 px crop/contact-sheet checks showed the blend and MCI frames to be visually extremely close around face, hair/fur, torso, cape and sword over the sampled segment.
+- Changed only Favor-resolution reduced-FPS synthesis from motion-compensated optical flow to exact-timestamp linear temporal blending. No periodic frame deletion is introduced; every chosen GIF cadence remains uniform.
+- Kept the dev.11 candidate ladder (`20 -> 16.67 -> 14.29 -> 12.5 FPS`), real encoded candidate-cost measurement, ~8% predicted linear-gain requirement, ~8% final realized-gain veto, 2048 px soft target, dev.8 smart-fit size search, exact planned frame-count verification, gifski 1.32.0, quality 100, `--extra`, explicit width, and infinite repeat unchanged.
+- Updated the Windows toolchain smoke gate so the deepest 12.5 FPS adaptive path verifies `minterpolate=mi_mode=blend` with exact planned frame count.
+- Preserve-motion GIF, MP4, framing, updater, preview, UI layout, and public release state remain unchanged.
+- Incremented the development tester to `0.1.0-dev.12`.
+
+### Touched files
+
+- `src/polymorph/adaptive_converter.py`
+- `build/verify_toolchain.py`
+- `build/README.md`
+- `src/polymorph/__init__.py`
+- `src/polymorph/constants.py`
+- `pyproject.toml`
+- `installer/Polymorph.iss`
+- `docs/UX_SPEC.md`
+- `docs/ARCHITECTURE.md`
+- `HISTORY/DIAGNOSTICS/GIF_ADAPTIVE_MOTION_2026-09-10.md`
+- `MASTER.md`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert this commit to restore dev.11's motion-compensated MCI adaptive synthesis. Preserve-motion GIF behavior and all non-adaptive conversion paths are independent of this change.
+
+### Test notes
+
+- Local Viper surrogate cadence comparison at 20 FPS showed MCI phase energy `[0.53750, 0.54245, 0.54592, 0.53687]` versus blend `[0.53751, 0.54239, 0.54587, 0.53700]`, indicating the uniform cadence is retained.
+- Windows CI must pass unit tests, the 12.5 FPS blend-resampling toolchain smoke, standalone-reference timing diagnostic, packaged-app smoke, installer compilation, checksum generation, and artifact upload before dev.12 is handed to the user.
+- Human Viper validation is only meaningful if dev.12 actually selects a reduced FPS and larger image; if it again returns 25 FPS, the synthesized-even-timestamp branch should be considered exhausted for this workload and the next investigation should be exact source-frame decimation cadences rather than lower interpolated FPS.
+
 ## POLY-2026-09-11-022 — 2026-09-11 00:22 PDT — Extend measured Favor resolution cadence ladder
 
 ### Summary
@@ -93,7 +133,7 @@
 ### Summary
 
 - Added an explicit experimental GIF priority choice: `Preserve motion` remains the default proven path, while `Favor resolution` may trade some temporal samples for a larger spatial result only when the user selects it.
-- Validated the design against the real Viper source before wiring production: 2048x2048, 375 frames, 25 FPS, 15.0 s. Ordinary 25 -> 20 frame selection produced a strong repeating motion-change spike, while motion-compensated interpolation removed that periodic cadence pattern in the 512px diagnostic and produced exactly 300 intended frames after end lookahead + trimming.
+- Validated the design against the real Viper source before wiring production: 2048x2048, 375 frames, 25 FPS, 15.0 s. Ordinary 25 -> 20 FPS frame selection produced a strong repeating motion-change spike, while motion-compensated interpolation removed that periodic cadence pattern in the 512px diagnostic and produced exactly 300 intended frames after end lookahead + trimming.
 - Added `src/polymorph/motion_planner.py` with a 2048 px soft preferred long edge, 20 FPS automatic floor, roughly 8% minimum predicted linear-resolution gain, uniform GIF-centisecond cadence candidates, and highest-FPS-first selection until 95% of the soft spatial target is reached.
 - Added `src/polymorph/adaptive_converter.py` as a surgical layer over the proven converter. Preserve-motion/MP4/fixed-resolution jobs still call the existing converter behavior unchanged. Favor-resolution GIF file-size jobs first measure the full-frame fitted result, then only run the reduced-FPS pass if the planner predicts a worthwhile gain.
 - Adaptive output uses FFmpeg motion-compensated `minterpolate` (`mci`, `aobmc`, bidirectional estimation, variable-size block compensation), cloned end lookahead, exact frame trimming, and explicit target FPS into gifski instead of uneven periodic frame deletion.
