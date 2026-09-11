@@ -21,6 +21,11 @@ class FramingMode(str, Enum):
     FIT = "fit"
 
 
+class GifMotionMode(str, Enum):
+    PRESERVE = "preserve"
+    FAVOR_RESOLUTION = "favor_resolution"
+
+
 @dataclass(slots=True)
 class MediaInfo:
     path: Path
@@ -58,6 +63,7 @@ class ConversionSettings:
     requested_height: int | None = None
     output_dir: Path | None = None
     framing: FramingSettings = field(default_factory=FramingSettings)
+    gif_motion_mode: GifMotionMode = GifMotionMode.PRESERVE
 
 
 @dataclass(slots=True)

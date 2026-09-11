@@ -5,7 +5,7 @@ from pathlib import Path
 
 from PySide6.QtWidgets import QApplication
 
-from .ui.main_window import MainWindow
+from .ui.adaptive_main_window import MainWindow
 
 
 def main() -> int:

@@ -13,6 +13,8 @@ def validate_output_integrity(
     *,
     expected_width: int | None = None,
     expected_height: int | None = None,
+    expected_frame_count: int | None = None,
+    expected_fps: float | None = None,
 ) -> None:
     """Reject silent spatial or temporal degradation after encoding.
 
@@ -27,16 +29,17 @@ def validate_output_integrity(
                 f"output is {output.width}x{output.height}."
             )
 
-    if output.frame_count != source.frame_count:
+    frames = source.frame_count if expected_frame_count is None else expected_frame_count
+    if output.frame_count != frames:
         raise IntegrityError(
-            f"Frame verification failed: source has {source.frame_count} frames, "
+            f"Frame verification failed: expected {frames} frames, "
             f"output has {output.frame_count}."
         )
 
     if source.duration_s <= 0 or output.duration_s <= 0:
         return
 
-    fps = source.fps
+    fps = expected_fps if expected_fps and expected_fps > 0 else source.fps
     frame_time = 1.0 / fps if fps > 0 else 0.05
     tolerance = max(0.05, frame_time * 2.0)
     delta = abs(output.duration_s - source.duration_s)

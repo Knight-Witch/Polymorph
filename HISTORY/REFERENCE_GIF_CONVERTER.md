@@ -41,6 +41,17 @@ The measured timing effect predicts the OG spatial-resolution advantage essentia
 
 Durable measurements are recorded in `HISTORY/DIAGNOSTICS/GIF_REFERENCE_TIMING_2026-09-10.md`.
 
+## Real-source confirmation
+
+The user later supplied the actual Viper source WebP plus the OG output GIF. Direct inspection confirmed:
+
+- source WebP: 2048x2048, 375 frames, every frame 40 ms, exactly 25 FPS, 15.0 s;
+- OG GIF: 1756x1756, 300 frames, approximately the same 15.0 s duration;
+- frame retention: exactly 80%;
+- effective OG cadence: exactly 20 FPS.
+
+The OG GIF frame-delay pattern contains 40 ms intervals with periodic 80 ms gaps, matching the subtle micro-skip pattern expected from frame removal rather than uniformly synthesized 20 FPS motion. This independently confirms the CI timing diagnosis on the real workload.
+
 ## Human validation history
 
 ### First Polymorph tester
@@ -70,9 +81,24 @@ Durable measurements are recorded in `HISTORY/DIAGNOSTICS/GIF_REFERENCE_TIMING_2
 - After correcting displayed 99 MB to exactly 99,000,000 bytes, same Viper conversion produced 1552x1552.
 - Quality/smoothness otherwise remained good.
 
+### Patched-Python optimizer parity retest
+
+- Dev.8 ported the patched Python smart-fit resolution search while preserving every source frame.
+- The same Viper conversion remained 1552x1552.
+- Conclusion: the current full-frame result is byte-limited by retaining 375 frames, not materially limited by the optimizer search.
+
+## Adaptive resolution-favoring direction
+
+- Preserve motion remains the default and continues to retain every source frame.
+- Dev.9 introduces an explicitly user-selected experimental Favor resolution mode.
+- Favor resolution does not reproduce the OG periodic frame deletion. It uses motion interpolation to synthesize evenly spaced lower-FPS frames.
+- The first automatic floor is 20 FPS and reduced rates are limited to uniform GIF-centisecond cadences.
+- A real-Viper 512px diagnostic showed ordinary frame selection had a strong repeating motion-change spike, while motion interpolation removed that cadence pattern; full-resolution human validation is still required.
+- Detailed adaptive diagnostic: `HISTORY/DIAGNOSTICS/GIF_ADAPTIVE_MOTION_2026-09-10.md`.
+
 ## Current boundary
 
-- Production Polymorph preserves every source frame and must not reproduce OG frame resampling silently.
+- Preserve motion must not reproduce OG frame resampling silently.
 - OG 1756px is not a valid full-frame 99 MB parity target.
-- Dev.8 ports the patched Python's smart-fit resolution search into GIF file-size mode while retaining full-frame timing and quality safeguards.
-- Any future lower-FPS mode must be explicit and user-selected.
+- Favor resolution may lower FPS only because the user explicitly selected that tradeoff, and it must use uniform interpolation rather than uneven deletion.
+- Any future advanced FPS control remains deferred until the adaptive automatic mode is validated.
