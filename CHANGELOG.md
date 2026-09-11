@@ -1,5 +1,57 @@
 # Changelog
 
+## POLY-2026-09-10-020 — 2026-09-10 21:12 PDT — Add adaptive Favor resolution GIF mode
+
+### Summary
+
+- Added an explicit experimental GIF priority choice: `Preserve motion` remains the default proven path, while `Favor resolution` may trade some temporal samples for a larger spatial result only when the user selects it.
+- Validated the design against the real Viper source before wiring production: 2048x2048, 375 frames, 25 FPS, 15.0 s. Ordinary 25 -> 20 frame selection produced a strong repeating motion-change spike, while motion-compensated interpolation removed that periodic cadence pattern in the 512px diagnostic and produced exactly 300 intended frames after end lookahead + trimming.
+- Added `src/polymorph/motion_planner.py` with a 2048 px soft preferred long edge, 20 FPS automatic floor, roughly 8% minimum predicted linear-resolution gain, uniform GIF-centisecond cadence candidates, and highest-FPS-first selection until 95% of the soft spatial target is reached.
+- Added `src/polymorph/adaptive_converter.py` as a surgical layer over the proven converter. Preserve-motion/MP4/fixed-resolution jobs still call the existing converter behavior unchanged. Favor-resolution GIF file-size jobs first measure the full-frame fitted result, then only run the reduced-FPS pass if the planner predicts a worthwhile gain.
+- Adaptive output uses FFmpeg motion-compensated `minterpolate` (`mci`, `aobmc`, bidirectional estimation, variable-size block compensation), cloned end lookahead, exact frame trimming, and explicit target FPS into gifski instead of uneven periodic frame deletion.
+- Extended output integrity checks to accept an explicit planned frame count/FPS for intentional adaptive resampling while retaining exact source-frame verification for Preserve motion.
+- Added a minimal dev.9 UI extension with `Preserve motion` / `Favor resolution`; adaptive controls are enabled only for GIF + `Fit under file size` and disabled for fixed-resolution output.
+- Added unit coverage for motion planning and adaptive integrity expectations, bundled Windows `minterpolate` toolchain smoke coverage, and packaged-app UI smoke checks.
+- Kept gifski 1.32.0, quality 100, `--extra`, infinite repeat, explicit width, `yuv420p`, dev.8 GIF smart-fit search, framing behavior, MP4, updater, preview behavior, and visual skin unchanged.
+- Incremented the development tester to `0.1.0-dev.9`.
+
+### Touched files
+
+- `src/polymorph/motion_planner.py`
+- `src/polymorph/adaptive_converter.py`
+- `src/polymorph/models.py`
+- `src/polymorph/integrity.py`
+- `src/polymorph/app.py`
+- `src/polymorph/smoke_test.py`
+- `src/polymorph/ui/adaptive_main_window.py`
+- `tests/test_motion_planner.py`
+- `tests/test_integrity.py`
+- `build/verify_toolchain.py`
+- `build/README.md`
+- `src/polymorph/__init__.py`
+- `src/polymorph/constants.py`
+- `pyproject.toml`
+- `installer/Polymorph.iss`
+- `docs/UX_SPEC.md`
+- `docs/ARCHITECTURE.md`
+- `MASTER.md`
+- `HISTORY/REFERENCE_GIF_CONVERTER.md`
+- `HISTORY/DIAGNOSTICS/GIF_ADAPTIVE_MOTION_2026-09-10.md`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert this commit to return to dev.8, which exposes only the proven full-frame behavior. MP4, framing, updater hardening, and the dev.8 GIF size optimizer are independent of the adaptive layer.
+
+### Test notes
+
+- Local motion-planner + integrity suite: 13/13 tests pass.
+- Python syntax compilation passes for all new/modified Python modules and the Windows toolchain verifier.
+- Real-Viper 512px diagnostic removed the repeating four-interval cadence spike and showed no obvious interpolation corruption in spot checks around sword, hair, cape, silhouette, front/side/back views.
+- Full Windows CI must still verify the pinned Gyan FFmpeg 9.0.1 build's `minterpolate` path, normal GIF/MP4 smoke behavior, packaged adaptive UI, installer build, and checksum before the tester is handed to the user.
+- Full-resolution human Viper validation remains required before Favor resolution can be considered stable.
+
 ## POLY-2026-09-10-019 — 2026-09-10 04:40 PDT — Port patched-Python GIF smart-fit optimizer
 
 ### Summary
