@@ -8,16 +8,17 @@ from pathlib import Path
 
 from .converter import ConversionCancelled, ConversionError, Converter, ProgressCallback
 from .geometry import native_geometry
+from .gif_timing import GifTimingError, patch_last_frame_delay, read_frame_delays_cs
 from .integrity import IntegrityError, validate_output_integrity
 from .models import ConversionResult, ConversionSettings, GifMotionMode, MediaInfo, OutputFormat, SizingMode
 from .motion_planner import (
     MIN_LINEAR_GAIN,
+    DecimationCandidate,
     actual_gain_is_worthwhile,
-    evaluate_measured_candidate,
-    expected_uniform_frame_count,
-    predicted_long_edge,
+    evaluate_measured_decimation,
+    predicted_decimated_long_edge,
     preferred_long_edge,
-    uniform_gif_fps_candidates,
+    source_decimation_candidates,
 )
 from .probe import ProbeError, probe_media
 from .size_units import mb_to_bytes
@@ -27,15 +28,18 @@ class AdaptiveConverter(Converter):
     """GIF motion/resolution balancing layered over the proven Converter behavior.
 
     Preserve-motion conversions call the production Converter unchanged. Favor
-    resolution first produces the proven full-FPS result, then measures real gifski
-    cost at lower uniform cadences before deciding whether any FPS sacrifice buys a
-    meaningful spatial improvement.
+    resolution first produces the proven full-FPS result, then tests exact source-
+    frame decimation. No synthetic intermediate frames are created in dev.13.
     """
 
     def __init__(self, tools) -> None:
         super().__init__(tools)
+        self._adaptive_stride: int | None = None
         self._adaptive_target_fps: float | None = None
+        self._adaptive_effective_fps: float | None = None
         self._adaptive_expected_frames: int | None = None
+        self._adaptive_delay_cs: int | None = None
+        self._adaptive_final_delay_cs: int | None = None
 
     def convert(
         self,
@@ -70,7 +74,7 @@ class AdaptiveConverter(Converter):
             baseline_progress = None
             if progress:
                 baseline_progress = lambda fraction, _label: progress(
-                    min(0.35, max(0.0, fraction) * 0.35),
+                    min(0.30, max(0.0, fraction) * 0.30),
                     "Measuring original motion",
                 )
 
@@ -86,48 +90,50 @@ class AdaptiveConverter(Converter):
             baseline_edge = max(baseline.width, baseline.height)
             native_edge = max(native.width, native.height)
 
-            # Do not sacrifice motion when the full-FPS result already reaches the
-            # useful/native spatial target.
             if baseline_edge >= preferred_long_edge(native_edge):
                 return self._commit_baseline(baseline, output, baseline.passes, progress)
 
-            candidates: list[tuple[float, int]] = []
-            for candidate_fps, delay_cs in uniform_gif_fps_candidates(info.fps):
-                # Skip rates that cannot possibly reach the minimum gain even under
-                # the optimistic frame-count-only model. Real encoded sampling below
-                # is the authority for candidates that survive this cheap screen.
-                ideal_edge = predicted_long_edge(
+            source_delay_cs = self._source_delay_centiseconds(info)
+            if source_delay_cs is None:
+                return self._commit_baseline(baseline, output, baseline.passes, progress)
+
+            candidates: list[DecimationCandidate] = []
+            for candidate in source_decimation_candidates(
+                source_fps=info.fps,
+                source_frame_count=info.frame_count,
+                source_delay_centiseconds=source_delay_cs,
+            ):
+                ideal_edge = predicted_decimated_long_edge(
                     baseline_edge,
-                    info.fps,
-                    candidate_fps,
+                    info.frame_count,
+                    candidate.expected_frames,
                     native_edge,
                 )
                 ideal_gain = ideal_edge / baseline_edge - 1.0
                 if ideal_gain + 1e-9 >= MIN_LINEAR_GAIN:
-                    candidates.append((candidate_fps, delay_cs))
+                    candidates.append(candidate)
 
             if not candidates:
                 return self._commit_baseline(baseline, output, baseline.passes, progress)
 
-            selected_plan = None
-            probe_passes = 0
-            probe_span = 0.20 / len(candidates)
+            total_passes = baseline.passes
+            slot_span = 0.70 / len(candidates)
 
-            for index, (candidate_fps, delay_cs) in enumerate(candidates):
-                expected_frames = expected_uniform_frame_count(info.duration_s, candidate_fps)
-                if expected_frames <= 0:
-                    continue
-
-                self._adaptive_target_fps = candidate_fps
-                self._adaptive_expected_frames = expected_frames
-                sample_output = temp_dir / f"probe-{delay_cs}cs.gif"
+            # Important: do not stop after a predicted candidate fails its full fit.
+            # Dev.10-dev.12 could select a higher-FPS probe, fail the final gain veto,
+            # then immediately return the baseline without ever testing deeper plans.
+            # Each candidate now gets its own measured probe and, when justified, a
+            # full fit before the next lower-motion plan is considered.
+            for index, candidate in enumerate(candidates):
+                slot_start = 0.30 + index * slot_span
+                self._set_decimation_state(candidate)
+                sample_output = temp_dir / f"probe-stride-{candidate.stride}.gif"
 
                 sample_progress = None
                 if progress:
-                    start = 0.35 + index * probe_span
-                    sample_progress = lambda fraction, _label, start=start: progress(
-                        start + min(probe_span, max(0.0, fraction) * probe_span),
-                        f"Measuring {candidate_fps:.2f} FPS tradeoff",
+                    sample_progress = lambda fraction, _label, start=slot_start: progress(
+                        start + min(slot_span * 0.35, max(0.0, fraction) * slot_span * 0.35),
+                        f"Measuring frame stride {candidate.stride}",
                     )
 
                 try:
@@ -143,85 +149,93 @@ class AdaptiveConverter(Converter):
                 except ConversionCancelled:
                     raise
                 except ConversionError:
-                    # Favor resolution is optional. A failed experimental cadence
-                    # must never make an otherwise valid Preserve-motion conversion
-                    # fail; simply try the next clean cadence or fall back.
                     self._clear_adaptive_state()
                     continue
 
-                probe_passes += 1
-                selected_plan = evaluate_measured_candidate(
+                total_passes += 1
+                plan = evaluate_measured_decimation(
                     source_fps=info.fps,
-                    target_fps=candidate_fps,
-                    delay_centiseconds=delay_cs,
+                    candidate=candidate,
                     baseline_long_edge=baseline_edge,
                     native_long_edge=native_edge,
                     sample_size_bytes=sample_output.stat().st_size,
                     max_bytes=max_bytes,
                 )
-                if selected_plan is not None:
-                    break
-                self._clear_adaptive_state()
+                if plan is None:
+                    self._clear_adaptive_state()
+                    continue
 
-            if selected_plan is None:
-                self._clear_adaptive_state()
-                return self._commit_baseline(
-                    baseline,
-                    output,
-                    baseline.passes + probe_passes,
-                    progress,
-                )
-
-            expected_frames = expected_uniform_frame_count(
-                info.duration_s,
-                selected_plan.target_fps,
-            )
-            self._adaptive_target_fps = selected_plan.target_fps
-            self._adaptive_expected_frames = expected_frames
-
-            adaptive_output = temp_dir / "adaptive.gif"
-            try:
+                adaptive_output = temp_dir / f"adaptive-stride-{candidate.stride}.gif"
                 adaptive_progress = None
                 if progress:
-                    adaptive_progress = lambda fraction, _label: progress(
-                        0.55 + min(0.45, max(0.0, fraction) * 0.45),
-                        f"Favoring resolution at {selected_plan.target_fps:.2f} FPS",
+                    adaptive_progress = lambda fraction, _label, start=slot_start: progress(
+                        start + slot_span * 0.35 + min(
+                            slot_span * 0.65,
+                            max(0.0, fraction) * slot_span * 0.65,
+                        ),
+                        f"Favoring resolution with every {candidate.stride}th source frame",
                     )
 
-                result = self._encode_gif_to_size(
-                    info,
-                    settings,
-                    adaptive_output,
-                    native.width,
-                    native.height,
-                    max_bytes,
-                    adaptive_progress,
-                )
-                total_passes = baseline.passes + probe_passes + result.passes
+                try:
+                    result = self._encode_gif_to_size(
+                        info,
+                        settings,
+                        adaptive_output,
+                        native.width,
+                        native.height,
+                        max_bytes,
+                        adaptive_progress,
+                    )
+                except ConversionCancelled:
+                    raise
+                except ConversionError:
+                    self._clear_adaptive_state()
+                    continue
 
-                # Planning is deliberately conservative, but the final measured
-                # result still has veto power. Never keep a lower-FPS output unless
-                # it actually earns the same meaningful spatial gain promised to the
-                # user by Favor resolution.
+                total_passes += result.passes
                 if not actual_gain_is_worthwhile(
                     baseline_long_edge=baseline_edge,
                     adaptive_long_edge=max(result.width, result.height),
                 ):
-                    return self._commit_baseline(
-                        baseline,
-                        output,
-                        total_passes,
-                        progress,
-                    )
+                    self._clear_adaptive_state()
+                    continue
 
                 if output.exists():
                     output.unlink()
                 shutil.copy2(result.output, output)
-                if progress:
-                    progress(1.0, f"Favoring resolution at {selected_plan.target_fps:.2f} FPS")
-                return replace(result, output=output, passes=total_passes)
-            finally:
+                effective_fps = candidate.effective_fps
                 self._clear_adaptive_state()
+                if progress:
+                    progress(1.0, f"Favoring resolution at {effective_fps:.2f} FPS")
+                return replace(result, output=output, passes=total_passes)
+
+            self._clear_adaptive_state()
+            return self._commit_baseline(baseline, output, total_passes, progress)
+
+    @staticmethod
+    def _source_delay_centiseconds(info: MediaInfo) -> int | None:
+        if not info.frame_durations_ms:
+            return None
+        shortest = min(info.frame_durations_ms)
+        longest = max(info.frame_durations_ms)
+        if longest - shortest > 1:
+            return None
+        average_ms = sum(info.frame_durations_ms) / len(info.frame_durations_ms)
+        delay_cs = int(round(average_ms / 10.0))
+        if delay_cs <= 0 or abs(average_ms - delay_cs * 10.0) > 0.5:
+            return None
+        expected_fps = 100.0 / delay_cs
+        if info.fps <= 0 or abs(info.fps - expected_fps) > 0.05:
+            return None
+        return delay_cs
+
+    def _set_decimation_state(self, candidate: DecimationCandidate) -> None:
+        self._adaptive_stride = candidate.stride
+        self._adaptive_target_fps = candidate.nominal_fps
+        self._adaptive_effective_fps = candidate.effective_fps
+        self._adaptive_expected_frames = candidate.expected_frames
+        self._adaptive_delay_cs = candidate.delay_centiseconds
+        self._adaptive_final_delay_cs = candidate.final_delay_centiseconds
 
     def _commit_baseline(
         self,
@@ -248,38 +262,34 @@ class AdaptiveConverter(Converter):
         progress: ProgressCallback | None,
         label: str,
     ) -> None:
-        if self._adaptive_target_fps is None:
+        if self._adaptive_stride is None:
             return super()._encode_gif(info, settings, output, width, height, progress, label)
 
-        if info.frame_durations_ms:
-            shortest = min(info.frame_durations_ms)
-            longest = max(info.frame_durations_ms)
-            if longest - shortest > 1:
-                raise ConversionError(
-                    "Favor resolution currently requires a constant-frame-rate animated WebP."
-                )
-
-        source_fps = info.fps
+        source_delay_cs = self._source_delay_centiseconds(info)
+        stride = self._adaptive_stride
         target_fps = self._adaptive_target_fps
         expected_frames = self._adaptive_expected_frames
-        if source_fps <= 0 or target_fps <= 0 or expected_frames is None:
-            raise ConversionError("Could not determine adaptive GIF timing.")
-        if target_fps >= source_fps - 1e-6:
-            raise ConversionError("Adaptive GIF target must be lower than the source frame rate.")
+        regular_delay_cs = self._adaptive_delay_cs
+        final_delay_cs = self._adaptive_final_delay_cs
+        if (
+            source_delay_cs is None
+            or target_fps is None
+            or expected_frames is None
+            or regular_delay_cs is None
+            or final_delay_cs is None
+        ):
+            raise ConversionError("Could not determine exact source-frame decimation timing.")
 
-        # Keep the proven spatial/framing filter untouched, then resample onto an
-        # exact uniform GIF cadence. Linear temporal blending avoids the irregular
-        # source-frame deletion cadence while producing substantially less synthetic
-        # motion detail than optical-flow interpolation for gifski to encode.
         from .filters import build_video_filter
 
         base_filter, _ = build_video_filter(info, settings.framing, width, height)
-        pad_seconds = max(2.0 / source_fps, 2.0 / target_fps)
+        # Keep every Nth original decoded frame. setpts + fps establishes a clean Y4M
+        # cadence for gifski without inventing intermediate image content.
         filter_graph = (
             f"{base_filter},"
-            f"tpad=stop_mode=clone:stop_duration={pad_seconds:.6f},"
-            f"minterpolate=fps={target_fps:.9f}:mi_mode=blend,"
-            f"trim=end_frame={expected_frames},setpts=PTS-STARTPTS"
+            f"select='not(mod(n\\,{stride}))',"
+            f"setpts=N/({target_fps:.9f}*TB),"
+            f"fps={target_fps:.9f}"
         )
 
         ffmpeg_cmd = self._base_ffmpeg(info, filter_graph) + [
@@ -347,6 +357,30 @@ class AdaptiveConverter(Converter):
                 raise ConversionError(
                     details or f"Adaptive GIF encoding failed (ffmpeg={ffmpeg_rc}, gifski={gifski_rc})"
                 )
+
+            # A source loop is not always divisible by the decimation stride. Keep
+            # every retained image at its exact source position, then shorten only
+            # the final GIF delay to the source-frame remainder. For Viper stride 2,
+            # this means 187 x 80 ms intervals plus one 40 ms closure interval: the
+            # original 15.0 s rotation and constant angular speed are preserved.
+            try:
+                delays = read_frame_delays_cs(output)
+                if len(delays) != expected_frames:
+                    raise GifTimingError(
+                        f"Expected {expected_frames} GIF frames, found {len(delays)}."
+                    )
+                if any(delay != regular_delay_cs for delay in delays):
+                    raise GifTimingError(
+                        "gifski did not produce the expected uniform pre-patch cadence."
+                    )
+                if final_delay_cs != regular_delay_cs:
+                    patch_last_frame_delay(output, final_delay_cs)
+            except GifTimingError as exc:
+                try:
+                    output.unlink(missing_ok=True)
+                except OSError:
+                    pass
+                raise ConversionError(f"Could not finalize adaptive GIF timing. {exc}") from exc
         finally:
             try:
                 gifski_log_path.unlink(missing_ok=True)
@@ -360,20 +394,39 @@ class AdaptiveConverter(Converter):
         expected_width: int,
         expected_height: int,
     ) -> None:
-        if self._adaptive_expected_frames is None or self._adaptive_target_fps is None:
+        if self._adaptive_expected_frames is None or self._adaptive_stride is None:
             return super()._verify_output(source_info, output, expected_width, expected_height)
 
+        expected_frames = self._adaptive_expected_frames
+        effective_fps = self._adaptive_effective_fps
+        regular_delay_cs = self._adaptive_delay_cs
+        final_delay_cs = self._adaptive_final_delay_cs
+        if effective_fps is None or regular_delay_cs is None or final_delay_cs is None:
+            raise ConversionError("Adaptive timing state is incomplete.")
+
         try:
+            delays = read_frame_delays_cs(output)
+            if len(delays) != expected_frames:
+                raise IntegrityError(
+                    f"Frame verification failed: expected {expected_frames} frames, output has {len(delays)}."
+                )
+            if any(delay != regular_delay_cs for delay in delays[:-1]):
+                raise IntegrityError("Adaptive GIF contains an unexpected internal frame delay.")
+            if delays[-1] != final_delay_cs:
+                raise IntegrityError(
+                    f"Adaptive GIF closure delay is {delays[-1]} cs; expected {final_delay_cs} cs."
+                )
+
             output_info = probe_media(self.tools.ffprobe, output)
             validate_output_integrity(
                 source_info,
                 output_info,
                 expected_width=expected_width,
                 expected_height=expected_height,
-                expected_frame_count=self._adaptive_expected_frames,
-                expected_fps=self._adaptive_target_fps,
+                expected_frame_count=expected_frames,
+                expected_fps=effective_fps,
             )
-        except (ProbeError, IntegrityError) as exc:
+        except (ProbeError, IntegrityError, GifTimingError) as exc:
             try:
                 output.unlink(missing_ok=True)
             except OSError:
@@ -394,5 +447,9 @@ class AdaptiveConverter(Converter):
         return result
 
     def _clear_adaptive_state(self) -> None:
+        self._adaptive_stride = None
         self._adaptive_target_fps = None
+        self._adaptive_effective_fps = None
         self._adaptive_expected_frames = None
+        self._adaptive_delay_cs = None
+        self._adaptive_final_delay_cs = None
