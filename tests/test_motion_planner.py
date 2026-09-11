@@ -10,12 +10,15 @@ from polymorph.motion_planner import (
 
 
 class MotionPlannerTests(unittest.TestCase):
-    def test_25fps_has_uniform_20_and_16_67_candidates(self):
+    def test_25fps_has_uniform_candidates_down_to_12_5(self):
         candidates = uniform_gif_fps_candidates(25.0)
-        self.assertEqual(len(candidates), 2)
+        self.assertEqual(len(candidates), 4)
         self.assertEqual(candidates[0], (20.0, 5))
         self.assertAlmostEqual(candidates[1][0], 100.0 / 6.0)
         self.assertEqual(candidates[1][1], 6)
+        self.assertAlmostEqual(candidates[2][0], 100.0 / 7.0)
+        self.assertEqual(candidates[2][1], 7)
+        self.assertEqual(candidates[3], (12.5, 8))
 
     def test_60fps_candidates_stay_uniform_and_nearest_first(self):
         self.assertEqual(
@@ -26,6 +29,8 @@ class MotionPlannerTests(unittest.TestCase):
                 (25.0, 4),
                 (20.0, 5),
                 (100.0 / 6.0, 6),
+                (100.0 / 7.0, 7),
+                (12.5, 8),
             ],
         )
 
@@ -47,8 +52,8 @@ class MotionPlannerTests(unittest.TestCase):
     def test_lower_uniform_candidate_is_accepted_when_measured_cost_earns_gain(self):
         plan = evaluate_measured_candidate(
             source_fps=25.0,
-            target_fps=100.0 / 6.0,
-            delay_centiseconds=6,
+            target_fps=100.0 / 7.0,
+            delay_centiseconds=7,
             baseline_long_edge=1552,
             native_long_edge=2048,
             sample_size_bytes=78_000_000,
@@ -56,8 +61,8 @@ class MotionPlannerTests(unittest.TestCase):
         )
         self.assertIsNotNone(plan)
         assert plan is not None
-        self.assertAlmostEqual(plan.target_fps, 100.0 / 6.0)
-        self.assertEqual(plan.delay_centiseconds, 6)
+        self.assertAlmostEqual(plan.target_fps, 100.0 / 7.0)
+        self.assertEqual(plan.delay_centiseconds, 7)
         self.assertGreaterEqual(plan.predicted_long_edge, 1700)
 
     def test_native_resolution_never_accepts_adaptive_candidate(self):
@@ -93,6 +98,8 @@ class MotionPlannerTests(unittest.TestCase):
     def test_expected_uniform_frame_counts(self):
         self.assertEqual(expected_uniform_frame_count(15.0, 20.0), 300)
         self.assertEqual(expected_uniform_frame_count(15.0, 100.0 / 6.0), 250)
+        self.assertEqual(expected_uniform_frame_count(15.0, 100.0 / 7.0), 214)
+        self.assertEqual(expected_uniform_frame_count(15.0, 12.5), 188)
 
 
 if __name__ == "__main__":
