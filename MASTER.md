@@ -5,8 +5,8 @@
 - Project: Polymorph
 - Repository: `Knight-Witch/Polymorph`
 - Platform target: Windows 10/11 x64
-- Status: functional scaffold on `dev`; MP4 human-validated; Preserve-motion GIF quality/smoothness human-validated; decimal-MB ceiling validated; updater hardening validated; dev.9 full-resolution interpolation visually validated; dev.10/dev.11 measured adaptive fallbacks human-validated; dev.12 tests lower-complexity uniform temporal blending for Favor resolution / no public release
-- Current development version: `0.1.0-dev.12`
+- Status: functional scaffold on `dev`; MP4 human-validated; Preserve-motion GIF quality/smoothness human-validated; decimal-MB ceiling validated; updater hardening validated; dev.9 full-resolution interpolation visually validated; dev.10-dev.12 adaptive fallbacks human-validated; dev.13 tests exact source-frame decimation for Favor resolution / no public release
+- Current development version: `0.1.0-dev.13`
 
 ## Canonical conversion behavior
 
@@ -30,17 +30,14 @@
 - Available only for GIF + Fit under file size.
 - Starts from the Preserve-motion fitted result.
 - Preferred long edge remains native resolution capped at 2048 px; never upscale.
-- Reduced rates must use uniform GIF-centisecond cadences (`100 / N` FPS).
-- Candidate rates are measured nearest the source FPS first rather than selected from frame-count math alone.
-- For each candidate, Polymorph performs one real gifski encode at the Preserve-motion dimensions to measure actual encoded byte cost before deciding whether any FPS sacrifice is worthwhile.
+- Dev.9-dev.12 proved that uniformly synthesized lower-FPS frames can erase the expected byte savings under gifski, so dev.13 does not synthesize intermediate frames.
+- Dev.13 measures exact source-frame decimation candidates instead: every 2nd source frame first, then every 3rd frame while the effective motion remains above the automatic 8 FPS floor.
+- Candidate samples are encoded at the Preserve-motion dimensions and measured by real gifski byte cost.
 - The patched-Python 97/99 byte target is used to project how much spatial resolution that measured cost can realistically buy.
-- A candidate must predict roughly 8% or greater linear spatial gain.
-- The first/highest candidate that earns the gain is selected, minimizing temporal sacrifice.
-- For a 25 FPS source, the current automatic cadence ladder is 20 FPS (50 ms), 16.67 FPS (60 ms), 14.29 FPS (70 ms), then 12.5 FPS (80 ms).
-- Dev.12 uses exact-timestamp linear temporal blending for reduced-FPS candidates instead of optical-flow motion compensation. The cadence remains uniform; no periodic source-frame deletion is used.
-- Pads the final source frame for interpolation lookahead and trims to the exact planned output frame count.
-- Keeps gifski quality 100, `--extra`, explicit width, infinite repeat, and post-encode integrity verification.
-- After the full adaptive size fit, a second measured-gain guard discards the lower-FPS output and returns Preserve motion unless the finished image is actually about 8% larger linearly.
+- A candidate must predict roughly 8% or greater linear spatial gain before the full adaptive size search runs.
+- If a full candidate fit fails the same realized-gain test, Polymorph continues to the next deeper stride rather than immediately returning the baseline.
+- If the source frame count is not divisible by the selected stride, only the final GIF delay is shortened to the exact source-frame remainder so the loop keeps its original total duration/angular speed.
+- Keeps gifski quality 100, `--extra`, explicit width, infinite repeat, dev.8 smart-fit sizing, and post-encode integrity verification.
 
 ### MP4
 
@@ -64,17 +61,15 @@
 
 ## Adaptive motion validation
 
-- Real Viper source: 2048x2048, 375 frames, 25 FPS, 15.0 s.
+- Real Viper source: 2048x2048, 375 frames, 25 FPS, 15.0 s, every source frame 40 ms.
 - Simple 25 -> 20 frame selection showed a strong repeating motion-change spike every fourth interval.
 - Motion-compensated interpolation removed that periodic cadence spike in a 512px diagnostic.
-- Dev.9 full-resolution 20 FPS motion interpolation was reported by the user as looking **really good**.
-- Dev.9 still produced `1552x1552`, i.e. no spatial gain over Preserve motion.
-- User-reported dev.9 completion size was `89.2 MB` under the then-existing binary-MiB display bug, corresponding to roughly 93.5 decimal MB and the optimizer's 93 MB acceptance region.
-- Diagnosis: motion-compensated synthesized frames are materially more expensive for gifski than the naive frame-count ratio predicted; frame-count math is therefore unsuitable as the authority for adaptive cadence selection.
-- Dev.10 switched to measured candidate cost and final actual-gain veto.
-- Human dev.10 Viper result was `1552x1552 • 93.6 MB • 25 FPS`, confirming both 20 FPS and 16.67 FPS were correctly rejected when they could not buy a meaningful spatial increase.
-- Human dev.11 Viper result was again `1552x1552 • 93.6 MB • 25 FPS`, confirming 14.29 FPS and 12.5 FPS optical-flow candidates also failed to earn the 8% spatial-gain threshold.
-- Local comparison against the full-frame dev.11 Viper GIF showed exact-timestamp linear temporal blending produces essentially the same uniform 20 FPS cadence as motion compensation in measured adjacent-frame energy, while avoiding optical-flow warping/detail synthesis. Dev.12 tests whether that lower-complexity resampling is materially more compressible under gifski.
+- Dev.9 full-resolution 20 FPS motion interpolation was reported by the user as looking **really good**, but still produced `1552x1552`, i.e. no spatial gain.
+- Dev.10 changed selection to measured candidate cost and final actual-gain veto; Viper returned `1552x1552 • 93.6 MB • 25 FPS`.
+- Dev.11 extended optical-flow probing through 12.5 FPS; Viper again returned the identical 25 FPS baseline.
+- Dev.12 replaced optical flow with lower-complexity temporal blending; Viper again returned the exact same output. The dev.11 and dev.12 user-supplied GIFs are byte-for-byte identical: 93,630,962 bytes, SHA-256 `dbfd1be7211b801f3a3a8d0ffaaf1058a1974f6b27141ef5f3be5ce55452e5af`, 375 frames at 40 ms.
+- Conclusion: the final adaptive output was repeatedly being discarded and the baseline copied back out. Synthetic even-timestamp frames also fail to create the desired compression advantage on this workload.
+- Dev.13 switches to original-source-frame decimation. For Viper stride 2 retains 188 original frames. The ordinary interval is 80 ms; because 375 is odd, the final loop closure is one source-frame step and therefore gets a 40 ms final delay. Total duration remains exactly 15.0 s and angular speed remains constant.
 
 ## v1 UI scope
 
@@ -104,10 +99,9 @@
 
 ## Known follow-ups
 
-- Run full Windows CI for dev.12, including the 12.5 FPS uniform-blend smoke path and packaged adaptive UI smoke checks.
-- Retest real Viper at GIF / Original / 99 MB / Favor resolution. Completion exposes final dimensions, decimal MB, and selected effective FPS.
-- If dev.12 selects a reduced FPS, validate both spatial gain and whether temporal blending introduces visible ghosting/softening around thin geometry, hair, sword edges, cape/silhouette, and the loop seam.
-- If dev.12 again returns 25 FPS, treat that as evidence that synthesized even-timestamp frames in general do not provide enough gifski savings on Viper; the next design branch should evaluate mathematically exact source-frame decimation cadences rather than keep lowering interpolated FPS.
+- Run full Windows CI for dev.13, including exact every-second-frame decimation, final-delay patch verification, standard Preserve-motion/MP4 gates, packaged app smoke, installer, and checksum.
+- Retest real Viper at GIF / Original / 99 MB / Favor resolution. The expected meaningful difference is a lower retained-frame count and larger spatial output; if dev.13 still returns the exact 25 FPS baseline, inspect the measured stride sample instead of changing interpolation again.
+- If stride 2 is selected, validate whether ~12.53 effective FPS is acceptably smooth at the recovered resolution and whether the single 40 ms closure interval is visually seamless.
 - If adaptive behavior is validated, test at least one harder HeroForge spin with thin geometry/hair/transparent or overlapping elements before stable promotion.
 - Favor resolution performs extra measurement encodes by design; optimize conversion time only after cadence/result behavior is validated.
 - First public release still requires a deliberate project-license choice and final release packaging/release-workflow review.
