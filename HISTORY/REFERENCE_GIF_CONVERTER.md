@@ -50,7 +50,7 @@ The user later supplied the actual Viper source WebP plus the OG output GIF. Dir
 - frame retention: exactly 80%;
 - effective OG cadence: exactly 20 FPS.
 
-The OG GIF frame-delay pattern contains 40 ms intervals with periodic 80 ms gaps, matching the subtle micro-skip pattern expected from frame removal rather than uniformly synthesized 20 FPS motion. This independently confirms the CI timing diagnosis on the real workload.
+The OG GIF frame-delay pattern contains 40 ms intervals with periodic 80 ms gaps, matching the subtle micro-skip pattern expected from frame removal rather than evenly spaced synthesized 20 FPS motion. This independently confirms the CI timing diagnosis on the real workload.
 
 ## Human validation history
 
@@ -87,18 +87,32 @@ The OG GIF frame-delay pattern contains 40 ms intervals with periodic 80 ms gaps
 - The same Viper conversion remained 1552x1552.
 - Conclusion: the current full-frame result is byte-limited by retaining 375 frames, not materially limited by the optimizer search.
 
-## Adaptive resolution-favoring direction
+## Adaptive resolution-favoring history
 
 - Preserve motion remains the default and continues to retain every source frame.
-- Dev.9 introduces an explicitly user-selected experimental Favor resolution mode.
-- Favor resolution does not reproduce the OG periodic frame deletion. It uses motion interpolation to synthesize evenly spaced lower-FPS frames.
-- The first automatic floor is 20 FPS and reduced rates are limited to uniform GIF-centisecond cadences.
-- A real-Viper 512px diagnostic showed ordinary frame selection had a strong repeating motion-change spike, while motion interpolation removed that cadence pattern; full-resolution human validation is still required.
-- Detailed adaptive diagnostic: `HISTORY/DIAGNOSTICS/GIF_ADAPTIVE_MOTION_2026-09-10.md`.
+- Dev.9 introduced explicit Favor resolution and used motion interpolation to synthesize even 20 FPS motion. The user reported the motion looked really good, but the output remained 1552x1552.
+- Dev.10 made actual gifski sample cost authoritative and fell back to the 25 FPS baseline when lower synthetic cadences could not buy the required spatial gain.
+- Dev.11 extended optical-flow candidates through 12.5 FPS; the result remained the exact 25 FPS baseline.
+- Dev.12 replaced optical-flow synthesis with temporal blending; the dev.11 and dev.12 user outputs were byte-for-byte identical 25 FPS baselines, proving the candidate path was again discarded.
+- Synthetic intermediate frames therefore do not currently provide a useful compression/resolution trade on Viper.
+
+## Dev.13 exact-decimation boundary
+
+Dev.13 changes only the experimental Favor-resolution strategy. It no longer creates synthetic frames.
+
+- Candidate plans retain every Nth original source frame.
+- Real gifski sample cost remains authoritative.
+- The patched-Python spatial smart-fit search, quality 100, `--extra`, explicit width, yuv420p handoff, and 99 MB ceiling remain unchanged.
+- For a constant-speed turntable, integer-stride source-frame retention keeps every retained image on a real source angle.
+- When source frame count is not divisible by the stride, the last loop interval spans fewer source-angle steps than the ordinary interval. Dev.13 compensates by losslessly shortening only the final GIF delay so angular speed and total loop duration remain exact.
+- Viper stride 2 therefore retains 188 original frames: 187 intervals at 80 ms plus one 40 ms closure interval, totaling exactly 15.0 s.
+- The output's average displayed FPS is `188 / 15 = 12.5333`, but there is no periodic 1/2-frame-step deletion cadence and no blended/warped image synthesis.
 
 ## Current boundary
 
 - Preserve motion must not reproduce OG frame resampling silently.
 - OG 1756px is not a valid full-frame 99 MB parity target.
-- Favor resolution may lower FPS only because the user explicitly selected that tradeoff, and it must use uniform interpolation rather than uneven deletion.
+- Favor resolution may reduce retained frames only because the user explicitly selected that tradeoff.
+- The experimental mode must not use the OG's periodic uneven frame-loss cadence.
+- Dev.13's exact source-frame decimation + loop-delay correction requires human validation before it can be considered stable.
 - Any future advanced FPS control remains deferred until the adaptive automatic mode is validated.
