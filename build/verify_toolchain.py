@@ -9,10 +9,14 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw
 
-FRAME_COUNT = 6
+from polymorph.gif_timing import patch_last_frame_delay, read_frame_delays_cs
+
+FRAME_COUNT = 5
 FPS = 25
 ADAPTIVE_FPS = 12.5
 ADAPTIVE_FRAMES = 3
+ADAPTIVE_DELAY_CS = 8
+ADAPTIVE_FINAL_DELAY_CS = 4
 EXPECTED_SIZE = (80, 64)
 
 
@@ -130,14 +134,14 @@ def verify(ffmpeg: Path, ffprobe: Path, gifski: Path, sample_out: Path | None = 
                 f"got {gif_w}x{gif_h}/{gif_frames}"
             )
 
-        # Verify the deepest clean cadence currently permitted by Favor resolution:
-        # uniform temporal blending, end lookahead padding, exact frame trim, and
-        # explicit target FPS handed to gifski.
+        # Favor-resolution smoke: retain every second decoded source frame, establish
+        # the 12.5 FPS Y4M cadence without synthesis, then patch only the final GIF
+        # delay so the odd five-frame source closes at its original 200 ms duration.
         adaptive_filter = (
             spatial_filter
-            + ",tpad=stop_mode=clone:stop_duration=0.160000"
-            + f",minterpolate=fps={ADAPTIVE_FPS:.9f}:mi_mode=blend"
-            + f",trim=end_frame={ADAPTIVE_FRAMES},setpts=PTS-STARTPTS"
+            + ",select='not(mod(n\\,2))'"
+            + f",setpts=N/({ADAPTIVE_FPS:.9f}*TB)"
+            + f",fps={ADAPTIVE_FPS:.9f}"
         )
         adaptive_ffmpeg = [
             str(ffmpeg), "-hide_banner", "-loglevel", "error", "-i", str(source),
@@ -155,10 +159,21 @@ def verify(ffmpeg: Path, ffprobe: Path, gifski: Path, sample_out: Path | None = 
         )
         if ffmpeg_rc != 0 or gifski_rc != 0:
             raise RuntimeError(
-                "Adaptive GIF interpolation smoke test failed\n"
+                "Adaptive GIF decimation smoke test failed\n"
                 f"ffmpeg={ffmpeg_rc}: {ffmpeg_err.decode(errors='replace')}\n"
                 f"gifski={gifski_rc}: {gifski_err.decode(errors='replace')}"
             )
+
+        pre_patch_delays = read_frame_delays_cs(adaptive_gif_out)
+        if pre_patch_delays != [ADAPTIVE_DELAY_CS] * ADAPTIVE_FRAMES:
+            raise RuntimeError(
+                f"Adaptive pre-patch timing mismatch: {pre_patch_delays}"
+            )
+        patch_last_frame_delay(adaptive_gif_out, ADAPTIVE_FINAL_DELAY_CS)
+        adaptive_delays = read_frame_delays_cs(adaptive_gif_out)
+        if adaptive_delays != [8, 8, 4]:
+            raise RuntimeError(f"Adaptive closure timing mismatch: {adaptive_delays}")
+
         adaptive_w, adaptive_h, adaptive_frames = stream_info(ffprobe, adaptive_gif_out)
         if (adaptive_w, adaptive_h) != EXPECTED_SIZE or adaptive_frames != ADAPTIVE_FRAMES:
             raise RuntimeError(
@@ -179,7 +194,8 @@ def verify(ffmpeg: Path, ffprobe: Path, gifski: Path, sample_out: Path | None = 
 
         print(
             f"Toolchain smoke test passed: preserve={FRAME_COUNT} frames, "
-            f"adaptive={ADAPTIVE_FRAMES} evenly-resampled frames, MP4={FRAME_COUNT} frames"
+            f"adaptive={ADAPTIVE_FRAMES} source-decimated frames with exact closure timing, "
+            f"MP4={FRAME_COUNT} frames"
         )
 
 
