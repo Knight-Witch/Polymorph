@@ -1,5 +1,47 @@
 # Changelog
 
+## POLY-2026-09-11-022 — 2026-09-11 00:22 PDT — Extend measured Favor resolution cadence ladder
+
+### Summary
+
+- Recorded the dev.10 Viper human result: `1552x1552 • 93.6 MB • 25 FPS` with Favor resolution selected.
+- Confirmed dev.10 behaved correctly: neither measured 20 FPS nor 16.67 FPS candidate predicted enough real byte savings to earn the existing ~8% linear-resolution threshold, so Polymorph kept the original 25 FPS Preserve-motion result.
+- Kept real encoded sample cost as the authority; no return to frame-count-only FPS prediction.
+- Extended only the clean uniform cadence search floor for the explicit Favor-resolution mode. A 25 FPS source now tests `20 -> 16.67 -> 14.29 -> 12.5 FPS`, corresponding to fixed 50/60/70/80 ms GIF frame delays.
+- The first/highest cadence whose measured sample predicts at least ~8% linear spatial gain is still selected; if none earns that gain, Polymorph still returns the 25 FPS baseline.
+- Preserved the final actual-gain veto, so even a selected lower cadence is discarded unless the completed adaptive fit really achieves the promised spatial increase.
+- No interpolation algorithm change: FFmpeg `minterpolate` motion compensation, end lookahead padding, exact planned frame trimming, gifski quality 100, gifski 1.32.0, `--extra`, explicit width, infinite repeat, dev.8 smart-fit sizing, and integrity verification remain unchanged.
+- Updated the Windows toolchain smoke gate to exercise the deepest permitted 12.5 FPS / 80 ms cadence.
+- Preserve-motion GIF, MP4, framing, updater, preview, UI layout, and public release state remain unchanged.
+- Incremented the development tester to `0.1.0-dev.11`.
+
+### Touched files
+
+- `src/polymorph/motion_planner.py`
+- `tests/test_motion_planner.py`
+- `build/verify_toolchain.py`
+- `build/README.md`
+- `src/polymorph/__init__.py`
+- `src/polymorph/constants.py`
+- `pyproject.toml`
+- `installer/Polymorph.iss`
+- `docs/UX_SPEC.md`
+- `docs/ARCHITECTURE.md`
+- `HISTORY/DIAGNOSTICS/GIF_ADAPTIVE_MOTION_2026-09-10.md`
+- `MASTER.md`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert this commit to restore dev.10's measured 20/16.67 FPS search floor. Preserve-motion behavior and all non-adaptive conversion paths are independent of this change.
+
+### Test notes
+
+- Planner tests now require the 25 FPS uniform-cadence ladder to include 20, 16.67, 14.29, and 12.5 FPS in nearest-first order and cover exact 15-second expected frame counts for all four cadences.
+- Windows CI must pass the 12.5 FPS `minterpolate` toolchain smoke, standard Preserve-motion GIF/MP4 gates, packaged app smoke, installer build, checksum generation, and artifact upload before dev.11 is handed to the user.
+- Human Viper validation is only needed for the final chosen result. If dev.11 again reports 25 FPS, treat the interpolation strategy as unable to buy a worthwhile spatial gain on this workload under current quality/size constraints rather than continuing to lower FPS automatically.
+
 ## POLY-2026-09-10-021 — 2026-09-10 23:05 PDT — Measure adaptive GIF gains before reducing FPS
 
 ### Summary
