@@ -1,5 +1,18 @@
 # Polymorph Pre-Flight Log
 
+## PFC-2026-09-11-023 — Test lower-complexity uniform temporal blending
+
+- Target files: `src/polymorph/adaptive_converter.py`, Windows adaptive toolchain smoke coverage, development version metadata, adaptive architecture/UX/status/diagnostic docs, and required tracking files.
+- Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, `docs/UX_SPEC.md`, `HISTORY/REFERENCE_GIF_CONVERTER.md`, `HISTORY/DIAGNOSTICS/GIF_ADAPTIVE_MOTION_2026-09-10.md`, current adaptive converter/planner/integrity/size optimizer/UI/toolchain paths, and completed dev.11 Windows + Viper validation.
+- Human validation incorporated: dev.11 Favor resolution again completed the real Viper workload at `1552x1552 • 93.6 MB • 25 FPS`; the supplied GIF verifies 375 frames at uniform 40 ms timing over 15.0 s, so all 20/16.67/14.29/12.5 FPS optical-flow candidates were correctly rejected and Preserve motion was retained.
+- Diagnosis: lowering the optical-flow cadence further is not justified. Motion-compensated synthetic frames remain too expensive for gifski to earn the existing 8% spatial-gain threshold even at 12.5 FPS.
+- Local probe: using the dev.11 full-frame Viper GIF as a 25 FPS source surrogate, exact-timestamp `minterpolate=mi_mode=blend` at 20 FPS produced essentially the same uniform adjacent-frame cadence energy as the prior MCI path, and 768 px crop checks showed no obvious new periodic motion jump or gross ghosting in the sampled face/hair/cape/sword regions.
+- Connected modules reviewed: measured candidate-cost gate, 8% final actual-gain veto, exact planned frame-count integrity checks, GIF smart-fit search, Preserve-motion boundary, MP4 path, framing, packaged app/UI readout, and Windows toolchain smoke.
+- Conflict risks: temporal blending may introduce subtle ghosting/softening on thin or overlapping geometry; blend-resampled frames may still fail to save enough bytes; accidental regression of the validated Preserve-motion path.
+- Recommended action: keep the dev.11 FPS ladder, measured byte-cost authority, 8% predicted/final gain thresholds, 2048 px soft target, and fallback behavior unchanged; change only Favor-resolution reduced-FPS synthesis from motion-compensated MCI to exact-timestamp linear temporal blending; rebuild and retain the lower-FPS result only if the existing measured gates prove a real spatial benefit.
+- Versioning: increment development tester from `0.1.0-dev.11` to `0.1.0-dev.12`.
+- Unchanged: Preserve-motion GIF encoder/optimizer, gifski 1.32.0/quality 100/Y4M behavior, cadence ladder, MP4, framing, updater, preview, UI layout, visual skin, and public release state.
+
 ## PFC-2026-09-11-022 — Extend measured Favor resolution cadence ladder
 
 - Target files: adaptive motion planner tests, Windows adaptive toolchain smoke coverage, development version metadata, adaptive architecture/UX/status/diagnostic docs, and required tracking files.
@@ -122,7 +135,7 @@
 - Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, current `converter.py`, current `build/verify_toolchain.py`, and the validated standalone `HeroForge_WebP_to_Reddit_GIF.py` from File Library.
 - Connected modules reviewed: GIF size optimizer, gifski width/FPS arguments, post-encode dimension/frame/timing integrity checks, MP4 path, installer version metadata, Windows smoke pipeline.
 - Human validation: width-corrected Polymorph GIF was reported fantastic and visually identical to the standalone result, possibly smoother; measured output remained `1570x1570` versus standalone `1756x1756`, with only a possible subtle red/pink difference.
-- Diagnosis: the current Polymorph GIF shown in Windows Explorer is already about `93.8 MB`, so the remaining resolution gap is not plausibly explained by simple unused file-size headroom alone. The canonical standalone FFmpeg command does not force a YUV pixel format before `yuv4mpegpipe`; Polymorph uniquely forced `yuv444p`.
+- Diagnosis: the current Polymorph GIF shown in Windows Explorer is already about `93.8 MB`, so the remaining scale difference is not plausibly explained by simple unused file-size headroom alone. The canonical standalone FFmpeg command does not force a YUV pixel format before `yuv4mpegpipe`; Polymorph uniquely forced `yuv444p`.
 - Conflict risks: changing optimizer thresholds simultaneously would make the A/B result ambiguous; changing MP4 would disturb an already-validated output path.
 - Recommended action: remove only the forced GIF-path `yuv444p`, preserve explicit source FPS, gifski quality/extra/repeat/width settings and integrity verification, update the smoke test to exercise the same handoff, and retest the same HeroForge Viper source before touching optimizer logic.
 - Versioning: development tester incremented from `0.1.0-dev.1` to `0.1.0-dev.2` so the replacement installer is unambiguous.
