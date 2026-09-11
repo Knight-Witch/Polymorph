@@ -95,24 +95,40 @@ This is the intended Preserve-motion fallback. Neither 20 FPS nor 16.67 FPS demo
 
 This validates the dev.10 guard behavior on the Viper workload: the adaptive mode no longer lowers FPS simply because the user selected Favor resolution.
 
-## Dev.11 deeper clean-cadence search
+## Dev.11 deeper clean-cadence validation
 
-The Viper result also proves that the dev.10 automatic floor was too shallow to answer the user's full Favor-resolution request. Dev.11 keeps the same measured-cost authority and final actual-gain veto, but extends the clean uniform cadence ladder before giving up.
+Dev.11 extended the same measured-cost search to 14.29 FPS / 70 ms and 12.5 FPS / 80 ms. The user retested the same Viper source and again received:
 
-For a 25 FPS source the candidates are now tried in this order:
+- `1552x1552`
+- `93.6 MB` decimal
+- `25 FPS`
 
-- 20 FPS / 50 ms;
-- 16.67 FPS / 60 ms;
-- 14.29 FPS / 70 ms;
-- 12.5 FPS / 80 ms.
+The supplied output GIF independently verifies the final file is 1552x1552, 375 frames, every frame 40 ms, 15.0 s total, and 93,630,962 bytes. The adaptive fallback therefore preserved the complete original 25 FPS cadence exactly.
 
-The first/highest cadence whose real encoded sample predicts at least about 8% linear spatial gain is selected for the full adaptive size fit. If none earns the gain, the 25 FPS Preserve-motion output remains final. This preserves the user's stated priority: stay as close to source FPS as possible, move lower only when the measured spatial reward is actually worthwhile, and keep all reduced-FPS output on an even GIF cadence.
+This rules out the original hypothesis that simply probing progressively lower optical-flow cadences would eventually unlock a useful spatial increase on Viper. Even through 12.5 FPS, the motion-compensated synthesized frames remained too expensive for gifski to meet the 8% spatial-gain gate.
+
+## Dev.12 temporal-blend probe
+
+The next isolated variable is interpolation complexity, not a lower FPS floor.
+
+Using the user's dev.11 full-frame Viper GIF as a 25 FPS source surrogate, 20 FPS optical-flow (`mi_mode=mci`) and exact-timestamp linear temporal blending (`mi_mode=blend`) were compared on downscaled diagnostic samples.
+
+At 256px / 20 FPS, adjacent-frame cadence energy was effectively identical:
+
+- MCI repeating four-phase energy: `[0.53750, 0.54245, 0.54592, 0.53687]`.
+- Blend repeating four-phase energy: `[0.53751, 0.54239, 0.54587, 0.53700]`.
+
+A 768px crop/contact-sheet check around face, hair/fur, torso, cape and sword showed the blend and MCI frames to be visually extremely close over the sampled segment; no obvious periodic jump was introduced by blending.
+
+The key remaining question is compression, not cadence: optical-flow synthesis may create high-frequency warping/detail that is expensive for gifski even when the result looks smooth. Dev.12 therefore keeps the same measured byte-cost gate, 8% predicted-gain threshold, 8% final realized-gain veto, FPS ladder, size optimizer, quality 100 and fallback behavior, but changes only the reduced-FPS resampling method from motion-compensated interpolation to exact-timestamp linear temporal blending.
+
+If blend does not produce a meaningful spatial gain either, the next design branch should stop lowering synthesized FPS and evaluate mathematically exact source-frame decimation cadences instead.
 
 ## Release boundary
 
 - Preserve motion remains the default and keeps the proven full-frame path unchanged.
 - Favor resolution remains experimental.
-- No automatic mode may use uneven frame deletion.
-- Full-resolution 20 FPS interpolation quality is human-validated on Viper.
-- Dev.10's no-benefit fallback is human-validated on Viper.
-- Dev.11 requires human validation only if it actually selects 14.29 FPS or 12.5 FPS; if it again returns 25 FPS, that confirms this interpolation strategy cannot buy a worthwhile spatial increase for this workload under the current 99 MB / quality-100 constraints.
+- No automatic mode may use uneven periodic frame deletion.
+- Full-resolution 20 FPS optical-flow interpolation quality is human-validated on Viper.
+- Dev.10 and dev.11 no-benefit fallback behavior is human-validated on Viper.
+- Dev.12 requires human validation only if it actually selects a reduced FPS and produces a larger image; otherwise its fallback is expected to remain the validated 25 FPS result.
