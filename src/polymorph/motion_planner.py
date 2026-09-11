@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from .size_optimizer import reference_thresholds
 
 PREFERRED_LONG_EDGE = 2048
-MIN_ADAPTIVE_FPS = 100.0 / 6.0  # 16.666... FPS / 60 ms GIF cadence.
+MIN_ADAPTIVE_FPS = 12.5  # 80 ms GIF cadence; Favor resolution only.
 MIN_LINEAR_GAIN = 0.08
 
 
@@ -38,7 +38,9 @@ def uniform_gif_fps_candidates(
 
     GIF frame delays are centiseconds. Restricting adaptive candidates to 100/N FPS
     gives every output frame the same duration instead of alternating short/long
-    delays that create a visible cadence wobble.
+    delays that create a visible cadence wobble. Favor resolution keeps stepping
+    down this clean ladder only until real encoded measurements prove a worthwhile
+    spatial gain; it never blindly selects the floor.
     """
     if source_fps <= 0 or min_fps <= 0 or source_fps <= min_fps + 1e-6:
         return []
