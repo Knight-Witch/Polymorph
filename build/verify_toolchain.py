@@ -131,12 +131,12 @@ def verify(ffmpeg: Path, ffprobe: Path, gifski: Path, sample_out: Path | None = 
             )
 
         # Verify the deepest clean cadence currently permitted by Favor resolution:
-        # final-size motion interpolation, end lookahead padding, exact frame trim,
-        # and explicit target FPS handed to gifski.
+        # uniform temporal blending, end lookahead padding, exact frame trim, and
+        # explicit target FPS handed to gifski.
         adaptive_filter = (
             spatial_filter
             + ",tpad=stop_mode=clone:stop_duration=0.160000"
-            + f",minterpolate=fps={ADAPTIVE_FPS:.9f}:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1"
+            + f",minterpolate=fps={ADAPTIVE_FPS:.9f}:mi_mode=blend"
             + f",trim=end_frame={ADAPTIVE_FRAMES},setpts=PTS-STARTPTS"
         )
         adaptive_ffmpeg = [
