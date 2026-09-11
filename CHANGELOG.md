@@ -1,5 +1,51 @@
 # Changelog
 
+## POLY-2026-09-10-021 — 2026-09-10 23:05 PDT — Measure adaptive GIF gains before reducing FPS
+
+### Summary
+
+- Recorded the dev.9 full-resolution Viper human test: motion-interpolated Favor resolution looked really good, but the result remained `1552x1552`, identical to Preserve motion.
+- Recorded that dev.9 displayed `89.2 MB` using the then-existing binary-MiB completion calculation; that corresponds to roughly 93.5 decimal MB, placing the result immediately in the GIF optimizer's 93 MB acceptance region rather than indicating large unused headroom.
+- Diagnosed the adaptive-planning regression: dev.9 selected 20 FPS from the theoretical `sqrt(source_fps / target_fps)` frame-count relationship, but motion-interpolated frames are materially more expensive for gifski than untouched source frames. Reducing frame count therefore did not produce the predicted byte savings or spatial gain.
+- Reworked Favor resolution planning so real encoded byte cost is authoritative. Polymorph now makes the normal Preserve-motion fit, then tests lower uniform GIF cadences nearest the source FPS by encoding each candidate once at the Preserve-motion dimensions and measuring its actual gifski size.
+- Candidate samples project achievable spatial size against the patched-Python `97/99` byte target and must predict roughly 8% or greater linear-resolution gain before Polymorph performs the full adaptive size search.
+- For a 25 FPS source, the clean automatic cadence ladder now tests 20 FPS / 50 ms first, then 16.67 FPS / 60 ms if 20 FPS does not earn the required real gain. The current automatic floor is 16.67 FPS.
+- Added a final actual-gain veto: even after a cadence passes the measured sample gate, Polymorph discards the completed reduced-FPS result and returns Preserve motion unless the final dimensions are actually about 8% larger linearly.
+- Kept motion-compensated `minterpolate`, even frame cadence, exact planned frame trimming, quality 100, gifski 1.32.0, `--extra`, explicit width, infinite repeat, dev.8 smart-fit sizing, and post-encode integrity checks unchanged.
+- Updated the adaptive completion line to show decimal MB and the actual effective output FPS, removing the remaining MiB-labeled-as-MB display mismatch for the development adaptive UI.
+- Extended the Windows toolchain smoke test to exercise the new 16.67 FPS / 60 ms clean cadence.
+- Preserve-motion GIF, MP4, framing, updater, preview, and visual skin remain unchanged.
+- Incremented the development tester to `0.1.0-dev.10`.
+
+### Touched files
+
+- `src/polymorph/motion_planner.py`
+- `src/polymorph/adaptive_converter.py`
+- `src/polymorph/ui/adaptive_main_window.py`
+- `tests/test_motion_planner.py`
+- `build/verify_toolchain.py`
+- `build/README.md`
+- `src/polymorph/__init__.py`
+- `src/polymorph/constants.py`
+- `pyproject.toml`
+- `installer/Polymorph.iss`
+- `docs/UX_SPEC.md`
+- `docs/ARCHITECTURE.md`
+- `HISTORY/DIAGNOSTICS/GIF_ADAPTIVE_MOTION_2026-09-10.md`
+- `MASTER.md`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert this commit to restore dev.9's 20-FPS theoretical adaptive planner and prior completion readout. Preserve-motion GIF, MP4, framing, updater hardening, and the dev.8 smart-fit optimizer are independent of this change.
+
+### Test notes
+
+- Planner regression tests cover rejection of a dev.9-like ~93.5 MB 20 FPS sample at 1552 px, acceptance of a lower uniform cadence when measured byte cost genuinely supports >=8% gain, the 25 FPS clean-cadence ladder, final actual-gain veto, and expected 20/16.67 FPS Viper frame counts.
+- Full Windows CI must pass the 16.67 FPS `minterpolate` toolchain smoke, standard Preserve-motion GIF/MP4 gates, packaged adaptive UI smoke, installer compilation, checksum generation, and artifact upload before dev.10 is handed to the user.
+- Human dev.10 Viper validation should report the completion line directly; it now exposes final dimensions, decimal MB, and selected effective FPS.
+
 ## POLY-2026-09-10-020 — 2026-09-10 21:12 PDT — Add adaptive Favor resolution GIF mode
 
 ### Summary

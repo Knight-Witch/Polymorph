@@ -1,5 +1,17 @@
 # Polymorph Pre-Flight Log
 
+## PFC-2026-09-10-021 — Measure adaptive GIF byte cost before sacrificing FPS
+
+- Target files: adaptive motion planner/converter/tests, adaptive UI completion readout, Windows adaptive smoke coverage, development version metadata, architecture/UX/status/adaptive-diagnostic docs, and required tracking files.
+- Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, `docs/UX_SPEC.md`, `HISTORY/REFERENCE_GIF_CONVERTER.md`, `HISTORY/DIAGNOSTICS/GIF_ADAPTIVE_MOTION_2026-09-10.md`, current adaptive converter/motion planner/size optimizer/size units/integrity/UI worker/toolchain smoke paths, and the completed dev.9 Windows + Viper human validation.
+- Human validation incorporated: dev.9 Favor resolution looked really good at full output resolution, but remained `1552x1552`; its completion line reported `89.2 MB` using the known binary-MiB display calculation, corresponding to roughly 93.5 decimal MB and the GIF optimizer's 93 MB acceptance region.
+- Diagnosis: the dev.9 planner assumed spatial gain from the 25/20 frame-count ratio, but motion-interpolated frames are materially more expensive for gifski than untouched source frames. A lower frame count therefore does not guarantee proportional byte savings or spatial recovery.
+- Connected modules reviewed: proven Preserve-motion GIF path, dev.8 smart-fit search, adaptive integrity verification, uniform interpolation, MP4 path, framing, decimal size units, UI settings/worker, packaging, updater boundaries.
+- Conflict risks: extra conversion time from candidate measurement encodes; 16.67 FPS may be visually less desirable even with even interpolation; accidentally retaining reduced FPS without real spatial benefit; accidental regression of Preserve motion.
+- Recommended action: measure each clean lower cadence with a real encode at the Preserve-motion dimensions; choose the highest FPS that predicts at least about 8% linear gain against the patched-Python 97/99 target; extend a 25 FPS source's automatic ladder from 20 FPS to 16.67 FPS only when 20 does not earn the gain; apply a final actual-gain veto/fallback to Preserve motion; report decimal MB and actual output FPS in the completion line.
+- Versioning: increment development tester from `0.1.0-dev.9` to `0.1.0-dev.10`.
+- Unchanged: Preserve-motion encoder/optimizer settings, GIF quality 100/gifski 1.32.0/Y4M behavior, MP4 encoding/sizing, framing, updater, preview behavior, existing visual skin, and public release state.
+
 ## PFC-2026-09-10-020 — Add experimental adaptive GIF motion/resolution mode
 
 - Target files: adaptive motion planner/converter/UI extension, models/integrity/tests, Windows toolchain and packaged-app smoke coverage, development version metadata, UX/architecture/status/reference/adaptive-diagnostic docs, and required tracking files.

@@ -20,7 +20,7 @@ Files -> Output Format -> Sizing Constraint -> GIF Priority -> Framing -> Polymo
 - Encoder quality remains fixed.
 - Resolution is automatically adjusted to fit.
 - Preserve motion keeps source timing/frame sequence fixed.
-- Favor resolution may intentionally reduce GIF FPS only through uniform motion interpolation when doing so yields a worthwhile spatial gain.
+- Favor resolution may intentionally reduce GIF FPS only through uniform motion interpolation when real encoded measurements show that doing so buys a worthwhile spatial gain.
 
 ### Set resolution
 
@@ -42,15 +42,21 @@ Visible only as meaningful controls for GIF + Fit under file size.
 
 ### Favor resolution
 
-- Experimental in dev.9 pending full-resolution human validation.
+- Experimental in dev.10 pending validation of the lower clean cadence selected when 20 FPS is not worthwhile.
 - The user does not enter an FPS or target pixel size.
-- Polymorph uses a soft 2048 px preferred long-edge target, capped by native source size.
-- It only sacrifices FPS when the predicted linear-resolution gain is about 8% or greater.
-- Automatic FPS never goes below 20 FPS in this first implementation.
+- Polymorph first creates the normal Preserve-motion fitted result.
+- It then tests lower uniform GIF cadences at that exact spatial size and measures the real gifski byte cost of the interpolated frames.
+- The first/highest lower FPS that predicts at least about 8% real linear-resolution gain is eligible for a full adaptive size search.
+- For a 25 FPS source, the automatic clean-cadence ladder is 20 FPS (50 ms) then 16.67 FPS (60 ms). The current automatic floor is 16.67 FPS.
 - Lower rates are restricted to uniform GIF-centisecond cadences (`100 / N` FPS) so every output frame has the same duration.
-- Polymorph chooses the highest eligible FPS that reaches at least 95% of the soft spatial target; if none reaches it, the lowest permitted viable FPS is used to honor the user's resolution preference.
 - Frame reduction is produced with motion interpolation, not uneven deletion.
-- No upscaling above native framed geometry.
+- A final measured-gain guard discards the lower-FPS result and returns the Preserve-motion output if the completed adaptive fit does not actually gain at least about 8% linear resolution.
+- Preferred spatial target remains native resolution capped at 2048 px; Polymorph never upscales above native framed geometry.
+
+## Completion readout
+
+- Development adaptive UI reports the actual result dimensions, decimal MB, and effective output FPS.
+- `MB` means decimal megabytes consistently with the file-size ceiling.
 
 ## Footer
 

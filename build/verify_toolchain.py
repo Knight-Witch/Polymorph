@@ -11,8 +11,8 @@ from PIL import Image, ImageDraw
 
 FRAME_COUNT = 6
 FPS = 25
-ADAPTIVE_FPS = 20
-ADAPTIVE_FRAMES = 5
+ADAPTIVE_FPS = 100.0 / 6.0
+ADAPTIVE_FRAMES = 4
 EXPECTED_SIZE = (80, 64)
 
 
@@ -130,13 +130,13 @@ def verify(ffmpeg: Path, ffprobe: Path, gifski: Path, sample_out: Path | None = 
                 f"got {gif_w}x{gif_h}/{gif_frames}"
             )
 
-        # Verify the exact adaptive building blocks used by Favor resolution:
-        # final-size motion interpolation, end lookahead padding, exact frame trim,
-        # and explicit target FPS handed to gifski.
+        # Verify the lower clean cadence used when 20 FPS does not buy enough real
+        # spatial gain: final-size motion interpolation, end lookahead padding,
+        # exact frame trim, and explicit target FPS handed to gifski.
         adaptive_filter = (
             spatial_filter
-            + ",tpad=stop_mode=clone:stop_duration=0.100000"
-            + ",minterpolate=fps=20:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1"
+            + ",tpad=stop_mode=clone:stop_duration=0.140000"
+            + f",minterpolate=fps={ADAPTIVE_FPS:.9f}:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1"
             + f",trim=end_frame={ADAPTIVE_FRAMES},setpts=PTS-STARTPTS"
         )
         adaptive_ffmpeg = [
@@ -148,7 +148,7 @@ def verify(ffmpeg: Path, ffprobe: Path, gifski: Path, sample_out: Path | None = 
         ffmpeg_rc, gifski_rc, ffmpeg_err, gifski_err = stream_gif(
             adaptive_ffmpeg,
             [
-                str(gifski), "--fps", str(ADAPTIVE_FPS), "--quality", "100", "--extra",
+                str(gifski), "--fps", f"{ADAPTIVE_FPS:.6f}", "--quality", "100", "--extra",
                 "--repeat", "0", "--width", str(EXPECTED_SIZE[0]),
                 "-o", str(adaptive_gif_out), "-",
             ],

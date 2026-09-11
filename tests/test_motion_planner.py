@@ -1,62 +1,98 @@
 import unittest
 
 from polymorph.motion_planner import (
-    choose_favor_resolution_plan,
+    actual_gain_is_worthwhile,
+    evaluate_measured_candidate,
     expected_uniform_frame_count,
+    predicted_long_edge,
     uniform_gif_fps_candidates,
 )
 
 
 class MotionPlannerTests(unittest.TestCase):
-    def test_25fps_only_steps_to_uniform_20fps(self):
-        self.assertEqual(uniform_gif_fps_candidates(25.0), [(20.0, 5)])
+    def test_25fps_has_uniform_20_and_16_67_candidates(self):
+        candidates = uniform_gif_fps_candidates(25.0)
+        self.assertEqual(len(candidates), 2)
+        self.assertEqual(candidates[0], (20.0, 5))
+        self.assertAlmostEqual(candidates[1][0], 100.0 / 6.0)
+        self.assertEqual(candidates[1][1], 6)
 
     def test_60fps_candidates_stay_uniform_and_nearest_first(self):
         self.assertEqual(
             uniform_gif_fps_candidates(60.0),
-            [(50.0, 2), (100.0 / 3.0, 3), (25.0, 4), (20.0, 5)],
+            [
+                (50.0, 2),
+                (100.0 / 3.0, 3),
+                (25.0, 4),
+                (20.0, 5),
+                (100.0 / 6.0, 6),
+            ],
         )
 
-    def test_viper_like_case_selects_20fps(self):
-        plan = choose_favor_resolution_plan(
+    def test_viper_20fps_sample_can_be_rejected_by_real_byte_cost(self):
+        # Dev.9 reported 1552px and displayed ~89.2 MiB, which is roughly
+        # 93.5 decimal MB. At that measured cost, 20 FPS cannot buy an 8%
+        # linear spatial gain even though frame-count-only math predicted it could.
+        plan = evaluate_measured_candidate(
             source_fps=25.0,
-            full_fps_long_edge=1552,
+            target_fps=20.0,
+            delay_centiseconds=5,
+            baseline_long_edge=1552,
             native_long_edge=2048,
+            sample_size_bytes=93_500_000,
+            max_bytes=99_000_000,
         )
-        self.assertTrue(plan.resample)
-        self.assertAlmostEqual(plan.target_fps, 20.0)
-        self.assertEqual(plan.delay_centiseconds, 5)
-        self.assertGreater(plan.predicted_long_edge, 1700)
+        self.assertIsNone(plan)
 
-    def test_native_resolution_never_sacrifices_frames(self):
-        plan = choose_favor_resolution_plan(
+    def test_lower_uniform_candidate_is_accepted_when_measured_cost_earns_gain(self):
+        plan = evaluate_measured_candidate(
             source_fps=25.0,
-            full_fps_long_edge=1024,
+            target_fps=100.0 / 6.0,
+            delay_centiseconds=6,
+            baseline_long_edge=1552,
+            native_long_edge=2048,
+            sample_size_bytes=78_000_000,
+            max_bytes=99_000_000,
+        )
+        self.assertIsNotNone(plan)
+        assert plan is not None
+        self.assertAlmostEqual(plan.target_fps, 100.0 / 6.0)
+        self.assertEqual(plan.delay_centiseconds, 6)
+        self.assertGreaterEqual(plan.predicted_long_edge, 1700)
+
+    def test_native_resolution_never_accepts_adaptive_candidate(self):
+        plan = evaluate_measured_candidate(
+            source_fps=25.0,
+            target_fps=20.0,
+            delay_centiseconds=5,
+            baseline_long_edge=1024,
             native_long_edge=1024,
+            sample_size_bytes=50_000_000,
+            max_bytes=99_000_000,
         )
-        self.assertFalse(plan.resample)
-        self.assertEqual(plan.target_fps, 25.0)
+        self.assertIsNone(plan)
 
-    def test_trivial_gain_preserves_motion(self):
-        plan = choose_favor_resolution_plan(
-            source_fps=25.0,
-            full_fps_long_edge=1950,
-            native_long_edge=2048,
+    def test_actual_gain_requires_same_eight_percent_floor(self):
+        self.assertFalse(
+            actual_gain_is_worthwhile(
+                baseline_long_edge=1552,
+                adaptive_long_edge=1600,
+            )
         )
-        self.assertFalse(plan.resample)
-
-    def test_higher_fps_uses_highest_uniform_rate_near_target(self):
-        plan = choose_favor_resolution_plan(
-            source_fps=60.0,
-            full_fps_long_edge=1500,
-            native_long_edge=3072,
+        self.assertTrue(
+            actual_gain_is_worthwhile(
+                baseline_long_edge=1552,
+                adaptive_long_edge=1680,
+            )
         )
-        self.assertTrue(plan.resample)
-        self.assertAlmostEqual(plan.target_fps, 100.0 / 3.0)
-        self.assertEqual(plan.delay_centiseconds, 3)
 
-    def test_expected_viper_frame_count(self):
+    def test_frame_count_only_prediction_remains_an_optimistic_screen(self):
+        predicted = predicted_long_edge(1552, 25.0, 20.0, 2048)
+        self.assertGreater(predicted, 1700)
+
+    def test_expected_uniform_frame_counts(self):
         self.assertEqual(expected_uniform_frame_count(15.0, 20.0), 300)
+        self.assertEqual(expected_uniform_frame_count(15.0, 100.0 / 6.0), 250)
 
 
 if __name__ == "__main__":

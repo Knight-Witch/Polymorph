@@ -1,11 +1,46 @@
 from __future__ import annotations
 
+import copy
+from pathlib import Path
+
 from PySide6.QtWidgets import QButtonGroup, QLabel, QRadioButton, QVBoxLayout
 
 from ..adaptive_converter import AdaptiveConverter
+from ..converter import ConversionCancelled
 from ..models import GifMotionMode
+from ..size_units import bytes_to_mb
 from ..tools import find_toolchain
-from .main_window import MainWindow as BaseMainWindow
+from .main_window import ConversionWorker, MainWindow as BaseMainWindow
+
+
+class AdaptiveConversionWorker(ConversionWorker):
+    """Dev worker that reports decimal MB and the actual resulting frame rate."""
+
+    def run(self) -> None:
+        for path in self.files:
+            if self.isInterruptionRequested():
+                break
+            self.fileStarted.emit(str(path))
+            try:
+                result = self.converter.convert(
+                    path,
+                    copy.deepcopy(self.settings),
+                    self._progress,
+                )
+                summary = (
+                    f"{result.width}×{result.height} • "
+                    f"{bytes_to_mb(result.size_bytes):.1f} MB"
+                )
+                if result.duration_s > 0 and result.frames > 0:
+                    fps = result.frames / result.duration_s
+                    fps_text = f"{fps:.2f}".rstrip("0").rstrip(".")
+                    summary += f" • {fps_text} FPS"
+                self.fileFinished.emit(str(path), summary)
+            except ConversionCancelled:
+                self.failed.emit(str(path), "Cancelled")
+                break
+            except Exception as exc:
+                self.failed.emit(str(path), str(exc))
 
 
 class MainWindow(BaseMainWindow):
@@ -35,8 +70,8 @@ class MainWindow(BaseMainWindow):
             "Keep the source frame rate and every source frame."
         )
         self.motion_favor_radio.setToolTip(
-            "When worthwhile, evenly resample motion to a uniform lower GIF frame rate "
-            "so more of the file-size budget can be spent on spatial resolution."
+            "Measure clean, evenly resampled GIF frame rates and only sacrifice motion "
+            "when the real encoded result can buy a meaningfully larger image."
         )
         self.motion_group = QButtonGroup(self)
         self.motion_group.addButton(self.motion_preserve_radio)
@@ -76,3 +111,27 @@ class MainWindow(BaseMainWindow):
             else GifMotionMode.PRESERVE
         )
         return settings
+
+    def _start_conversion(self) -> None:
+        if not self.converter or not self.files:
+            return
+        self.worker = AdaptiveConversionWorker(
+            self.converter,
+            list(self.files),
+            self._make_settings(),
+            self,
+        )
+        self.worker.progressChanged.connect(self._progress_changed)
+        self.worker.fileStarted.connect(
+            lambda p: self.status_label.setText(f"Polymorphing {Path(p).name}…")
+        )
+        self.worker.fileFinished.connect(self._file_finished)
+        self.worker.failed.connect(self._file_failed)
+        self.worker.finished.connect(self._conversion_finished)
+        self.progress.setValue(0)
+        self.arcane_progress.set_progress(0)
+        self.arcane_progress.setVisible(True)
+        self.arcane_progress.set_active(True)
+        self.cancel_btn.setVisible(True)
+        self.worker.start()
+        self._sync_enabled_state()

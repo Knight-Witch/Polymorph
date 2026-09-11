@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Evaluate whether a lower-FPS GIF mode can preserve uniform turntable motion instead of reproducing the patched standalone converter's periodic frame-loss cadence.
+Evaluate whether a lower-FPS GIF mode can preserve uniform turntable motion instead of reproducing the patched standalone converter's periodic frame-loss cadence, and whether that temporal trade actually buys meaningful spatial resolution under the 99 MB ceiling.
 
 ## Source
 
@@ -53,7 +53,7 @@ The periodic spike is removed. Motion change is distributed evenly across the 20
 
 ## Visual spot check
 
-Contact-sheet checks at front, side, back, cape/hair, sword and return-to-front positions did not show obvious interpolation corruption at 512px diagnostic scale. Full-resolution human validation is still required before the adaptive mode is considered release-ready.
+Contact-sheet checks at front, side, back, cape/hair, sword and return-to-front positions did not show obvious interpolation corruption at 512px diagnostic scale.
 
 ## Endpoint handling
 
@@ -64,25 +64,47 @@ A bare `minterpolate=fps=20` ended one frame early on this source. The reliable 
 3. trim to the mathematically expected frame count;
 4. reset timestamps.
 
-For the Viper source this produces exactly 300 evenly spaced frames.
+For the Viper source this produces exactly 300 evenly spaced frames at 20 FPS.
 
-## Adaptive planning decision
+## Dev.9 full-resolution human validation
 
-Development mode uses a soft spatial target rather than blindly chasing source-native resolution:
+The user tested the real Viper source through dev.9 with `Favor resolution` selected.
 
-- preferred long edge: native size capped at 2048 px;
-- automatic FPS floor: 20 FPS;
-- lower-FPS candidates must use uniform GIF centisecond delays (`100 / N` FPS);
-- require about 8% predicted linear-resolution improvement before sacrificing FPS;
-- choose the highest uniform FPS that reaches at least 95% of the soft spatial target;
-- if no eligible rate reaches the target, choose the lowest permitted viable rate to maximize the requested resolution bias;
-- never upscale beyond native source geometry.
+- Motion/interpolation quality: reported as **really good** at full output resolution.
+- Final dimensions: `1552x1552`, unchanged from Preserve motion.
+- Reported completion size: `89.2 MB` in the dev.9 UI.
+- The dev.9 completion readout still divided bytes by 1024^2 while labeling the value `MB`; therefore 89.2 displayed units correspond to roughly 93.5 decimal MB, immediately above the GIF optimizer's 93,000,000-byte acceptance floor.
 
-For the real Viper workload, a 1552px full-frame result at 25 FPS predicts a useful gain at uniform 20 FPS, so the adaptive planner selects 20 FPS.
+### Diagnosis
+
+The dev.9 planner assumed that reducing 25 FPS to 20 FPS would lower encoded cost roughly in proportion to frame count. That assumption was valid for the OG converter's simple frame resampling, but it is not valid for motion-interpolated frames: synthesized frames can be materially more expensive for gifski to palette/encode than untouched source frames.
+
+As a result, dev.9 made a temporal sacrifice without earning a measurable spatial gain on Viper. The interpolation method itself passed the visual test; the planning heuristic did not.
+
+## Dev.10 planning correction
+
+Favor resolution now uses measured encoded cost rather than frame-count math as the authority:
+
+1. produce the normal Preserve-motion fitted GIF;
+2. consider lower uniform GIF cadences nearest the source FPS first;
+3. encode each candidate once at the Preserve-motion dimensions;
+4. measure the actual gifski byte cost of those interpolated frames;
+5. project achievable spatial size against the patched-Python 97/99 byte target;
+6. accept the first/highest candidate that predicts at least about 8% linear-resolution gain;
+7. run the full adaptive size search only for that candidate;
+8. discard the reduced-FPS output if the finished result still fails to achieve about 8% actual linear gain.
+
+For a 25 FPS source, the current clean-cadence ladder is:
+
+- 20 FPS / 50 ms;
+- 16.67 FPS / 60 ms.
+
+The automatic floor is therefore 16.67 FPS in dev.10. The 20 FPS candidate is still preferred whenever its real encoded byte cost earns the required gain; Polymorph only steps lower when 20 FPS demonstrably does not.
 
 ## Release boundary
 
 - Preserve motion remains the default and keeps the proven full-frame path unchanged.
-- Favor resolution is experimental in dev.9.
+- Favor resolution remains experimental.
 - No automatic mode may use uneven frame deletion.
-- Full-resolution Viper testing is required before promotion to stable.
+- Full-resolution 20 FPS interpolation quality is human-validated on Viper.
+- The next human validation target is dev.10's measured cadence selection, especially whether Viper chooses 16.67 FPS and whether that lower clean cadence remains visually acceptable while finally increasing spatial resolution.
