@@ -4,9 +4,10 @@
 
 - `src/polymorph/converter.py`: proven conversion orchestration.
 - `src/polymorph/adaptive_converter.py`: experimental GIF motion/resolution balancing layered over the proven converter; preserve-motion calls the base behavior unchanged.
-- `src/polymorph/motion_planner.py`: pure adaptive-FPS candidate and measured-gain planning math.
+- `src/polymorph/motion_planner.py`: adaptive source-frame decimation and measured-gain planning math.
+- `src/polymorph/gif_timing.py`: pure GIF frame-delay inspection/patching used only to preserve exact loop closure timing after source-frame decimation.
 - `src/polymorph/probe.py`: media metadata and WebP RIFF fallback parsing.
-- `src/polymorph/integrity.py`: post-encode dimension/frame-count/timing verification, including explicit expected frame count for intentional uniform resampling.
+- `src/polymorph/integrity.py`: post-encode dimension/frame-count/timing verification.
 - `src/polymorph/geometry.py`: deterministic Crop/Fit geometry and no-upscale validation.
 - `src/polymorph/size_optimizer.py`: pure GIF smart-fit scale selection ported from the user-tested patched Python reference.
 - `src/polymorph/filters.py`: proven spatial FFmpeg filter construction.
@@ -18,19 +19,20 @@
 
 ## Conversion ordering
 
-1. Probe source dimensions, duration, frame count, and nominal frame rate.
+1. Probe source dimensions, duration, frame count, frame durations, and nominal frame rate.
 2. Resolve framing geometry.
 3. Resolve user sizing constraint.
 4. For Preserve motion, use the proven converter path unchanged.
 5. For Favor resolution in GIF file-size mode, first obtain the full-frame fitted result as the spatial/byte baseline.
-6. Build lower uniform GIF-cadence candidates nearest the source FPS first.
-7. Reject candidates whose ideal frame-count-only ceiling cannot possibly meet the minimum useful spatial gain.
-8. Encode each surviving candidate once at the already-fitted baseline dimensions and measure its actual gifski byte cost.
-9. Select the first/highest candidate whose measured byte cost predicts at least about 8% linear spatial gain toward the patched-Python 97/99 byte target.
-10. If no candidate earns that gain, return the Preserve-motion baseline unchanged.
-11. If a candidate is worthwhile, run the normal GIF smart-fit search at that exact uniform resampled FPS.
-12. Probe output and verify requested dimensions, exact planned frame count, and bounded duration drift.
-13. Apply a final measured-gain veto: if the finished adaptive result is not at least about 8% larger linearly than the Preserve-motion baseline, discard it and return the baseline.
+6. Require a constant-frame-rate source whose frame duration is exactly representable in GIF centiseconds.
+7. Build exact source-frame decimation candidates nearest the source motion first: keep every 2nd frame, then every 3rd frame while the resulting motion remains above the automatic floor.
+8. Reject candidates whose ideal retained-frame-count ceiling cannot possibly meet the minimum useful spatial gain.
+9. Encode each surviving candidate once at the already-fitted baseline dimensions and measure its actual gifski byte cost.
+10. When a measured candidate predicts at least about 8% linear spatial gain toward the 2048 px/native soft target, run the normal GIF smart-fit search using that exact source-frame stride.
+11. If the full adaptive fit does not realize the same minimum gain, continue to the next deeper decimation candidate instead of immediately falling back to Preserve motion.
+12. Patch only the final GIF frame delay when the source frame count is not divisible by the selected stride so the loop closes at the original duration/angular speed.
+13. Probe output and verify requested dimensions, exact retained frame count, exact internal/final GIF delay pattern, and bounded duration drift.
+14. If no candidate survives both measured gates, return the Preserve-motion baseline unchanged.
 
 ## File-size units
 
@@ -52,30 +54,26 @@
 ## Adaptive GIF motion planning
 
 - Preserve motion remains default and keeps source FPS/frame count.
-- Favor resolution applies only to GIF + file-size mode.
+- Favor resolution applies only to GIF + file-size mode and remains experimental.
 - Preferred spatial target is the native framed long edge capped at 2048 px.
-- Current automatic FPS floor is 12.5 FPS (80 ms/frame), but the floor is never selected blindly.
-- Candidate reduced rates must have an integer GIF centisecond delay: `fps = 100 / delay_cs`.
-- Candidates are tried nearest the source FPS first. For a 25 FPS source the ladder is 20 FPS, 16.67 FPS, 14.29 FPS, then 12.5 FPS.
-- The frame-count-only relationship `linear_scale ~= sqrt(source_fps / target_fps)` is retained only as an optimistic cheap screen; it is not trusted to select the final cadence.
-- Actual selection is based on a real gifski encode at the baseline spatial dimensions because synthesized evenly timed frames can cost materially more bytes per frame than untouched source frames.
+- Dev.9-dev.12 proved that uniformly synthesized intermediate frames can erase the expected GIF byte savings even when the output frame count is reduced.
+- Dev.13 therefore stops synthesizing frames. Candidate plans retain only original decoded source frames at a constant integer stride.
+- Candidates are tried nearest the source motion first. For a 25 FPS source the automatic floor of 8 FPS yields stride 2 (~12.5 FPS nominal) and then stride 3 (~8.33 FPS nominal).
+- Frame-count-only math is used only as an optimistic cheap screen. Real gifski sample size at the Preserve-motion dimensions remains authoritative.
 - The measured sample projects achievable spatial size against the patched-Python 97/99 target. A candidate must predict at least about 8% linear gain.
-- The first/highest FPS that earns the gain wins, minimizing temporal sacrifice.
 - The planner never requests dimensions above native framed geometry or the 2048 px soft target.
-- Final adaptive output must independently realize the same minimum gain or it is discarded in favor of Preserve motion.
-- Human dev.10 and dev.11 validation on Viper both returned `1552x1552 • 93.6 MB • 25 FPS`, confirming optical-flow candidates from 20 FPS through 12.5 FPS could not buy worthwhile spatial gain.
+- A selected candidate must independently realize the same minimum gain after the full smart-fit search or Polymorph continues to the next stride.
 
-## Uniform motion resampling
+## Exact source-frame decimation and loop timing
 
-- Reduced-FPS output is not made by periodically deleting source frames.
-- Spatial Crop/Fit/Lanczos filtering remains unchanged and occurs before temporal resampling.
-- Dev.12 uses FFmpeg `minterpolate` with `mi_mode=blend`, sampling exact uniformly spaced target timestamps by linear temporal blending rather than optical-flow motion compensation.
-- This keeps every output interval the same duration and avoids the repeating short/long movement cadence caused by periodic source-frame deletion.
-- A cloned end pad supplies interpolation lookahead.
-- Output is trimmed to the exact mathematically expected frame count and timestamps are reset.
-- gifski receives the same explicit target FPS used by the resampling stage.
-- The measured candidate-cost gate and final 8% realized-gain veto remain authoritative, so a blend-resampled result is never kept merely because FPS was lowered.
-- Windows toolchain smoke coverage requires the bundled FFmpeg build to support the current 12.5 FPS deepest clean cadence and exact planned reduced frame count.
+- Dev.13 does not use `minterpolate`, optical flow, temporal blending, or periodic 1/2-frame-step deletion.
+- For stride `N`, FFmpeg retains frames `0, N, 2N, ...` from the decoded source and establishes a nominal `source_fps / N` Y4M cadence for gifski.
+- Retained image data therefore comes only from original source frames; no synthetic blended/warped frames are introduced.
+- Most output frame delays are exactly `N * source_frame_delay`.
+- If the source frame count is not divisible by `N`, the final retained frame has a smaller source-angle remainder before the loop returns to frame 0. Polymorph patches only that final GIF delay to `remainder_steps * source_frame_delay`.
+- This preserves the original total loop duration and constant source angular speed instead of creating a periodic micro-skip. Example: Viper stride 2 retains 188 frames, uses 187 intervals at 80 ms and one 40 ms closure interval, totaling the original 15.0 seconds.
+- GIF image data is not rewritten by the closure patch; only the final Graphic Control Extension delay field changes.
+- Post-encode verification checks the complete delay pattern as well as dimensions/frame count/duration.
 
 ## GIF reference boundary
 
@@ -85,7 +83,7 @@
 - Controlled Windows CI proved that timing shape reduces a 50-frame/25-FPS source to 41 GIF frames over the same 2.0 s and uses about 82.19% of the full-frame byte cost at fixed dimensions.
 - Real Viper source/output inspection separately confirmed 375 source frames at 25 FPS became 300 OG GIF frames over the same duration: exactly 20 FPS.
 - Preserve motion must never silently reproduce that frame loss.
-- Favor resolution may reduce FPS only because the user explicitly selects that tradeoff, and it must do so with uniform resampling rather than uneven deletion.
+- Favor resolution may reduce retained frames only because the user explicitly selects that tradeoff; dev.13 uses deterministic source-frame stride plus exact loop-timing correction rather than hidden periodic frame loss.
 
 ## Diagnostic evidence
 
@@ -105,7 +103,7 @@
 
 - Queue can contain many files.
 - Only one conversion runs at a time in v1.
-- Favor resolution intentionally does extra work: one Preserve-motion baseline fit plus one or more measured cadence probes and, only when justified, an adaptive size fit.
+- Favor resolution intentionally does extra work: one Preserve-motion baseline fit plus one or more measured stride probes and, only when justified, adaptive size fits.
 - No background service.
 - No cloud processing.
 - No telemetry.

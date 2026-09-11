@@ -70,7 +70,7 @@ class MainWindow(BaseMainWindow):
             "Keep the source frame rate and every source frame."
         )
         self.motion_favor_radio.setToolTip(
-            "Measure clean, evenly resampled GIF frame rates and only sacrifice motion "
+            "Measure evenly spaced original source-frame subsets and only sacrifice motion "
             "when the real encoded result can buy a meaningfully larger image."
         )
         self.motion_group = QButtonGroup(self)

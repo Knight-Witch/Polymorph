@@ -18,20 +18,11 @@ Evaluate whether a lower-FPS GIF mode can preserve uniform turntable motion inst
 The source was decoded with Pillow and downsampled to a lossless 512x512 / 25 FPS diagnostic stream. Two 20 FPS conversions were compared:
 
 1. Ordinary `fps=20` frame selection.
-2. FFmpeg motion interpolation using:
-   - `minterpolate=fps=20`
-   - `mi_mode=mci`
-   - `mc_mode=aobmc`
-   - `me_mode=bidir`
-   - `vsbmc=1`
-   - cloned end padding for interpolation lookahead
-   - exact output-frame trimming.
+2. FFmpeg motion interpolation using `minterpolate=fps=20` with motion compensation, cloned end padding, and exact frame trimming.
 
 Both paths targeted 300 frames for the same 15-second spin.
 
 ## Cadence measurement
-
-Per-frame grayscale absolute-difference energy was measured after downscaling the diagnostic outputs to 256x256.
 
 ### Ordinary 20 FPS frame selection
 
@@ -51,21 +42,6 @@ This shows a strong periodic motion jump: one interval in every four carries sub
 
 The periodic spike is removed. Motion change is distributed evenly across the 20 FPS cadence.
 
-## Visual spot check
-
-Contact-sheet checks at front, side, back, cape/hair, sword and return-to-front positions did not show obvious interpolation corruption at 512px diagnostic scale.
-
-## Endpoint handling
-
-A bare `minterpolate=fps=20` ended one frame early on this source. The reliable pipeline is:
-
-1. clone/pad the last source frame to give `minterpolate` lookahead;
-2. interpolate at the selected uniform FPS;
-3. trim to the mathematically expected frame count;
-4. reset timestamps.
-
-For the Viper source this produces exactly 300 evenly spaced frames at 20 FPS.
-
 ## Dev.9 full-resolution human validation
 
 The user tested the real Viper source through dev.9 with `Favor resolution` selected.
@@ -73,62 +49,90 @@ The user tested the real Viper source through dev.9 with `Favor resolution` sele
 - Motion/interpolation quality: reported as **really good** at full output resolution.
 - Final dimensions: `1552x1552`, unchanged from Preserve motion.
 - Reported completion size: `89.2 MB` in the dev.9 UI.
-- The dev.9 completion readout still divided bytes by 1024^2 while labeling the value `MB`; therefore 89.2 displayed units correspond to roughly 93.5 decimal MB, immediately above the GIF optimizer's 93,000,000-byte acceptance floor.
+- The dev.9 completion readout still divided bytes by 1024^2 while labeling the value `MB`; therefore 89.2 displayed units correspond to roughly 93.5 decimal MB.
 
-### Diagnosis
-
-The dev.9 planner assumed that reducing 25 FPS to 20 FPS would lower encoded cost roughly in proportion to frame count. That assumption was valid for the OG converter's simple frame resampling, but it is not valid for motion-interpolated frames: synthesized frames can be materially more expensive for gifski to palette/encode than untouched source frames.
-
-As a result, dev.9 made a temporal sacrifice without earning a measurable spatial gain on Viper. The interpolation method itself passed the visual test; the planning heuristic did not.
+Diagnosis: synthesized motion-interpolated frames are materially more expensive for gifski than the naive frame-count ratio predicts. Reducing frame count did not create the expected spatial budget.
 
 ## Dev.10 measured-planning validation
 
-Dev.10 changed Favor resolution so real encoded sample cost, not frame-count math, decides whether a lower clean cadence is worth keeping. For a 25 FPS source it measured 20 FPS / 50 ms first and then 16.67 FPS / 60 ms.
+Dev.10 made real encoded sample cost authoritative and measured 20 FPS then 16.67 FPS before committing to any temporal sacrifice.
 
-The user retested the same Viper source and the final completion line was:
+The user retested Viper and received:
 
 - `1552x1552`
 - `93.6 MB` decimal
 - `25 FPS`
 
-This is the intended Preserve-motion fallback. Neither 20 FPS nor 16.67 FPS demonstrated enough measured byte savings to justify at least about 8% linear spatial gain, so Polymorph kept the original frame rate instead of sacrificing motion for no meaningful resolution benefit.
-
-This validates the dev.10 guard behavior on the Viper workload: the adaptive mode no longer lowers FPS simply because the user selected Favor resolution.
+The fallback worked: no lower cadence was kept without a measured spatial payoff.
 
 ## Dev.11 deeper clean-cadence validation
 
-Dev.11 extended the same measured-cost search to 14.29 FPS / 70 ms and 12.5 FPS / 80 ms. The user retested the same Viper source and again received:
+Dev.11 extended optical-flow probing through 14.29 FPS and 12.5 FPS. The user again received:
 
 - `1552x1552`
-- `93.6 MB` decimal
+- `93.6 MB`
 - `25 FPS`
 
-The supplied output GIF independently verifies the final file is 1552x1552, 375 frames, every frame 40 ms, 15.0 s total, and 93,630,962 bytes. The adaptive fallback therefore preserved the complete original 25 FPS cadence exactly.
+The supplied GIF verifies 1552x1552, 375 frames, every frame 40 ms, 15.0 s total, 93,630,962 bytes.
 
-This rules out the original hypothesis that simply probing progressively lower optical-flow cadences would eventually unlock a useful spatial increase on Viper. Even through 12.5 FPS, the motion-compensated synthesized frames remained too expensive for gifski to meet the 8% spatial-gain gate.
+## Dev.12 temporal-blend validation
 
-## Dev.12 temporal-blend probe
+Dev.12 replaced optical-flow synthesis with exact-timestamp linear temporal blending while keeping the same measured-cost gate and fallback logic.
 
-The next isolated variable is interpolation complexity, not a lower FPS floor.
+The user again received:
 
-Using the user's dev.11 full-frame Viper GIF as a 25 FPS source surrogate, 20 FPS optical-flow (`mi_mode=mci`) and exact-timestamp linear temporal blending (`mi_mode=blend`) were compared on downscaled diagnostic samples.
+- `1552x1552`
+- `93.6 MB`
+- `25 FPS`
 
-At 256px / 20 FPS, adjacent-frame cadence energy was effectively identical:
+The dev.11 and dev.12 user-supplied outputs are byte-for-byte identical:
 
-- MCI repeating four-phase energy: `[0.53750, 0.54245, 0.54592, 0.53687]`.
-- Blend repeating four-phase energy: `[0.53751, 0.54239, 0.54587, 0.53700]`.
+- bytes: `93,630,962`;
+- SHA-256: `dbfd1be7211b801f3a3a8d0ffaaf1058a1974f6b27141ef5f3be5ce55452e5af`;
+- 375 frames;
+- every frame 40 ms;
+- 15.0 s total.
 
-A 768px crop/contact-sheet check around face, hair/fur, torso, cape and sword showed the blend and MCI frames to be visually extremely close over the sampled segment; no obvious periodic jump was introduced by blending.
+This is the concrete reason the repeated tests looked unchanged: the adaptive candidate was discarded and Polymorph copied the exact Preserve-motion baseline back out.
 
-The key remaining question is compression, not cadence: optical-flow synthesis may create high-frequency warping/detail that is expensive for gifski even when the result looks smooth. Dev.12 therefore keeps the same measured byte-cost gate, 8% predicted-gain threshold, 8% final realized-gain veto, FPS ladder, size optimizer, quality 100 and fallback behavior, but changes only the reduced-FPS resampling method from motion-compensated interpolation to exact-timestamp linear temporal blending.
+Two conclusions follow:
 
-If blend does not produce a meaningful spatial gain either, the next design branch should stop lowering synthesized FPS and evaluate mathematically exact source-frame decimation cadences instead.
+1. Synthetic even-timestamp frames do not create enough gifski savings on Viper to justify the desired spatial trade.
+2. The dev.10-dev.12 control flow could also stop after a higher candidate passed the prediction gate but failed the final realized-gain veto, without continuing to deeper candidates. Dev.13 corrects that orchestration bug as part of the next isolated strategy.
+
+## Dev.13 exact source-frame decimation
+
+Dev.13 stops synthesizing intermediate frames entirely.
+
+The new Favor-resolution strategy:
+
+1. fit the proven 25 FPS Preserve-motion baseline;
+2. keep every second original decoded source frame and measure its actual gifski cost at the baseline dimensions;
+3. if that measured result predicts at least about 8% linear spatial gain, run the full smart-fit search using the exact stride-2 source frames;
+4. if the final stride-2 fit still misses the realized-gain floor, continue to stride 3 rather than immediately returning the baseline;
+5. retain quality 100, `--extra`, explicit width, 99 MB ceiling, and the dev.8 smart-fit size search unchanged.
+
+### Why source-frame decimation is different
+
+A 25 -> 20 FPS conversion cannot use only original source frames while also maintaining equal angular steps: 20 FPS requires positions every 1.25 source frames. Some form of synthesis or uneven 1/2-frame stepping is unavoidable.
+
+A fixed integer source-frame stride avoids that problem. For Viper stride 2 retains frames `0, 2, 4, ... 374` — 188 original frames with no optical-flow or blend-generated image data.
+
+Because 375 is odd, the last retained frame is only one source-frame step from the loop start while the ordinary retained-frame spacing is two steps. Dev.13 preserves constant angular speed by using:
+
+- 187 ordinary intervals at 80 ms;
+- one final closure interval at 40 ms;
+- total duration exactly 15.0 s.
+
+The image sequence therefore uses an even every-other-source-frame sacrifice across the spin, while the single loop-boundary delay reflects the actual smaller remaining source angle instead of forcing a periodic micro-skip or synthetic frame. The final GIF delay is patched losslessly in the Graphic Control Extension after gifski encoding; image data is untouched.
+
+For Viper the resulting effective average rate is `188 / 15 = 12.5333 FPS`. The human test must decide whether that motion trade is acceptable for the spatial gain.
 
 ## Release boundary
 
-- Preserve motion remains the default and keeps the proven full-frame path unchanged.
+- Preserve motion remains the default and unchanged.
 - Favor resolution remains experimental.
-- No automatic mode may use uneven periodic frame deletion.
-- Full-resolution 20 FPS optical-flow interpolation quality is human-validated on Viper.
-- Dev.10 and dev.11 no-benefit fallback behavior is human-validated on Viper.
-- Dev.12 requires human validation only if it actually selects a reduced FPS and produces a larger image; otherwise its fallback is expected to remain the validated 25 FPS result.
+- Dev.9 validates that 20 FPS optical-flow interpolation can look smooth, but not that it improves spatial output.
+- Dev.10-dev.12 prove synthesized-frame approaches can legitimately fall back to the exact Preserve-motion result on Viper.
+- Dev.13 is the first test that removes synthetic frames from the compression equation and corrects candidate continuation after a failed final-gain veto.
+- No public release should promote Favor resolution until the dev.13 Viper output is human-validated for both recovered dimensions and motion/loop quality.

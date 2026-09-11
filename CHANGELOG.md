@@ -1,5 +1,55 @@
 # Changelog
 
+## POLY-2026-09-11-024 — 2026-09-11 05:55 PDT — Use exact source-frame decimation for Favor resolution
+
+### Summary
+
+- Recorded the dev.12 Viper human result: `1552x1552 • 93.6 MB • 25 FPS`, identical in the UI to dev.11 despite the interpolation-method change.
+- Compared the supplied dev.11 and dev.12 outputs directly and confirmed they are byte-for-byte identical: 93,630,962 bytes, SHA-256 `dbfd1be7211b801f3a3a8d0ffaaf1058a1974f6b27141ef5f3be5ce55452e5af`, 1552x1552, 375 frames, 40 ms per frame, 15.0 s. The adaptive candidate was being discarded and the exact Preserve-motion baseline copied back out.
+- Concluded the synthetic even-timestamp branch is exhausted for this Viper workload: both optical-flow and linear-blend synthesized frames fail to create enough gifski byte savings for the desired resolution trade.
+- Identified and fixed a separate adaptive orchestration defect: dev.10-dev.12 could stop after a candidate passed the measured prediction gate but failed the completed 8% realized-gain veto, returning the baseline without testing deeper candidates. Dev.13 continues to the next candidate instead.
+- Replaced only the experimental Favor-resolution synthesis path with deterministic source-frame decimation. Polymorph now tests exact integer strides nearest the source motion first, retaining every second original decoded frame and then every third frame while the effective rate remains above the automatic 8 FPS floor.
+- Added `gif_timing.py` to inspect GIF Graphic Control Extension delays and losslessly patch only the final frame delay when the source frame count is not divisible by the selected stride.
+- Viper stride 2 retains 188 original frames: 187 ordinary 80 ms intervals plus one 40 ms loop-closure interval, totaling the original 15.0 s and preserving constant source angular speed without synthesized images or periodic 1/2-step frame deletion.
+- Kept real gifski sample cost authoritative, retained the ~8% predicted and final linear-gain thresholds, the 2048 px/native soft target, dev.8 GIF smart-fit search, true 99 MB ceiling, gifski 1.32.0, quality 100, `--extra`, explicit width, yuv420p, and infinite repeat.
+- Added regression tests for Viper stride/remainder math, lossless final-delay patching, measured decimation planning, and the previously missing continue-to-deeper-candidate behavior after a failed final-gain veto.
+- Reworked Windows toolchain smoke coverage to verify every-second-frame source decimation and exact closure-delay correction on an odd five-frame 25 FPS source.
+- Preserve-motion GIF, MP4, framing, updater, preview, general UI layout, and public release state remain unchanged. Favor-resolution tooltip wording was updated to match the new original-source-frame strategy.
+- Incremented the development tester to `0.1.0-dev.13`.
+
+### Touched files
+
+- `src/polymorph/adaptive_converter.py`
+- `src/polymorph/motion_planner.py`
+- `src/polymorph/gif_timing.py`
+- `src/polymorph/ui/adaptive_main_window.py`
+- `tests/test_motion_planner.py`
+- `tests/test_gif_timing.py`
+- `tests/test_adaptive_converter.py`
+- `build/verify_toolchain.py`
+- `build/README.md`
+- `src/polymorph/__init__.py`
+- `src/polymorph/constants.py`
+- `pyproject.toml`
+- `installer/Polymorph.iss`
+- `docs/UX_SPEC.md`
+- `docs/ARCHITECTURE.md`
+- `HISTORY/REFERENCE_GIF_CONVERTER.md`
+- `HISTORY/DIAGNOSTICS/GIF_ADAPTIVE_MOTION_2026-09-10.md`
+- `MASTER.md`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert this commit to restore dev.12's synthetic exact-timestamp temporal-blend Favor-resolution experiment. Preserve-motion GIF, MP4, framing, updater, and the dev.8 GIF smart-fit search are independent of this adaptive change.
+
+### Test notes
+
+- Pure tests cover Viper stride-2/stride-3 frame/timing math, measured decimation gain gates, byte-level final GIF delay patching, and continuing to a deeper stride after a higher candidate fails the final realized-gain test.
+- Windows CI must pass the exact source-decimation/closure-timing smoke, existing Preserve-motion GIF and MP4 gates, standalone-reference timing diagnostic, packaged-app smoke, installer compilation, checksum generation, and artifact upload before dev.13 is handed to the user.
+- Human Viper validation should now produce a materially different result if source-frame decimation earns the spatial gain. For stride 2, expected temporal shape is 188 retained original frames over 15.0 s (~12.53 average FPS); user validation should focus on recovered dimensions and whether the lower motion rate/loop seam are acceptable.
+
 ## POLY-2026-09-11-023 — 2026-09-11 03:05 PDT — Test lower-complexity uniform temporal blending
 
 ### Summary
@@ -133,7 +183,7 @@
 ### Summary
 
 - Added an explicit experimental GIF priority choice: `Preserve motion` remains the default proven path, while `Favor resolution` may trade some temporal samples for a larger spatial result only when the user selects it.
-- Validated the design against the real Viper source before wiring production: 2048x2048, 375 frames, 25 FPS, 15.0 s. Ordinary 25 -> 20 FPS frame selection produced a strong repeating motion-change spike, while motion-compensated interpolation removed that periodic cadence pattern in the 512px diagnostic and produced exactly 300 intended frames after end lookahead + trimming.
+- Validated the design against the real Viper source before wiring production: 2048x2048, 375 frames, 25 FPS, 15.0 s. Ordinary 25 -> 20 frame selection produced a strong repeating motion-change spike, while motion-compensated interpolation removed that periodic cadence pattern in the 512px diagnostic and produced exactly 300 intended frames after end lookahead + trimming.
 - Added `src/polymorph/motion_planner.py` with a 2048 px soft preferred long edge, 20 FPS automatic floor, roughly 8% minimum predicted linear-resolution gain, uniform GIF-centisecond cadence candidates, and highest-FPS-first selection until 95% of the soft spatial target is reached.
 - Added `src/polymorph/adaptive_converter.py` as a surgical layer over the proven converter. Preserve-motion/MP4/fixed-resolution jobs still call the existing converter behavior unchanged. Favor-resolution GIF file-size jobs first measure the full-frame fitted result, then only run the reduced-FPS pass if the planner predicts a worthwhile gain.
 - Adaptive output uses FFmpeg motion-compensated `minterpolate` (`mci`, `aobmc`, bidirectional estimation, variable-size block compensation), cloned end lookahead, exact frame trimming, and explicit target FPS into gifski instead of uneven periodic frame deletion.
@@ -448,7 +498,7 @@
 
 - Recorded the successful human retest of the width-corrected GIF: visual quality now matches the standalone converter and may be slightly smoother framewise.
 - Recorded the remaining measured scale difference: Polymorph `1570x1570` versus standalone `1756x1756` at the same nominal size target, plus only a possible subtle red/pink color difference.
-- Rechecked the actual size context before editing: the Polymorph result shown in Windows Explorer is already about `93.8 MB`, so the remaining scale difference is not plausibly explained by simple unused file-size headroom.
+- Rechecked the actual size context before editing: the Polymorph result shown in Windows Explorer is already about `93.8 MB`, so the remaining scale difference is not plausibly explained by simple unused file-size headroom alone.
 - Compared the GIF pixel handoff against the canonical standalone converter and found the remaining material difference: Polymorph forced `yuv444p`; the standalone FFmpeg command did not force a YUV pixel format before `yuv4mpegpipe`.
 - Removed only the forced GIF-path `yuv444p` so the Y4M handoff again matches the validated standalone pipeline.
 - Preserved Polymorph's explicit source-FPS handoff, gifski quality 100, extra effort, infinite repeat, explicit output width, post-encode dimensions, exact frame count, and timing verification.
@@ -636,7 +686,7 @@
 
 ### Test notes
 
-- Provider documentation confirms the Essentials build includes libwebp and libx264 and all internal Windows FFmpeg components.
+- Provider documentation confirms the Essentials build includes libwebp/libx264 and all internal Windows FFmpeg components.
 - Exact bundled toolchain behavior is gated by the Windows smoke-test step; installer artifacts are not accepted if that step fails.
 
 ## POLY-2026-09-09-006 — 2026-09-09 19:12 PDT — Correct PyInstaller repository root

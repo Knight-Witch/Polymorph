@@ -1,3 +1,3 @@
 """Polymorph media conversion utility."""
 
-__version__ = "0.1.0-dev.12"
+__version__ = "0.1.0-dev.13"
