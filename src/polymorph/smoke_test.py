@@ -8,9 +8,10 @@ from pathlib import Path
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
+from .models import GifMotionMode
 from .resources import asset_path
 from .tools import find_toolchain
-from .ui.main_window import MainWindow
+from .ui.adaptive_main_window import MainWindow
 
 _ASSETS = ("update.svg", "github.svg", "kofi.svg", "patreon.svg", "discord.svg")
 
@@ -74,6 +75,13 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
             raise RuntimeError("Live preview did not produce a renderable WebP frame")
         lines.append("PASS animated WebP live preview")
 
+        if not window.motion_preserve_radio.isChecked():
+            raise RuntimeError("GIF motion priority did not default to Preserve motion")
+        window.motion_favor_radio.setChecked(True)
+        if window._make_settings().gif_motion_mode is not GifMotionMode.FAVOR_RESOLUTION:
+            raise RuntimeError("Favor resolution UI did not map to conversion settings")
+        lines.append("PASS adaptive GIF priority controls")
+
         window.frame_mode.setCurrentIndex(1)  # Crop to ratio
         window.ratio_combo.setCurrentText("16:9")
         app.processEvents()
@@ -85,6 +93,8 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
                 "Linked resolution controls failed for 16:9: "
                 f"{window.width_spin.value()}x{window.height_spin.value()}"
             )
+        if window.motion_favor_radio.isEnabled():
+            raise RuntimeError("Favor resolution should disable in fixed-resolution mode")
         lines.append("PASS linked 16:9 resolution controls")
 
         lines.append("PACKAGED POLYMORPH SMOKE TEST PASSED")

@@ -30,6 +30,27 @@ class IntegrityTests(unittest.TestCase):
         with self.assertRaises(IntegrityError):
             validate_output_integrity(self.info(), self.info(frames=179))
 
+    def test_expected_reduced_frame_count_passes(self):
+        source = self.info(frames=150, duration=6.0)
+        output = self.info(frames=120, duration=6.0, width=1600, height=1600)
+        validate_output_integrity(
+            source,
+            output,
+            expected_width=1600,
+            expected_height=1600,
+            expected_frame_count=120,
+            expected_fps=20.0,
+        )
+
+    def test_wrong_reduced_frame_count_fails(self):
+        with self.assertRaises(IntegrityError):
+            validate_output_integrity(
+                self.info(frames=150, duration=6.0),
+                self.info(frames=119, duration=6.0),
+                expected_frame_count=120,
+                expected_fps=20.0,
+            )
+
     def test_large_timing_drift_fails(self):
         with self.assertRaises(IntegrityError):
             validate_output_integrity(self.info(), self.info(duration=6.5))

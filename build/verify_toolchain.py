@@ -11,6 +11,8 @@ from PIL import Image, ImageDraw
 
 FRAME_COUNT = 6
 FPS = 25
+ADAPTIVE_FPS = 20
+ADAPTIVE_FRAMES = 5
 EXPECTED_SIZE = (80, 64)
 
 
@@ -59,11 +61,32 @@ def make_animated_webp(path: Path) -> None:
     )
 
 
+def stream_gif(ffmpeg_cmd: list[str], gifski_cmd: list[str]) -> tuple[int, int, bytes, bytes]:
+    ffmpeg_proc = subprocess.Popen(
+        ffmpeg_cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    assert ffmpeg_proc.stdout is not None
+    gifski_proc = subprocess.Popen(
+        gifski_cmd,
+        stdin=ffmpeg_proc.stdout,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    ffmpeg_proc.stdout.close()
+    _, gifski_err = gifski_proc.communicate()
+    ffmpeg_err = ffmpeg_proc.stderr.read() if ffmpeg_proc.stderr else b""
+    ffmpeg_rc = ffmpeg_proc.wait()
+    return ffmpeg_rc, gifski_proc.returncode, ffmpeg_err, gifski_err
+
+
 def verify(ffmpeg: Path, ffprobe: Path, gifski: Path, sample_out: Path | None = None) -> None:
     with tempfile.TemporaryDirectory(prefix="polymorph-toolchain-") as tmp:
         root = Path(tmp)
         source = root / "source.webp"
         gif_out = root / "out.gif"
+        adaptive_gif_out = root / "adaptive.gif"
         mp4_out = root / "out.mp4"
         make_animated_webp(source)
 
@@ -78,40 +101,26 @@ def verify(ffmpeg: Path, ffprobe: Path, gifski: Path, sample_out: Path | None = 
                 f"got {source_w}x{source_h}/{source_frames}"
             )
 
+        spatial_filter = "crop=80:80:8:8,scale=64:64:flags=lanczos,pad=80:64:8:0:color=black,setsar=1"
         common = [
             str(ffmpeg), "-hide_banner", "-loglevel", "error", "-i", str(source),
             "-map", "0:v:0", "-an",
-            "-vf", "crop=80:80:8:8,scale=64:64:flags=lanczos,pad=80:64:8:0:color=black,setsar=1",
+            "-vf", spatial_filter,
             "-fps_mode", "passthrough",
         ]
 
-        # The standalone reference effectively handed gifski a 4:2:0 Y4M stream.
-        # Pin that compatible format because FFmpeg 9.0.1 may otherwise retain RGB
-        # after filtering, which yuv4mpegpipe refuses.
-        ffmpeg_proc = subprocess.Popen(
+        ffmpeg_rc, gifski_rc, ffmpeg_err, gifski_err = stream_gif(
             common + ["-pix_fmt", "yuv420p", "-f", "yuv4mpegpipe", "pipe:1"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        assert ffmpeg_proc.stdout is not None
-        gifski_proc = subprocess.Popen(
             [
                 str(gifski), "--fps", str(FPS), "--quality", "100", "--extra",
                 "--repeat", "0", "--width", str(EXPECTED_SIZE[0]), "-o", str(gif_out), "-",
             ],
-            stdin=ffmpeg_proc.stdout,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
         )
-        ffmpeg_proc.stdout.close()
-        _, gifski_err = gifski_proc.communicate()
-        ffmpeg_err = ffmpeg_proc.stderr.read() if ffmpeg_proc.stderr else b""
-        ffmpeg_rc = ffmpeg_proc.wait()
-        if ffmpeg_rc != 0 or gifski_proc.returncode != 0:
+        if ffmpeg_rc != 0 or gifski_rc != 0:
             raise RuntimeError(
                 "GIF streaming smoke test failed\n"
                 f"ffmpeg={ffmpeg_rc}: {ffmpeg_err.decode(errors='replace')}\n"
-                f"gifski={gifski_proc.returncode}: {gifski_err.decode(errors='replace')}"
+                f"gifski={gifski_rc}: {gifski_err.decode(errors='replace')}"
             )
 
         gif_w, gif_h, gif_frames = stream_info(ffprobe, gif_out)
@@ -119,6 +128,42 @@ def verify(ffmpeg: Path, ffprobe: Path, gifski: Path, sample_out: Path | None = 
             raise RuntimeError(
                 f"GIF smoke mismatch: expected {EXPECTED_SIZE[0]}x{EXPECTED_SIZE[1]}/{FRAME_COUNT} frames, "
                 f"got {gif_w}x{gif_h}/{gif_frames}"
+            )
+
+        # Verify the exact adaptive building blocks used by Favor resolution:
+        # final-size motion interpolation, end lookahead padding, exact frame trim,
+        # and explicit target FPS handed to gifski.
+        adaptive_filter = (
+            spatial_filter
+            + ",tpad=stop_mode=clone:stop_duration=0.100000"
+            + ",minterpolate=fps=20:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1"
+            + f",trim=end_frame={ADAPTIVE_FRAMES},setpts=PTS-STARTPTS"
+        )
+        adaptive_ffmpeg = [
+            str(ffmpeg), "-hide_banner", "-loglevel", "error", "-i", str(source),
+            "-map", "0:v:0", "-an", "-vf", adaptive_filter,
+            "-fps_mode", "passthrough", "-pix_fmt", "yuv420p",
+            "-f", "yuv4mpegpipe", "pipe:1",
+        ]
+        ffmpeg_rc, gifski_rc, ffmpeg_err, gifski_err = stream_gif(
+            adaptive_ffmpeg,
+            [
+                str(gifski), "--fps", str(ADAPTIVE_FPS), "--quality", "100", "--extra",
+                "--repeat", "0", "--width", str(EXPECTED_SIZE[0]),
+                "-o", str(adaptive_gif_out), "-",
+            ],
+        )
+        if ffmpeg_rc != 0 or gifski_rc != 0:
+            raise RuntimeError(
+                "Adaptive GIF interpolation smoke test failed\n"
+                f"ffmpeg={ffmpeg_rc}: {ffmpeg_err.decode(errors='replace')}\n"
+                f"gifski={gifski_rc}: {gifski_err.decode(errors='replace')}"
+            )
+        adaptive_w, adaptive_h, adaptive_frames = stream_info(ffprobe, adaptive_gif_out)
+        if (adaptive_w, adaptive_h) != EXPECTED_SIZE or adaptive_frames != ADAPTIVE_FRAMES:
+            raise RuntimeError(
+                f"Adaptive GIF smoke mismatch: expected {EXPECTED_SIZE[0]}x{EXPECTED_SIZE[1]}/"
+                f"{ADAPTIVE_FRAMES} frames, got {adaptive_w}x{adaptive_h}/{adaptive_frames}"
             )
 
         run(common + [
@@ -133,8 +178,8 @@ def verify(ffmpeg: Path, ffprobe: Path, gifski: Path, sample_out: Path | None = 
             )
 
         print(
-            f"Toolchain smoke test passed: {EXPECTED_SIZE[0]}x{EXPECTED_SIZE[1]}, "
-            f"{FRAME_COUNT}/{FRAME_COUNT} frames in GIF and MP4"
+            f"Toolchain smoke test passed: preserve={FRAME_COUNT} frames, "
+            f"adaptive={ADAPTIVE_FRAMES} evenly-resampled frames, MP4={FRAME_COUNT} frames"
         )
 
 

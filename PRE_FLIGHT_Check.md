@@ -1,5 +1,16 @@
 # Polymorph Pre-Flight Log
 
+## PFC-2026-09-10-020 — Add experimental adaptive GIF motion/resolution mode
+
+- Target files: adaptive motion planner/converter/UI extension, models/integrity/tests, Windows toolchain and packaged-app smoke coverage, development version metadata, UX/architecture/status/reference/adaptive-diagnostic docs, and required tracking files.
+- Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, `docs/UX_SPEC.md`, `HISTORY/REFERENCE_GIF_CONVERTER.md`, `HISTORY/DIAGNOSTICS/GIF_REFERENCE_TIMING_2026-09-10.md`, current converter/filters/size optimizer/size units/main window/smoke/toolchain paths, and the real Viper source/output diagnostics.
+- Confirmed real-source evidence: Viper source is 2048x2048, 375 frames at 25 FPS over 15.0 s; OG output is 300 frames over the same duration. Ordinary 25 -> 20 FPS frame selection showed a repeating motion-change spike `[0.6891, 1.1577, 0.6898, 0.6899]`, while motion-compensated interpolation produced near-even phase energy `[0.7742, 0.7898, 0.7902, 0.7755]` and exactly 300 intended frames with end lookahead + trimming.
+- Connected modules reviewed: proven Preserve-motion GIF path, dev.8 GIF smart-fit search, integrity validation, spatial Crop/Fit/Lanczos filter, MP4 path, file-size units, UI settings flow, packaging, and updater boundaries.
+- Conflict risks: interpolation artifacts at full output resolution; increased conversion time from baseline + adaptive fitting; accidental regression of the default Preserve-motion path; missing `minterpolate` support in the pinned Windows FFmpeg build; unsupported variable-duration inputs.
+- Recommended action: add explicit opt-in `Favor resolution` for GIF + file-size mode only; leave `Preserve motion` as default and route it through the proven converter unchanged; use a soft 2048 px target, roughly 8% minimum predicted linear gain, 20 FPS automatic floor, uniform GIF-centisecond cadence candidates, and motion interpolation instead of uneven deletion; gate with unit tests, Windows toolchain/package smoke tests, then full-resolution Viper human validation.
+- Versioning: increment development tester from `0.1.0-dev.8` to `0.1.0-dev.9`.
+- Unchanged: MP4 encoding/sizing, framing behavior, updater, preview behavior, existing visual skin, and public release state.
+
 ## PFC-2026-09-10-019 — Port patched-Python GIF smart-fit optimizer
 
 - Target files: `src/polymorph/size_optimizer.py`, GIF file-size orchestration in `src/polymorph/converter.py`, optimizer tests, development version metadata, GIF reference/diagnostic/architecture/status docs, and required tracking files.
@@ -119,7 +130,7 @@
 
 - Target files: application entrypoint, new packaged smoke-test module, toolchain sample retention, Windows workflow, build/tracking docs.
 - Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, `docs/UX_SPEC.md`, current build workflow, resource loader, resolution linker, and app entrypoint on `dev`.
-- Connected modules reviewed: frozen tool discovery, packaged SVG resource lookup, `MainWindow` construction, Qt animated-WebP preview, linked-resolution controls, PyInstaller output path.
+- Connected modules reviewed: frozen-tool discovery, packaged SVG resource lookup, `MainWindow` construction, Qt animated-WebP preview, linked-resolution controls, PyInstaller output path.
 - Confirmed gap: successful PyInstaller/installer builds did not yet prove the frozen executable itself could start and resolve its packaged runtime resources.
 - Conflict risks: hidden smoke path interfering with normal CLI file-open behavior; headless Qt platform issues; passing build despite missing WebP image plugin/assets/tools.
 - Recommended action: add a hidden `--smoke-test` path used only by CI, run the actual frozen EXE in Qt offscreen mode, and block installer compilation if bundled tools/resources/live preview/linked sizing fail.
