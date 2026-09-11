@@ -1,5 +1,18 @@
 # Polymorph Pre-Flight Log
 
+## PFC-2026-09-11-024 — Replace synthesized adaptive frames with exact source-frame decimation
+
+- Target files: `src/polymorph/adaptive_converter.py`, `src/polymorph/motion_planner.py`, new `src/polymorph/gif_timing.py`, adaptive/UI wording, planner/timing/orchestration tests, Windows toolchain smoke coverage, version metadata, architecture/UX/status/reference/diagnostic docs, and required tracking files.
+- Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, `docs/UX_SPEC.md`, `HISTORY/REFERENCE_GIF_CONVERTER.md`, `HISTORY/DIAGNOSTICS/GIF_ADAPTIVE_MOTION_2026-09-10.md`, current `converter.py`, `adaptive_converter.py`, `motion_planner.py`, integrity/size-optimizer/UI/build paths, and completed dev.12 Windows + Viper validation.
+- Human validation incorporated: dev.12 Favor resolution again completed Viper at `1552x1552 • 93.6 MB • 25 FPS`. The user-supplied dev.11 and dev.12 GIFs are byte-for-byte identical: 93,630,962 bytes, SHA-256 `dbfd1be7211b801f3a3a8d0ffaaf1058a1974f6b27141ef5f3be5ce55452e5af`, 375 frames at 40 ms, 15.0 s.
+- Diagnosis: the synthetic even-timestamp branch is exhausted for Viper; optical-flow and blend-generated frames do not create enough gifski savings. A second control-flow defect was also identified: after a candidate passed the sample prediction but failed the final realized-gain veto, dev.10-dev.12 returned the baseline instead of continuing to deeper candidates.
+- Recommended action: replace only experimental Favor-resolution synthesis with exact integer-stride source-frame retention; test stride 2 then stride 3 nearest-first, keep real encoded sample cost and the 8% predicted/final gain floors, continue to the next stride after a failed full fit, and losslessly patch only the final GIF delay when the source frame count is not divisible by the stride so total loop duration/angular speed remain exact.
+- Viper timing plan: stride 2 retains 188 original frames, uses 187 ordinary 80 ms intervals plus one 40 ms loop-closure interval, totaling exactly 15.0 s; average displayed rate is 12.5333 FPS. No optical-flow or blended image synthesis is used.
+- Connected modules reviewed: Preserve-motion delegation, GIF smart-fit search, exact frame/duration verification, gifski 1.32.0 quality/extra/width/repeat arguments, framing filters, MP4 boundary, adaptive completion readout, packaging and build smoke.
+- Conflict risks: ~12.53 FPS may be visibly too choppy despite constant angular speed; GIF delay-parser/patch correctness; FFmpeg `select`/timestamp filtering could alter expected retained-frame count; source-frame-count remainder handling; extra adaptive measurement time.
+- Versioning: increment development tester from `0.1.0-dev.12` to `0.1.0-dev.13`.
+- Unchanged: Preserve-motion GIF encoder/optimizer, MP4 encoder/optimizer, framing, updater, preview, visual skin, gifski dependency, 99 MB decimal ceiling, quality 100, and public release state.
+
 ## PFC-2026-09-11-023 — Test lower-complexity uniform temporal blending
 
 - Target files: `src/polymorph/adaptive_converter.py`, Windows adaptive toolchain smoke coverage, development version metadata, adaptive architecture/UX/status/diagnostic docs, and required tracking files.
@@ -54,7 +67,7 @@
 - Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, `HISTORY/REFERENCE_GIF_CONVERTER.md`, the completed CI timing diagnostic, current converter/geometry/size-unit paths, and the full user-tested patched `HeroForge_WebP_to_Reddit_GIF.py`.
 - Canonical-source boundary: only the patched Python converter actually run by the user is behavioral evidence. The later Discord distribution package is unvalidated and excluded from parity decisions.
 - Confirmed timing result recorded: patched-Python timing retained 41/50 frames and used 82.1878% of the bytes of an otherwise matched full-frame 25 FPS path; the derived 1.10305x linear factor maps the comparable 1592px result to 1756.06px, matching the OG 1756px result.
-- Optimizer diagnosis: current Polymorph GIF search can stop at roughly 90.27 MB under a 99 MB ceiling because its current acceptance condition is based on `0.97 * 0.94`; the patched Python instead uses a 97 MB target and a 93 MB acceptance floor, plus different measured-size and pass/fail-bracketing logic.
+- Optimizer diagnosis: current Polymorph GIF search can stop at roughly 90.27 MB under a 99 MB ceiling because its current acceptance condition is based on `0.97 * 0.94`; the patched Python instead uses a 97 MB target and 93 MB acceptance floor, plus different measured-size and pass/fail-bracketing logic.
 - Connected modules reviewed: GIF encoder/timing/integrity safeguards, shared size dispatcher, MP4 file-size search, geometry even-dimension handling, decimal-MB conversion, cancellation/progress behavior, installer/version metadata.
 - Conflict risks: replacing the shared size search would alter already-human-validated MP4 sizing; changing encoder/timing/color settings alongside the optimizer would make the Viper comparison ambiguous.
 - Recommended action: route GIF file-size mode through a pure port of the patched Python smart-fit search generalized by 97/99 and 93/99 threshold ratios; preserve six normal attempts and 128px emergency long-edge fallback without upscaling; retain the existing MP4 size search unchanged; add pure optimizer regression tests.
@@ -89,7 +102,7 @@
 - Target files: file-size unit helper, converter ceiling calculation, unit tests, development version metadata, architecture/status docs, required tracking files.
 - Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, current `src/polymorph/converter.py`, `src/polymorph/models.py`, current sizing UI, and dev.5 Windows CI/artifact results.
 - Connected modules reviewed: file-size optimizer, user `MB` input, conversion result byte accounting, GIF frame/FPS safeguards, MP4 path, installer/version metadata.
-- Confirmed bug: the UI labels the ceiling in `MB`, but the converter multiplied by `1024 * 1024`, making `99 MB` equal 103,809,024 bytes and allowing a nominal 99 MB job to exceed a platform's decimal 100 MB limit.
+- Confirmed bug: the UI labels the ceiling in `MB`, but the converter multiplied by `1024 * 1024`, making `99 MB` equal 103,809,024 bytes and allowing a nominal 99 MB job to exceed a platform's decimal 100 MB upload limit.
 - Conflict risks: correcting the ceiling will slightly reduce spatial resolution for outputs that were previously using the extra binary-MiB allowance; altering optimizer thresholds at the same time would make that expected change harder to audit.
 - Recommended action: define decimal megabytes centrally as 1,000,000 bytes, use that helper only for the user-defined ceiling, add direct unit coverage, and leave optimizer search behavior, GIF quality/frame preservation, MP4 encoding, framing, and UI layout unchanged.
 - Versioning: increment development tester from `0.1.0-dev.5` to `0.1.0-dev.6`.
@@ -135,7 +148,7 @@
 - Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, current `converter.py`, current `build/verify_toolchain.py`, and the validated standalone `HeroForge_WebP_to_Reddit_GIF.py` from File Library.
 - Connected modules reviewed: GIF size optimizer, gifski width/FPS arguments, post-encode dimension/frame/timing integrity checks, MP4 path, installer version metadata, Windows smoke pipeline.
 - Human validation: width-corrected Polymorph GIF was reported fantastic and visually identical to the standalone result, possibly smoother; measured output remained `1570x1570` versus standalone `1756x1756`, with only a possible subtle red/pink difference.
-- Diagnosis: the current Polymorph GIF shown in Windows Explorer is already about `93.8 MB`, so the remaining scale difference is not plausibly explained by simple unused file-size headroom alone. The canonical standalone FFmpeg command does not force a YUV pixel format before `yuv4mpegpipe`; Polymorph uniquely forced `yuv444p`.
+- Diagnosis: the current Polymorph GIF shown in Windows Explorer is already about `93.8 MB`, so the remaining resolution gap is not plausibly explained by simple unused file-size headroom alone. The canonical standalone FFmpeg command does not force a YUV pixel format before `yuv4mpegpipe`; Polymorph uniquely forced `yuv444p`.
 - Conflict risks: changing optimizer thresholds simultaneously would make the A/B result ambiguous; changing MP4 would disturb an already-validated output path.
 - Recommended action: remove only the forced GIF-path `yuv444p`, preserve explicit source FPS, gifski quality/extra/repeat/width settings and integrity verification, update the smoke test to exercise the same handoff, and retest the same HeroForge Viper source before touching optimizer logic.
 - Versioning: development tester incremented from `0.1.0-dev.1` to `0.1.0-dev.2` so the replacement installer is unambiguous.
