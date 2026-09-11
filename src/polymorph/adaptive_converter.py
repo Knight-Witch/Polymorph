@@ -267,9 +267,10 @@ class AdaptiveConverter(Converter):
         if target_fps >= source_fps - 1e-6:
             raise ConversionError("Adaptive GIF target must be lower than the source frame rate.")
 
-        # Keep the proven spatial/framing filter untouched, then motion-resample the
-        # already-scaled frames. Padding supplies minterpolate with end-of-stream
-        # lookahead; trimming makes the uniform output frame count exact.
+        # Keep the proven spatial/framing filter untouched, then resample onto an
+        # exact uniform GIF cadence. Linear temporal blending avoids the irregular
+        # source-frame deletion cadence while producing substantially less synthetic
+        # motion detail than optical-flow interpolation for gifski to encode.
         from .filters import build_video_filter
 
         base_filter, _ = build_video_filter(info, settings.framing, width, height)
@@ -277,8 +278,7 @@ class AdaptiveConverter(Converter):
         filter_graph = (
             f"{base_filter},"
             f"tpad=stop_mode=clone:stop_duration={pad_seconds:.6f},"
-            f"minterpolate=fps={target_fps:.9f}:mi_mode=mci:mc_mode=aobmc:"
-            "me_mode=bidir:vsbmc=1,"
+            f"minterpolate=fps={target_fps:.9f}:mi_mode=blend,"
             f"trim=end_frame={expected_frames},setpts=PTS-STARTPTS"
         )
 
