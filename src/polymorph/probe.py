@@ -63,7 +63,13 @@ def _ffprobe_json(ffprobe: Path, path: Path) -> dict:
         "json",
         str(path),
     ]
-    proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    proc = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        check=False,
+        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+    )
     if proc.returncode != 0:
         raise ProbeError(proc.stderr.strip() or "ffprobe failed")
     try:
