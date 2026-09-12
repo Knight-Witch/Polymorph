@@ -89,10 +89,6 @@ class MainWindow(BaseMainWindow):
         self.res_radio.toggled.connect(self._sync_enabled_state)
 
     def _apply_layout_polish(self) -> None:
-        # The adaptive GIF-priority controls add a full section to the right rail.
-        # The old 720px default was tall enough before that section existed but now
-        # compresses line edits/radios on first launch. Give the normal layout the
-        # vertical room it actually needs while retaining a smaller resizable floor.
         self.resize(1080, 800)
         self.setMinimumSize(900, 700)
         controls_layout = self.convert_btn.parentWidget().layout()
@@ -106,7 +102,7 @@ class MainWindow(BaseMainWindow):
             ),
             (
                 self.preview,
-                "Live source preview. In Crop or Fit modes, drag the image to reposition it.",
+                "Live source preview. In Crop or Fit modes, drag to reposition and use the mouse wheel to zoom.",
             ),
             (
                 self.gif_radio,
@@ -126,7 +122,7 @@ class MainWindow(BaseMainWindow):
             ),
             (
                 self.res_radio,
-                "Use exact output dimensions. Polymorph will not upscale beyond the source.",
+                "Use exact output dimensions. Polymorph will not upscale beyond the source framing canvas.",
             ),
             (
                 self.width_spin,
@@ -146,15 +142,19 @@ class MainWindow(BaseMainWindow):
             ),
             (
                 self.frame_mode,
-                "Original keeps the full source. Crop fills a ratio by trimming edges. Fit keeps all content and adds padding.",
+                "Original keeps the source unchanged. Crop fills a ratio without stretching. Fit preserves the source and adds padding.",
             ),
             (
                 self.ratio_combo,
                 "Target aspect ratio used by Crop to ratio and Fit to ratio.",
             ),
             (
+                self.zoom_slider,
+                "Magnify the source inside the Crop/Fit canvas from 100% to 400%. The canvas aspect ratio does not change.",
+            ),
+            (
                 self.center_btn,
-                "Reset Crop or Fit positioning to the center.",
+                "Center the source inside the Crop or Fit frame without changing zoom.",
             ),
             (
                 self.color_btn,
