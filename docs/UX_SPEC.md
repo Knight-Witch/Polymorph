@@ -4,6 +4,15 @@
 
 Files -> Output Format -> Sizing Constraint -> GIF Priority -> Framing -> Polymorph
 
+## Window and interaction ergonomics
+
+- Default development window opens at 1080x800 so the full right-side control rail has enough vertical room after the GIF-priority section was added.
+- Minimum window size is 900x700; users can still resize freely above that floor.
+- Core form controls have minimum visual heights so labels and field values do not collapse or clip when the window is resized.
+- Primary controls expose concise hover tooltips rather than adding permanent explanatory text to the interface.
+- Tooltips cover the file queue/preview, output formats, sizing modes and fields, GIF priority choices, framing controls, output folder, and conversion action.
+- Existing footer icon controls retain their service-specific hover tooltips.
+
 ## Main preview
 
 - Animated source preview is the visual centerpiece.
@@ -42,7 +51,7 @@ Visible only as meaningful controls for GIF + Fit under file size.
 
 ### Favor resolution
 
-- Experimental in dev.13.
+- Experimental source-frame-decimation behavior introduced in dev.13 and carried into dev.14 unchanged.
 - The user does not enter an FPS or target pixel size.
 - Polymorph first creates the normal Preserve-motion fitted result.
 - Dev.9-dev.12 proved that uniformly synthesized intermediate frames can consume enough GIF bytes to erase the expected resolution gain, so dev.13 stops synthesizing frames entirely.
