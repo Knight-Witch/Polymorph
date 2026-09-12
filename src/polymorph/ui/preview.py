@@ -6,11 +6,13 @@ from PySide6.QtCore import QPoint, QRect, QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QMovie, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import QWidget
 
+from ..geometry import clamp_framing_zoom, content_placement
 from ..models import FramingMode, FramingSettings
 
 
 class AnimatedPreview(QWidget):
     framingChanged = Signal(float, float)
+    zoomChanged = Signal(float)
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
@@ -59,21 +61,43 @@ class AnimatedPreview(QWidget):
             return
 
         source = QRectF(self._pixmap.rect())
-        target_ratio = self._framing.ratio if self._framing.mode is not FramingMode.ORIGINAL else None
-        display_rect = self._fit_rect(inner, target_ratio or (source.width() / source.height()))
+        source_ratio = source.width() / source.height()
+        target_ratio = (
+            self._framing.ratio
+            if self._framing.mode is not FramingMode.ORIGINAL and self._framing.ratio
+            else source_ratio
+        )
+        canvas = self._fit_rect(inner, target_ratio)
 
-        if self._framing.mode is FramingMode.CROP and target_ratio:
-            crop = self._crop_rect(source, target_ratio)
-            painter.drawPixmap(display_rect, self._pixmap, crop)
-        elif self._framing.mode is FramingMode.FIT and target_ratio:
-            painter.fillRect(display_rect, QColor(self._framing.background))
-            content_rect = self._content_rect_for_fit(display_rect, source.width() / source.height())
-            content_rect = self._offset_fit_rect(content_rect, display_rect)
-            painter.drawPixmap(content_rect, self._pixmap, source)
+        if self._framing.mode is FramingMode.FIT and self._framing.ratio:
+            painter.fillRect(canvas, QColor(self._framing.background))
+
+        if self._framing.mode is FramingMode.ORIGINAL or not self._framing.ratio:
+            content = canvas
         else:
-            painter.drawPixmap(display_rect, self._pixmap, source)
+            placement = content_placement(
+                source.width(),
+                source.height(),
+                canvas.width(),
+                canvas.height(),
+                self._framing,
+            )
+            content = QRectF(
+                canvas.x() + placement.x,
+                canvas.y() + placement.y,
+                placement.width,
+                placement.height,
+            )
 
-        self._draw_border(painter, display_rect.toRect())
+        # Draw the entire source at an aspect-preserving size and clip it to the
+        # framing canvas. This mirrors the encoder's cover/contain placement model
+        # and cannot stretch the source to the target ratio.
+        painter.save()
+        painter.setClipRect(canvas)
+        painter.drawPixmap(content, self._pixmap, source)
+        painter.restore()
+
+        self._draw_border(painter, canvas.toRect())
 
     @staticmethod
     def _fit_rect(bounds: QRect, ratio: float) -> QRectF:
@@ -88,36 +112,19 @@ class AnimatedPreview(QWidget):
         y = bounds.y() + (bh - h) / 2
         return QRectF(x, y, w, h)
 
-    def _crop_rect(self, source: QRectF, ratio: float) -> QRectF:
-        sr = source.width() / source.height()
-        if sr > ratio:
-            h = source.height()
-            w = h * ratio
-            extra = source.width() - w
-            x = ((self._framing.offset_x + 1) / 2) * extra
-            return QRectF(x, 0, w, h)
-        w = source.width()
-        h = w / ratio
-        extra = source.height() - h
-        y = ((self._framing.offset_y + 1) / 2) * extra
-        return QRectF(0, y, w, h)
-
-    @staticmethod
-    def _content_rect_for_fit(canvas: QRectF, source_ratio: float) -> QRectF:
-        if canvas.width() / canvas.height() > source_ratio:
-            h = canvas.height()
-            w = h * source_ratio
-        else:
-            w = canvas.width()
-            h = w / source_ratio
-        return QRectF(canvas.x() + (canvas.width() - w) / 2, canvas.y() + (canvas.height() - h) / 2, w, h)
-
-    def _offset_fit_rect(self, content: QRectF, canvas: QRectF) -> QRectF:
-        max_x = max(0.0, canvas.width() - content.width())
-        max_y = max(0.0, canvas.height() - content.height())
-        x = canvas.x() + ((self._framing.offset_x + 1) / 2) * max_x
-        y = canvas.y() + ((self._framing.offset_y + 1) / 2) * max_y
-        return QRectF(x, y, content.width(), content.height())
+    def _preview_sizes(self) -> tuple[float, float, float, float] | None:
+        if self._pixmap.isNull() or self._framing.mode is FramingMode.ORIGINAL or not self._framing.ratio:
+            return None
+        inner = self.rect().adjusted(18, 18, -18, -18)
+        canvas = self._fit_rect(inner, self._framing.ratio)
+        placement = content_placement(
+            self._pixmap.width(),
+            self._pixmap.height(),
+            canvas.width(),
+            canvas.height(),
+            self._framing,
+        )
+        return canvas.width(), canvas.height(), placement.width, placement.height
 
     @staticmethod
     def _draw_border(painter: QPainter, rect: QRect) -> None:
@@ -135,9 +142,24 @@ class AnimatedPreview(QWidget):
             return
         delta = event.position().toPoint() - self._drag_origin
         ox, oy = self._drag_start_offsets
-        direction = -1.0 if self._framing.mode is FramingMode.CROP else 1.0
-        nx = max(-1.0, min(1.0, ox + direction * delta.x() / max(80, self.width() / 3)))
-        ny = max(-1.0, min(1.0, oy + direction * delta.y() / max(80, self.height() / 3)))
+        sizes = self._preview_sizes()
+        if sizes is None:
+            return
+        canvas_w, canvas_h, content_w, content_h = sizes
+
+        # Make the visible media follow the pointer. Contained content moves in the
+        # same direction as the drag; overflowing/cropped content uses the inverse
+        # normalized offset because revealing the far edge moves the image left/up.
+        direction_x = 1.0 if content_w <= canvas_w else -1.0
+        direction_y = 1.0 if content_h <= canvas_h else -1.0
+        nx = max(
+            -1.0,
+            min(1.0, ox + direction_x * delta.x() / max(80.0, canvas_w / 3.0)),
+        )
+        ny = max(
+            -1.0,
+            min(1.0, oy + direction_y * delta.y() / max(80.0, canvas_h / 3.0)),
+        )
         self._framing.offset_x = nx
         self._framing.offset_y = ny
         self.framingChanged.emit(nx, ny)
@@ -146,3 +168,16 @@ class AnimatedPreview(QWidget):
     def mouseReleaseEvent(self, _event) -> None:
         self._drag_origin = None
         self.unsetCursor()
+
+    def wheelEvent(self, event) -> None:
+        if self._framing.mode is FramingMode.ORIGINAL:
+            return super().wheelEvent(event)
+        steps = event.angleDelta().y() / 120.0
+        if not steps:
+            return
+        zoom = clamp_framing_zoom(self._framing.zoom + steps * 0.10)
+        if abs(zoom - self._framing.zoom) > 1e-9:
+            self._framing.zoom = zoom
+            self.zoomChanged.emit(zoom)
+            self.update()
+        event.accept()
