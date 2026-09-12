@@ -2,6 +2,52 @@
 
 Historical entries through dev.15 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV15.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV15.md).
 
+## POLY-2026-09-12-030 — 2026-09-12 04:45 PDT — Rebuild the branded UI around the approved mockup
+
+### Summary
+
+- Replaced dev.18's presentation-only skinning approach with the first real structural UI rebuild toward the approved mockup. The old three-column `Files | Preview | Controls` composition is no longer the branded runtime layout.
+- Re-composed the already-validated widgets into two primary columns: a large left workspace with the file queue above the preview, and a dedicated scrollable right control rail.
+- Split the right rail into distinct `OUTPUT FORMAT`, `SIZING`, `GIF PRIORITY`, `FRAMING`, `ASPECT RATIO`, and `OUTPUT FOLDER` cards so spacing can now be judged in the intended composition rather than inside the old development scaffold.
+- Kept the preview as the dominant visual area and moved `+ Add Files`, Remove, and a new functional Clear queue action into the Files card header area.
+- Replaced the visible framing combo with real Original / Crop / Fit radio controls that remain synchronized to the existing hidden combo. Established framing logic, preview geometry, export geometry, Crop zoom, Fit padding, and enabled/disabled state therefore remain driven by the previously validated control path.
+- Added the exact user-directed brand lockup: `MEDIA CONVERSION MAGIC — BY KNIGHT WITCH™` beneath `POLYMORPH`, with the version kept subordinate to the title.
+- Added bundled typography support: Cinzel for display/primary-action text and Inter for general UI/body text. Windows CI fetches pinned Google Fonts assets, verifies their Git blob identities before packaging, and bundles the matching SIL OFL notices.
+- Kept `Cast Polymorph` as the main action and retained the dev.18 black/charcoal, ivory, champagne-gold, and restrained crimson palette while adapting the QSS to the new card-based composition.
+- Removed the generic percentage text from the thin progress bar so the later dedicated working animation can become the visual progress treatment without fighting a second large indicator.
+- Did not add fake mockup-only controls. The only new controls in this pass are real queue/framing affordances wired to existing behavior.
+- Did not change the working/loading animation yet. The later magic-circle versus D20 concept remains deliberately separate.
+- No GIF/MP4 encoder settings, adaptive selection logic, framing geometry, subprocess behavior, optimizer behavior, updater behavior, or pinned conversion tool versions changed.
+- Incremented the development tester to `0.1.0-dev.19`.
+
+### Touched files
+
+- `src/polymorph/ui/branded_layout.py` (new)
+- `src/polymorph/ui/fonts.py` (new)
+- `src/polymorph/ui/styles.py`
+- `src/polymorph/app.py`
+- `src/polymorph/smoke_test.py`
+- `build/verify_font_assets.py` (new)
+- `.github/workflows/windows-dev-build.yml`
+- `THIRD_PARTY.md`
+- `src/polymorph/__init__.py`
+- `src/polymorph/constants.py`
+- `pyproject.toml`
+- `installer/Polymorph.iss`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert this commit to return to dev.18's old three-column layout with the first color/type skin. Conversion, framing, adaptive GIF behavior, updater behavior, and conversion toolchain state are independent of this UI composition pass.
+
+### Test notes
+
+- CI now fails if the pinned Cinzel or Inter file does not match the expected Git blob identity.
+- Frozen-app smoke must confirm that both fonts loaded, the exact `MEDIA CONVERSION MAGIC — BY KNIGHT WITCH™` lockup exists, the branded runtime has a two-column main splitter, at least six control cards are present, and `Cast Polymorph` remains the primary action.
+- The normal packaged smoke still exercises animated WebP preview decode, adaptive GIF priority mapping, visible Crop radio -> established framing state mapping, Crop zoom, and linked 16:9 resolution behavior.
+- Human dev.19 review should focus on the actual approved-layout questions that dev.18 could not answer: workspace/rail proportions, file queue height, preview dominance, card density, readability, header hierarchy, and whether the new composition feels like the mockup before loader animation work begins.
+
 ## POLY-2026-09-12-029 — 2026-09-12 04:20 PDT — Establish first branded visual skin
 
 ### Summary
@@ -83,7 +129,7 @@ Historical entries through dev.15 are preserved verbatim in [`HISTORY/PROJECT_LO
 - Diagnosed the user's focus-stealing CMD/PowerShell flashes. FFmpeg and gifski already launched with Windows `CREATE_NO_WINDOW`; ffprobe did not. ffprobe now uses the same no-console creation flag while continuing to capture stdout/stderr for errors and metadata.
 - Replaced the animated preview's duplicate Crop/Fit geometry implementation with the same shared `native_geometry_for_size()` resolver used by encoder framing. Preview and export now consume one source of truth for crop rectangle, canvas size, padding, and offsets instead of merely attempting to agree.
 - Crop continues to preserve aspect ratio and now adds a 100–300% manual zoom slider. Zoom reduces the retained source crop window and therefore its native framed maximum; it does not upscale source pixels and preserves the project-wide no-upscale rule. Preview drag chooses which source area remains visible.
-- Fit preserves the complete source aspect ratio and expands the canvas with background padding. The preview now derives content size and position from the same pad geometry that drives the FFmpeg export filter rather than stretching the source to the selected ratio.
+- Fit preserves the complete source aspect ratio and expands the canvas with background padding. The preview now derives content size and position from the same pad geometry that drives the FFmpeg `pad` filter rather than stretching the source to the selected ratio.
 - Added an explicit visible radio-button checked state so the selected GIF/sizing/priority option can no longer appear blank and be mistaken for the unselected choice.
 - Hardened the Qt/PyInstaller framing boundary by converting combo item data through `FramingMode(...)` instead of depending on Python object identity; this was required after the first frozen-app smoke caught Crop item data round-tripping as the underlying string.
 - Extended geometry tests for crop zoom/no-distortion, probe tests for the Windows no-console flag, and the packaged-app smoke gate for checked-radio styling, Crop zoom mapping, and framing state.

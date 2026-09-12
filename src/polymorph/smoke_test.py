@@ -6,15 +6,26 @@ import traceback
 from pathlib import Path
 
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QApplication, QLabel
+from PySide6.QtWidgets import QApplication, QFrame, QLabel, QSplitter
 
 from .models import FramingMode, GifMotionMode
 from .resources import asset_path
 from .tools import find_toolchain
 from .ui.adaptive_main_window import MainWindow
+from .ui.branded_layout import rebuild_brand_layout
 from .ui.styles import apply_brand_skin
 
-_ASSETS = ("update.svg", "github.svg", "kofi.svg", "patreon.svg", "discord.svg")
+_ASSETS = (
+    "update.svg",
+    "github.svg",
+    "kofi.svg",
+    "patreon.svg",
+    "discord.svg",
+)
+_FONT_ASSETS = (
+    "fonts/Cinzel-wght.ttf",
+    "fonts/Inter-opsz-wght.ttf",
+)
 
 
 def _write_log(lines: list[str]) -> None:
@@ -53,30 +64,48 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
                 raise RuntimeError(f"Packaged UI resource could not be loaded: {path}")
         lines.append("PASS packaged footer SVG resources")
 
+        for name in _FONT_ASSETS:
+            path = asset_path(name)
+            if not path.is_file():
+                raise RuntimeError(f"Packaged font resource is missing: {path}")
+        loaded_fonts = str(app.property("polymorphFontsLoaded") or "")
+        if "Cinzel" not in loaded_fonts or "Inter" not in loaded_fonts:
+            raise RuntimeError(f"Bundled brand fonts did not load: {loaded_fonts!r}")
+        lines.append("PASS bundled Cinzel and Inter fonts")
+
         window = MainWindow()
+        rebuild_brand_layout(window)
         apply_brand_skin(window)
         if window.converter is None:
             raise RuntimeError("Main window could not resolve the bundled conversion toolchain")
 
-        if window.width() < 1080 or window.height() < 800:
+        if window.width() < 1200 or window.height() < 840:
             raise RuntimeError(
                 f"Default window geometry regressed: got {window.width()}x{window.height()}, "
-                "expected at least 1080x800"
+                "expected at least 1200x840"
             )
-        if window.minimumHeight() < 700:
+        if window.minimumWidth() < 1000 or window.minimumHeight() < 700:
             raise RuntimeError(
-                f"Minimum window height regressed: got {window.minimumHeight()}, expected >=700"
+                f"Minimum window geometry regressed: got {window.minimumWidth()}x"
+                f"{window.minimumHeight()}, expected >=1000x700"
             )
-        lines.append("PASS comfortable default window geometry")
+        lines.append("PASS branded default window geometry")
 
-        subtitle = window.findChild(QLabel, "Subtitle")
-        if window.property("polymorphSkin") != "occult-gold-v1":
+        subtitle = window.findChild(QLabel, "BrandSubtitle")
+        if window.property("polymorphSkin") != "occult-gold-v2":
             raise RuntimeError("Branded presentation skin was not applied")
-        if subtitle is None or subtitle.text() != "MEDIA CONVERSION MAGIC":
-            raise RuntimeError("Branded subtitle copy is missing")
+        if window.property("polymorphLayout") != "two-column-v1":
+            raise RuntimeError("Branded two-column layout was not applied")
+        if subtitle is None or subtitle.text() != "MEDIA CONVERSION MAGIC — BY KNIGHT WITCH™":
+            raise RuntimeError("Branded subtitle/byline copy is missing")
         if window.convert_btn.text() != "Cast Polymorph":
             raise RuntimeError("Primary action copy regressed")
-        lines.append("PASS branded visual shell and primary copy")
+        splitter = window.findChild(QSplitter, "BrandMainSplitter")
+        if splitter is None or splitter.count() != 2:
+            raise RuntimeError("Main workspace did not collapse to the two-column composition")
+        if len(window.findChildren(QFrame, "ControlCard")) < 6:
+            raise RuntimeError("Right control rail is missing branded section cards")
+        lines.append("PASS branded two-column shell, byline, and section cards")
 
         tooltip_widgets = {
             "file queue": window.file_list,
@@ -110,7 +139,9 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
             raise RuntimeError("Selected radio controls do not have an explicit visible style")
         if "qradialgradient" not in stylesheet:
             raise RuntimeError("Selected radio controls do not use the centered filled-dot style")
-        lines.append("PASS primary control hover tooltips and radio dot selection styling")
+        if '"Cinzel"' not in stylesheet or '"Inter"' not in stylesheet:
+            raise RuntimeError("Branded type families are missing from the packaged stylesheet")
+        lines.append("PASS branded typography, tooltips, and radio selection styling")
 
         window._add_files([sample])
         app.processEvents()
@@ -139,16 +170,16 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
             raise RuntimeError("Favor resolution UI did not map to conversion settings")
         lines.append("PASS adaptive GIF priority controls")
 
-        window.frame_mode.setCurrentIndex(1)  # Crop to ratio
+        window._brand_crop_radio.setChecked(True)
         window.ratio_combo.setCurrentText("16:9")
         window.crop_zoom_slider.setValue(150)
         app.processEvents()
         settings = window._make_settings()
         if settings.framing.mode is not FramingMode.CROP:
-            raise RuntimeError("Crop framing UI did not map to conversion settings")
+            raise RuntimeError("Branded Crop radio did not map to conversion settings")
         if abs(settings.framing.zoom - 1.5) > 1e-6:
             raise RuntimeError("Crop zoom UI did not map to conversion settings")
-        lines.append("PASS crop zoom framing controls")
+        lines.append("PASS branded framing radios and crop zoom controls")
 
         window.res_radio.setChecked(True)
         window.width_spin.setValue(64)

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "polymorph-media"
-version = "0.1.0.dev18"
+version = "0.1.0.dev19"
 description = "Simple high-quality animated WebP conversion and framing utility"
 requires-python = ">=3.11"
 dependencies = [
@@ -18,4 +18,4 @@ polymorph = "polymorph.app:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-polymorph = ["assets/*.svg"]
+polymorph = ["assets/*.svg", "assets/fonts/*.ttf", "assets/fonts/*.txt"]

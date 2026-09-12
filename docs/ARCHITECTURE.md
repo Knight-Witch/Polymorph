@@ -15,9 +15,32 @@
 - `src/polymorph/ui/preview.py`: animated preview renderer driven from the same native framing geometry as export.
 - `src/polymorph/ui/main_window.py`: novice-facing desktop UI and queue/framing state.
 - `src/polymorph/ui/adaptive_main_window.py`: development UI extension for GIF priority, Crop zoom, decimal-MB/effective-FPS completion reporting, and diagnostic traces.
+- `src/polymorph/ui/branded_layout.py`: presentation composition layer that reparents the already-wired functional widgets into the branded two-column workspace/control-rail layout without duplicating conversion state.
+- `src/polymorph/ui/fonts.py`: bundled Cinzel/Inter registration and application-font setup; missing assets degrade to stylesheet fallbacks in source checkouts.
+- `src/polymorph/ui/styles.py`: shared branded QSS applied after the functional and branded layout are constructed.
 - `src/polymorph/update_service.py`: official-release discovery, exact asset pairing, bounded streaming download, checksum verification, installer launch.
-- `build/`: executable packaging and CI-only diagnostics, including the real-toolchain adaptive-selection integration gate.
+- `build/verify_font_assets.py`: verifies the pinned Google Fonts downloads by Git blob SHA-1 before the frozen application is built.
+- `build/`: executable packaging and CI-only diagnostics, including real-toolchain adaptive-selection and pinned-font gates.
 - `installer/`: per-user Windows installer.
+
+## Branded UI composition boundary
+
+- `MainWindow` and `AdaptiveMainWindow` continue to create and wire the functional controls first.
+- `rebuild_brand_layout()` runs only after that construction completes. It reuses those exact widget instances for files, preview, output format, sizing, GIF priority, aspect ratio, Crop zoom, output folder, progress, and conversion action.
+- The visible Original/Crop/Fit branded radios synchronize to the existing `frame_mode` combo. The combo remains the established framing-state bridge consumed by existing enabled-state and framing callbacks.
+- The branded composition therefore changes ownership/layout, not conversion semantics.
+- Unsupported mockup concepts are not represented as fake controls. New visual controls must either drive existing state or implement a real action.
+- `apply_brand_skin()` runs after the layout rebuild and changes only visual state/object names/window geometry.
+- This separation keeps later loader/button animation work outside the converter and framing engine.
+
+## Bundled font pipeline
+
+- The Windows workflow downloads Cinzel and Inter from immutable google/fonts commit URLs.
+- `build/verify_font_assets.py` computes the Git blob SHA-1 for each downloaded TTF and fails the build if it does not match the expected upstream blob identity.
+- Matching SIL OFL text files are downloaded from the same pinned commits.
+- `build/Polymorph.spec` already packages the complete `src/polymorph/assets` directory, so the downloaded font files and notices are included in the frozen application.
+- `load_brand_fonts()` registers the packaged TTFs with Qt before `MainWindow` is constructed and sets Inter as the application body font. QSS selects Cinzel for display/primary-action roles.
+- Packaged smoke fails if either font asset is missing or Qt cannot register both logical families.
 
 ## Conversion ordering
 

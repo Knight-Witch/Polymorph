@@ -32,6 +32,24 @@ Polymorph invokes third-party executables and uses third-party Python libraries.
 - Project: https://pyinstaller.org/
 - Purpose: Windows executable bundle creation.
 
+## Cinzel
+
+- Project source: Google Fonts / Cinzel.
+- Purpose: Polymorph display typography.
+- Bundled file: `Cinzel[wght].ttf`, pinned from google/fonts commit `45071f07c63e863a539442ef3562b71ab1f147a6`.
+- Verified Git blob SHA-1: `d218a0b9c8879fd5a708872cc0ef357e507b35ca`.
+- License: SIL Open Font License 1.1.
+- The packaged font directory includes `OFL-Cinzel.txt`.
+
+## Inter
+
+- Project source: Google Fonts / Inter.
+- Purpose: Polymorph body/UI typography.
+- Bundled file: `Inter[opsz,wght].ttf`, pinned from google/fonts commit `e1d6480102fed30739fead0faee463101f892c8f`.
+- Verified Git blob SHA-1: `047c92f6e2212473dc436020afed689527076d44`.
+- License: SIL Open Font License 1.1.
+- The packaged font directory includes `OFL-Inter.txt`.
+
 ## Simple Icons
 
 - Project: https://github.com/simple-icons/simple-icons

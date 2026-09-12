@@ -2,17 +2,29 @@
 
 ## Primary flow
 
-Files -> Output Format -> Sizing Constraint -> GIF Priority -> Framing -> Polymorph
+Files -> Output Format -> Sizing Constraint -> GIF Priority -> Framing -> Cast Polymorph
+
+## Branded application composition
+
+- The branded runtime uses a two-column composition instead of the old three-column development scaffold.
+- The left workspace is dominant and contains the file queue above the animated preview.
+- The right rail is a scrollable stack of distinct `OUTPUT FORMAT`, `SIZING`, `GIF PRIORITY`, `FRAMING`, `ASPECT RATIO`, and `OUTPUT FOLDER` cards, with `Cast Polymorph` anchored after the settings.
+- Queue actions live with the queue: Add Files, Remove selected, and Clear queue. Clear removes queue entries only; it never deletes source files.
+- The visible framing selector is Original / Crop / Fit radio controls. They are synchronized to the established framing state used by preview/export logic rather than introducing a second framing model.
+- The header brand lockup is `POLYMORPH`, version, then `MEDIA CONVERSION MAGIC — BY KNIGHT WITCH™`.
+- Mockup-only decorative slogans are intentionally excluded.
+- Cinzel is the bundled display family for the title and primary action. Inter is the bundled body/UI family. Packaged builds include the pinned font files and SIL OFL notices.
+- The current black/charcoal, ivory, champagne-gold, and restrained crimson palette remains the baseline visual direction.
+- Loader/progress art is not part of this composition pass. The later magic-circle and D20 concepts remain separate design work.
 
 ## Window and interaction ergonomics
 
-- Default development window opens at 1080x820 so the right-side control rail has room for GIF priority plus Crop zoom.
-- Minimum window size is 900x700; users can still resize freely above that floor.
+- The branded development window opens at 1280x880 so the preview remains dominant while the card rail can use readable 11pt body text.
+- Minimum branded size is 1020x720; the right settings rail scrolls vertically when the window cannot show every card at once.
 - Core form controls have minimum visual heights so labels and field values do not collapse or clip when the window is resized.
-- Primary controls expose concise hover tooltips rather than adding permanent explanatory text to the interface.
+- Primary controls expose concise hover tooltips rather than adding permanent codec jargon to the interface.
 - Tooltips cover the file queue/preview, output formats, sizing modes and fields, GIF priority choices, framing controls, output folder, and conversion action.
 - Existing footer icon controls retain their service-specific hover tooltips.
-- Dev.14 layout sizing and hover help were human-validated on the user's normal Windows desktop setup.
 - Radio buttons use conventional state styling: hollow circle when unselected, centered filled dot when selected. Disabled selected radios keep the same dot treatment in the dimmed disabled palette.
 
 ## Main preview
@@ -24,6 +36,7 @@ Files -> Output Format -> Sizing Constraint -> GIF Priority -> Framing -> Polymo
 - Crop zoom reduces the retained source window rather than upscaling source content; the maximum export dimensions therefore shrink as zoom increases, preserving the no-upscale rule.
 - Fit mode preserves the full source aspect ratio and expands the canvas to the chosen ratio with background padding; it supports drag-to-reposition within the available padding and a user-selected background color.
 - Center resets source position within the current Crop/Fit framing but does not discard the chosen Crop zoom.
+- Human dev.16/17 testing and subsequent real Crop/Fit exports validated preview/export framing parity end to end.
 
 ## Sizing modes
 
@@ -98,6 +111,8 @@ The service glyphs are monochrome so the footer remains visually restrained. The
 
 ## Deferred
 
+- Final working/loading animation and cast-transition behavior.
+- Final application emblem/icon.
 - ETA/time remaining.
 - Advanced codec controls.
 - Parallel jobs.

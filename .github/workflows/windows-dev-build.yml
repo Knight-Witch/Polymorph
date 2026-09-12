@@ -35,6 +35,18 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install . pyinstaller pillow
 
+      - name: Fetch pinned Polymorph UI fonts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force src\polymorph\assets\fonts | Out-Null
+          $cinzel = "https://raw.githubusercontent.com/google/fonts/45071f07c63e863a539442ef3562b71ab1f147a6/ofl/cinzel/Cinzel%5Bwght%5D.ttf"
+          $inter = "https://raw.githubusercontent.com/google/fonts/e1d6480102fed30739fead0faee463101f892c8f/ofl/inter/Inter%5Bopsz%2Cwght%5D.ttf"
+          Invoke-WebRequest $cinzel -OutFile src\polymorph\assets\fonts\Cinzel-wght.ttf
+          Invoke-WebRequest $inter -OutFile src\polymorph\assets\fonts\Inter-opsz-wght.ttf
+          Invoke-WebRequest "https://raw.githubusercontent.com/google/fonts/45071f07c63e863a539442ef3562b71ab1f147a6/ofl/cinzel/OFL.txt" -OutFile src\polymorph\assets\fonts\OFL-Cinzel.txt
+          Invoke-WebRequest "https://raw.githubusercontent.com/google/fonts/e1d6480102fed30739fead0faee463101f892c8f/ofl/inter/OFL.txt" -OutFile src\polymorph\assets\fonts\OFL-Inter.txt
+          python build\verify_font_assets.py src\polymorph\assets\fonts
+
       - name: Run unit tests
         shell: pwsh
         env:
