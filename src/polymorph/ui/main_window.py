@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QProgressBar,
     QRadioButton,
+    QSlider,
     QSpinBox,
     QSplitter,
     QToolButton,
@@ -44,7 +45,7 @@ from ..constants import (
     default_output_dir,
 )
 from ..converter import ConversionCancelled, Converter
-from ..geometry import native_geometry
+from ..geometry import MAX_FRAMING_ZOOM, MIN_FRAMING_ZOOM, native_geometry
 from ..models import ConversionSettings, FramingMode, FramingSettings, OutputFormat, SizingMode
 from ..resources import asset_path
 from ..tools import find_toolchain
@@ -161,6 +162,7 @@ class MainWindow(QMainWindow):
         preview_layout.setContentsMargins(10, 10, 10, 10)
         self.preview = AnimatedPreview()
         self.preview.framingChanged.connect(self._preview_offset_changed)
+        self.preview.zoomChanged.connect(self._preview_zoom_changed)
         preview_layout.addWidget(self.preview, 1)
         self.dimensions_label = QLabel("No file selected")
         self.dimensions_label.setAlignment(Qt.AlignCenter)
@@ -241,6 +243,21 @@ class MainWindow(QMainWindow):
         guide.clicked.connect(self._show_aspect_guide)
         ratio_row.addWidget(guide)
         controls_layout.addLayout(ratio_row)
+
+        zoom_row = QHBoxLayout()
+        zoom_row.addWidget(QLabel("Zoom"))
+        self.zoom_slider = QSlider(Qt.Horizontal)
+        self.zoom_slider.setRange(int(MIN_FRAMING_ZOOM * 100), int(MAX_FRAMING_ZOOM * 100))
+        self.zoom_slider.setSingleStep(5)
+        self.zoom_slider.setPageStep(25)
+        self.zoom_slider.setValue(100)
+        self.zoom_slider.valueChanged.connect(self._zoom_changed)
+        self.zoom_value = QLabel("100%")
+        self.zoom_value.setMinimumWidth(42)
+        self.zoom_value.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        zoom_row.addWidget(self.zoom_slider, 1)
+        zoom_row.addWidget(self.zoom_value)
+        controls_layout.addLayout(zoom_row)
 
         frame_actions = QHBoxLayout()
         self.center_btn = QPushButton("Center")
@@ -417,6 +434,21 @@ class MainWindow(QMainWindow):
         self.framing.offset_x = x
         self.framing.offset_y = y
 
+    def _zoom_changed(self, value: int) -> None:
+        zoom = value / 100.0
+        self.framing.zoom = zoom
+        self.zoom_value.setText(f"{value}%")
+        self.preview.set_framing(self.framing)
+
+    def _preview_zoom_changed(self, zoom: float) -> None:
+        value = int(round(zoom * 100))
+        if self.zoom_slider.value() != value:
+            blocked = self.zoom_slider.blockSignals(True)
+            self.zoom_slider.setValue(value)
+            self.zoom_slider.blockSignals(blocked)
+        self.framing.zoom = zoom
+        self.zoom_value.setText(f"{value}%")
+
     def _center_framing(self) -> None:
         self.framing.offset_x = 0.0
         self.framing.offset_y = 0.0
@@ -447,6 +479,7 @@ class MainWindow(QMainWindow):
         self.height_spin.setEnabled(self.res_radio.isChecked() and not busy)
         framing_enabled = self.frame_mode.currentData() is not FramingMode.ORIGINAL
         self.ratio_combo.setEnabled(framing_enabled and not busy)
+        self.zoom_slider.setEnabled(framing_enabled and not busy)
         self.center_btn.setEnabled(framing_enabled and not busy)
         self.color_btn.setEnabled(
             self.frame_mode.currentData() is FramingMode.FIT and not busy
