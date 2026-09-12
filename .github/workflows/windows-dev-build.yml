@@ -69,6 +69,17 @@ jobs:
         shell: pwsh
         run: python build\verify_toolchain.py tools build-smoke\sample.webp
 
+      - name: Verify adaptive converter integration
+        shell: pwsh
+        run: python build\verify_adaptive_converter.py tools build-smoke\adaptive-integration.json
+
+      - name: Upload adaptive integration diagnostic
+        uses: actions/upload-artifact@v4
+        with:
+          name: Polymorph-adaptive-integration
+          path: build-smoke/adaptive-integration.json
+          if-no-files-found: error
+
       - name: Compare standalone GIF timing reference
         shell: pwsh
         run: python build\compare_gif_reference.py tools build-smoke\gif-reference
