@@ -1,5 +1,42 @@
 # Changelog
 
+## POLY-2026-09-11-025 — 2026-09-11 17:05 PDT — Fix first-launch layout compression and add hover tooltips
+
+### Summary
+
+- Responded to the user-reported first-launch UI defect where the old 1080x720 default window height compressed the right-side settings rail after the GIF-priority section was added; values and radio-label text rendered clipped until the user manually made the window taller.
+- Kept the existing three-column layout and visual palette, but changed the adaptive UI's normal opening size to 1080x800 with a 900x700 resize floor and slightly tighter right-rail spacing.
+- Added minimum visual heights for section headings, radio buttons, combo boxes, and spin boxes so controls do not collapse into unreadable rows near the lower resize range.
+- Improved disabled-state styling for radio/input controls without changing their enabled/disabled logic.
+- Added concise hover tooltips to the file queue, live preview, GIF/MP4 choices, sizing modes and fields, GIF priority controls, framing controls, output folder, primary conversion action, Add Files, Remove Selected, and Cancel. Existing footer/aspect-guide/output-folder tooltips remain.
+- Extended the packaged-app smoke gate to require the new default geometry, minimum height, and primary-control tooltip coverage before an installer is accepted.
+- Updated UX/status documentation and incremented the development tester to `0.1.0-dev.14`.
+- Conversion behavior is intentionally untouched: dev.14 carries dev.13 exact source-frame-decimation Favor-resolution logic verbatim, along with Preserve-motion GIF, MP4, framing math, updater, dependencies, and file-size behavior.
+
+### Touched files
+
+- `src/polymorph/ui/adaptive_main_window.py`
+- `src/polymorph/ui/styles.py`
+- `src/polymorph/smoke_test.py`
+- `src/polymorph/__init__.py`
+- `src/polymorph/constants.py`
+- `pyproject.toml`
+- `installer/Polymorph.iss`
+- `docs/UX_SPEC.md`
+- `MASTER.md`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert this commit to restore dev.13's 1080x720 first-launch geometry and prior control styling/tooltips. Conversion output is independent of this UI-only change.
+
+### Test notes
+
+- Packaged-app smoke coverage now fails if the adaptive window initializes below 1080x800, if its minimum height falls below 700, or if the primary settings controls lose their hover tooltip text.
+- Full Windows CI must pass unit tests, the dev.13 exact source-decimation toolchain smoke, standalone-reference diagnostic, packaged UI smoke, installer compilation, checksum generation, and artifact upload before dev.14 is handed to the user.
+- Human UI validation should confirm that the first-launch control rail renders normally at the user's Windows DPI/scaling without manually increasing the window height and that hover tooltips appear as expected.
+
 ## POLY-2026-09-11-024 — 2026-09-11 05:55 PDT — Use exact source-frame decimation for Favor resolution
 
 ### Summary
@@ -403,7 +440,6 @@
 - `installer/Polymorph.iss`
 - `THIRD_PARTY.md`
 - `build/README.md`
-- `docs/ARCHITECTURE.md`
 - `HISTORY/REFERENCE_GIF_CONVERTER.md`
 - `MASTER.md`
 - `PRE_FLIGHT_Check.md`
@@ -686,7 +722,7 @@
 
 ### Test notes
 
-- Provider documentation confirms the Essentials build includes libwebp/libx264 and all internal Windows FFmpeg components.
+- Provider documentation confirms the Essentials build includes libwebp and libx264 and all internal Windows FFmpeg components.
 - Exact bundled toolchain behavior is gated by the Windows smoke-test step; installer artifacts are not accepted if that step fails.
 
 ## POLY-2026-09-09-006 — 2026-09-09 19:12 PDT — Correct PyInstaller repository root
