@@ -8,7 +8,7 @@ from pathlib import Path
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
-from .models import GifMotionMode
+from .models import FramingMode, GifMotionMode
 from .resources import asset_path
 from .tools import find_toolchain
 from .ui.adaptive_main_window import MainWindow
@@ -67,6 +67,10 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
             )
         lines.append("PASS comfortable default window geometry")
 
+        if "QRadioButton::indicator:checked" not in window.styleSheet():
+            raise RuntimeError("Radio-button checked state has no explicit visible style")
+        lines.append("PASS explicit selected radio styling")
+
         tooltip_widgets = {
             "file queue": window.file_list,
             "preview": window.preview,
@@ -81,6 +85,7 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
             "favor resolution": window.motion_favor_radio,
             "framing mode": window.frame_mode,
             "aspect ratio": window.ratio_combo,
+            "zoom": window.zoom_slider,
             "center framing": window.center_btn,
             "fit background": window.color_btn,
             "output folder": window.output_path,
@@ -124,7 +129,34 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
 
         window.frame_mode.setCurrentIndex(1)  # Crop to ratio
         window.ratio_combo.setCurrentText("16:9")
+        window.zoom_slider.setValue(150)
         app.processEvents()
+        settings = window._make_settings()
+        if settings.framing.mode is not FramingMode.CROP or abs(settings.framing.zoom - 1.5) > 1e-9:
+            raise RuntimeError("Crop/zoom UI did not map to conversion settings")
+        sizes = window.preview._preview_sizes()
+        if sizes is None:
+            raise RuntimeError("Crop preview did not produce framing geometry")
+        canvas_w, canvas_h, content_w, content_h = sizes
+        if abs(canvas_w / canvas_h - 16 / 9) > 0.01:
+            raise RuntimeError("Crop preview canvas ratio is incorrect")
+        if abs(content_w / content_h - 1.0) > 0.01:
+            raise RuntimeError("Crop preview stretched the square source")
+
+        window.frame_mode.setCurrentIndex(2)  # Fit to ratio
+        app.processEvents()
+        sizes = window.preview._preview_sizes()
+        if sizes is None:
+            raise RuntimeError("Fit preview did not produce framing geometry")
+        canvas_w, canvas_h, content_w, content_h = sizes
+        if abs(canvas_w / canvas_h - 16 / 9) > 0.01:
+            raise RuntimeError("Fit preview canvas ratio is incorrect")
+        if abs(content_w / content_h - 1.0) > 0.01:
+            raise RuntimeError("Fit preview stretched the square source")
+        lines.append("PASS aspect-safe Crop/Fit preview with zoom")
+
+        window.frame_mode.setCurrentIndex(1)  # Crop to ratio
+        window.zoom_slider.setValue(100)
         window.res_radio.setChecked(True)
         window.width_spin.setValue(64)
         app.processEvents()
