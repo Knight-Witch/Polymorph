@@ -128,11 +128,45 @@ The image sequence therefore uses an even every-other-source-frame sacrifice acr
 
 For Viper the resulting effective average rate is `188 / 15 = 12.5333 FPS`. The human test must decide whether that motion trade is acceptable for the spatial gain.
 
+### Dev.13 real Viper result
+
+The user supplied the completed dev.13 GIF. Direct inspection showed it is not merely similar to the earlier Preserve-motion fallback — it is the exact same file again:
+
+- dimensions: `1552x1552`;
+- bytes: `93,630,962`;
+- frames: `375`;
+- frame delay: `40 ms` for every frame;
+- duration: `15.0 s`;
+- SHA-256: `dbfd1be7211b801f3a3a8d0ffaaf1058a1974f6b27141ef5f3be5ce55452e5af`.
+
+Therefore no stride-2 or stride-3 result survived dev.13. The final GIF does **not** reveal why. Three materially different paths can all produce this exact fallback:
+
+1. the stride sample encoded successfully but its real byte cost predicted less than the 8% spatial-gain floor;
+2. the stride sample passed, but the completed smart-fit result failed the 8% realized-gain floor;
+3. the adaptive sample/full-fit hit an encode or integrity error, which the experimental orchestration intentionally catches and skips before returning the known-good baseline.
+
+Changing the cadence/threshold again without distinguishing those cases would be another blind iteration.
+
+## Dev.15 diagnostic boundary
+
+Dev.15 therefore does **not** change Favor-resolution conversion decisions.
+
+It adds two development-only diagnostics:
+
+1. A `DiagnosticAdaptiveConverter` wrapper records every baseline/adaptive encode attempt, dimensions, bytes, stride metadata, predicted linear gain, full-fit result/error, and final selected/fallback result. Each Favor-resolution conversion writes a compact `*_ADAPTIVE_DIAGNOSTIC.json` sidecar beside the GIF.
+2. Windows CI runs a deterministic, high-entropy animated-WebP integration workload through the actual `AdaptiveConverter` + pinned FFmpeg/gifski toolchain. The test dynamically chooses a byte cap where Preserve motion must spatially downscale but stride-2 fits cheaply enough to earn at least 8% linear resolution. CI fails unless the real adaptive orchestration actually returns the lower-frame/larger-image result.
+
+This separates two questions cleanly:
+
+- **Does the adaptive code path work end-to-end when the economics support it?** CI answers this without human intervention.
+- **Why does real Viper still fall back?** The dev.15 sidecar answers this from the user's exact workload.
+
 ## Release boundary
 
 - Preserve motion remains the default and unchanged.
 - Favor resolution remains experimental.
 - Dev.9 validates that 20 FPS optical-flow interpolation can look smooth, but not that it improves spatial output.
 - Dev.10-dev.12 prove synthesized-frame approaches can legitimately fall back to the exact Preserve-motion result on Viper.
-- Dev.13 is the first test that removes synthetic frames from the compression equation and corrects candidate continuation after a failed final-gain veto.
-- No public release should promote Favor resolution until the dev.13 Viper output is human-validated for both recovered dimensions and motion/loop quality.
+- Dev.13 proves exact source-frame decimation also fell back on the real Viper workload, but did not expose the rejection stage.
+- Dev.15 is diagnostic-first: no further adaptive policy change should be made until the real trace identifies the concrete limiting stage.
+- No public release should promote Favor resolution until the adaptive trade is both technically explained and human-validated.

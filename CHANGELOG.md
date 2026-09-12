@@ -1,5 +1,49 @@
 # Changelog
 
+## POLY-2026-09-11-026 — 2026-09-11 17:30 PDT — Trace adaptive fallback decisions
+
+### Summary
+
+- Recorded successful human validation of dev.14 presentation: the default window now sizes correctly and the new hover tooltips work well on the user's Windows setup.
+- Inspected the user-supplied dev.13 Viper result and confirmed source-frame decimation did not survive the adaptive gates. The output is again the exact Preserve-motion baseline: `1552x1552`, 93,630,962 bytes, 375 frames at 40 ms over 15.0 s, SHA-256 `dbfd1be7211b801f3a3a8d0ffaaf1058a1974f6b27141ef5f3be5ce55452e5af`.
+- Stopped blind adaptive-policy changes. The final fallback file alone cannot distinguish whether stride 2/3 failed the measured-byte gain gate, failed the completed >=8% realized-gain gate, or hit an adaptive encode/integrity error that was caught before fallback.
+- Added `DiagnosticAdaptiveConverter`, a development-only observation wrapper over the existing `AdaptiveConverter`. It records the source/native geometry, byte ceiling, every baseline/adaptive encode result, stride metadata, sample byte cost, predicted linear gain, full adaptive-fit result/error, and final selection/fallback without changing the underlying planning or encode decisions.
+- Dev.15 Favor-resolution jobs write a compact `*_ADAPTIVE_DIAGNOSTIC.json` sidecar beside the GIF; the completion line reports that sidecar filename. Preserve-motion and MP4 jobs do not emit the trace, and a diagnostic-write failure is non-fatal.
+- Added direct unit coverage for measured-gain rejection, successful selected-candidate classification, and JSON sidecar output.
+- Added `build/verify_adaptive_converter.py`, a process-level integration gate using the actual `Converter`/`AdaptiveConverter` plus pinned FFmpeg/gifski. It creates a deterministic high-entropy 25 FPS animated WebP, measures full-resolution and stride-2 costs, chooses a cap that forces a meaningful trade, and fails unless Favor resolution really returns fewer frames, stays under the same cap, and gains at least 8% linear resolution over Preserve motion.
+- Added the integration gate and its JSON artifact to Windows CI before packaging. This separates a real control-flow/toolchain defect from a workload such as Viper whose GIF byte economics may simply not justify decimation.
+- Carried the human-validated dev.14 UI geometry/tooltips forward unchanged and incremented the tester to `0.1.0-dev.15`.
+- Actual conversion policy is unchanged from dev.13: same stride order, 8% predicted/final gain floors, 2048px/native soft target, exact loop-delay correction, gifski 1.32.0, quality 100, dev.8 smart-fit sizing, and Preserve-motion/MP4 behavior.
+
+### Touched files
+
+- `src/polymorph/diagnostic_adaptive_converter.py`
+- `src/polymorph/ui/adaptive_main_window.py`
+- `tests/test_adaptive_diagnostics.py`
+- `build/verify_adaptive_converter.py`
+- `.github/workflows/windows-dev-build.yml`
+- `src/polymorph/__init__.py`
+- `src/polymorph/constants.py`
+- `pyproject.toml`
+- `installer/Polymorph.iss`
+- `build/README.md`
+- `docs/ARCHITECTURE.md`
+- `docs/UX_SPEC.md`
+- `HISTORY/DIAGNOSTICS/GIF_ADAPTIVE_MOTION_2026-09-10.md`
+- `MASTER.md`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert this commit to return to dev.14: the same dev.13 adaptive conversion policy plus the human-validated UI pass, without JSON decision tracing or the process-level adaptive integration gate.
+
+### Test notes
+
+- Unit tests must cover diagnostic outcome classification and sidecar serialization in addition to all existing adaptive/planner/timing tests.
+- Windows CI must pass the new process-level adaptive-selection gate with the exact pinned FFmpeg 9.0.1/gifski 1.32.0 toolchain, then the existing reference diagnostic, packaged-app smoke, installer compilation, checksum generation, and artifact uploads.
+- The next human Viper test should use GIF / Original / 99 MB / Favor resolution and return the generated `*_ADAPTIVE_DIAGNOSTIC.json`; no additional adaptive-policy change should be made before that trace is inspected.
+
 ## POLY-2026-09-11-025 — 2026-09-11 17:05 PDT — Fix first-launch layout compression and add hover tooltips
 
 ### Summary

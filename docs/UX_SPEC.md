@@ -12,6 +12,7 @@ Files -> Output Format -> Sizing Constraint -> GIF Priority -> Framing -> Polymo
 - Primary controls expose concise hover tooltips rather than adding permanent explanatory text to the interface.
 - Tooltips cover the file queue/preview, output formats, sizing modes and fields, GIF priority choices, framing controls, output folder, and conversion action.
 - Existing footer icon controls retain their service-specific hover tooltips.
+- Dev.14 layout sizing and hover help have been human-validated on the user's normal Windows desktop setup.
 
 ## Main preview
 
@@ -51,7 +52,7 @@ Visible only as meaningful controls for GIF + Fit under file size.
 
 ### Favor resolution
 
-- Experimental source-frame-decimation behavior introduced in dev.13 and carried into dev.14 unchanged.
+- Experimental source-frame-decimation behavior introduced in dev.13 and carried into dev.15 unchanged.
 - The user does not enter an FPS or target pixel size.
 - Polymorph first creates the normal Preserve-motion fitted result.
 - Dev.9-dev.12 proved that uniformly synthesized intermediate frames can consume enough GIF bytes to erase the expected resolution gain, so dev.13 stops synthesizing frames entirely.
@@ -59,7 +60,7 @@ Visible only as meaningful controls for GIF + Fit under file size.
 - A candidate must predict at least about 8% linear-resolution gain before Polymorph runs the full adaptive size search.
 - For a 25 FPS source, dev.13 tests retaining every second source frame first (~12.5 FPS nominal), then every third frame (~8.33 FPS nominal) only if needed.
 - Frame sacrifice is deterministic across the spin rather than periodic 1/2-step deletion. If the source frame count is not divisible by the stride, Polymorph shortens only the final GIF frame delay so the loop closes at the original total duration/angular speed.
-- No optical-flow warping or temporal blending is used in dev.13.
+- No optical-flow warping or temporal blending is used in dev.13+.
 - If a candidate passes the byte-cost prediction but its full adaptive fit still fails to realize at least about 8% larger dimensions, Polymorph continues to the next source-frame stride instead of immediately returning Preserve motion.
 - Preferred spatial target remains native resolution capped at 2048 px; Polymorph never upscales above native framed geometry.
 
@@ -68,6 +69,8 @@ Visible only as meaningful controls for GIF + Fit under file size.
 - Development adaptive UI reports the actual result dimensions, decimal MB, and effective average output FPS.
 - A decimated loop may have one shorter closure delay when the source frame count is not divisible by the chosen stride; the displayed FPS is therefore `output frames / original duration`.
 - `MB` means decimal megabytes consistently with the file-size ceiling.
+- In dev.15 only, a Favor-resolution run also reports the filename of a compact `*_ADAPTIVE_DIAGNOSTIC.json` sidecar saved beside the GIF. The sidecar is temporary developer instrumentation so the real Viper fallback can be diagnosed without another blind algorithm change.
+- Preserve-motion and MP4 runs do not create that diagnostic sidecar.
 
 ## Footer
 

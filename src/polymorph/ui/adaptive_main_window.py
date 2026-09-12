@@ -5,8 +5,8 @@ from pathlib import Path
 
 from PySide6.QtWidgets import QButtonGroup, QLabel, QPushButton, QRadioButton, QVBoxLayout
 
-from ..adaptive_converter import AdaptiveConverter
 from ..converter import ConversionCancelled
+from ..diagnostic_adaptive_converter import DiagnosticAdaptiveConverter
 from ..models import GifMotionMode
 from ..size_units import bytes_to_mb
 from ..tools import find_toolchain
@@ -35,6 +35,9 @@ class AdaptiveConversionWorker(ConversionWorker):
                     fps = result.frames / result.duration_s
                     fps_text = f"{fps:.2f}".rstrip("0").rstrip(".")
                     summary += f" • {fps_text} FPS"
+                diagnostic_path = getattr(self.converter, "last_diagnostic_path", None)
+                if diagnostic_path:
+                    summary += f" • diagnostic {Path(diagnostic_path).name}"
                 self.fileFinished.emit(str(path), summary)
             except ConversionCancelled:
                 self.failed.emit(str(path), "Cancelled")
@@ -49,7 +52,7 @@ class MainWindow(BaseMainWindow):
     def __init__(self) -> None:
         super().__init__()
         if self.converter is not None:
-            self.converter = AdaptiveConverter(find_toolchain())
+            self.converter = DiagnosticAdaptiveConverter(find_toolchain())
         self._install_gif_priority_controls()
         self._apply_layout_polish()
         self._install_hover_tooltips()

@@ -5,8 +5,8 @@
 - Project: Polymorph
 - Repository: `Knight-Witch/Polymorph`
 - Platform target: Windows 10/11 x64
-- Status: functional scaffold on `dev`; MP4 human-validated; Preserve-motion GIF quality/smoothness human-validated; decimal-MB ceiling validated; updater hardening validated; dev.9 full-resolution interpolation visually validated; dev.10-dev.12 adaptive fallbacks human-validated; dev.13 exact source-frame decimation is under human Viper validation; dev.14 adds requested first-launch layout/tooltips without changing conversion behavior / no public release
-- Current development version: `0.1.0-dev.14`
+- Status: functional scaffold on `dev`; MP4 human-validated; Preserve-motion GIF quality/smoothness human-validated; decimal-MB ceiling validated; updater hardening validated; dev.9 full-resolution interpolation visually validated; dev.10-dev.13 adaptive tests all returned the Preserve-motion Viper baseline; dev.14 first-launch layout/tooltips human-validated; dev.15 adds adaptive decision tracing + a real process-level adaptive integration gate without changing conversion decisions / no public release
+- Current development version: `0.1.0-dev.15`
 
 ## Canonical conversion behavior
 
@@ -38,7 +38,8 @@
 - If a full candidate fit fails the same realized-gain test, Polymorph continues to the next deeper stride rather than immediately returning the baseline.
 - If the source frame count is not divisible by the selected stride, only the final GIF delay is shortened to the exact source-frame remainder so the loop keeps its original total duration/angular speed.
 - Keeps gifski quality 100, `--extra`, explicit width, infinite repeat, dev.8 smart-fit sizing, and post-encode integrity verification.
-- Dev.14 does not change any Favor-resolution conversion behavior; it only changes presentation/hover help.
+- Dev.14 changes only presentation/hover help.
+- Dev.15 changes only development diagnostics around the same decisions: Favor-resolution runs emit an adaptive JSON sidecar containing baseline/pass sizes, stride probe sizes, predicted gain, full-fit results/errors, and the final selection/fallback reason.
 
 ### MP4
 
@@ -69,8 +70,10 @@
 - Dev.10 changed selection to measured candidate cost and final actual-gain veto; Viper returned `1552x1552 • 93.6 MB • 25 FPS`.
 - Dev.11 extended optical-flow probing through 12.5 FPS; Viper again returned the identical 25 FPS baseline.
 - Dev.12 replaced optical flow with lower-complexity temporal blending; Viper again returned the exact same output. The dev.11 and dev.12 user-supplied GIFs are byte-for-byte identical: 93,630,962 bytes, SHA-256 `dbfd1be7211b801f3a3a8d0ffaaf1058a1974f6b27141ef5f3be5ce55452e5af`, 375 frames at 40 ms.
-- Conclusion: the final adaptive output was repeatedly being discarded and the baseline copied back out. Synthetic even-timestamp frames also fail to create the desired compression advantage on this workload.
-- Dev.13 switches to original-source-frame decimation. For Viper stride 2 retains 188 original frames. The ordinary interval is 80 ms; because 375 is odd, the final loop closure is one source-frame step and therefore gets a 40 ms final delay. Total duration remains exactly 15.0 s and angular speed remains constant.
+- Dev.13 switched to original-source-frame decimation. For Viper stride 2 would retain 188 original frames with 187 x 80 ms intervals plus one 40 ms loop closure.
+- The user-supplied dev.13 output nevertheless returned the **exact same Preserve-motion file** again: 1552x1552, 93,630,962 bytes, 375 frames at 40 ms, SHA-256 `dbfd1be7211b801f3a3a8d0ffaaf1058a1974f6b27141ef5f3be5ce55452e5af`.
+- Therefore dev.13 did not select a source-decimated candidate. The final file alone cannot distinguish whether stride probes were rejected by measured byte economics, a full-fit result missed the 8% gain floor, or the real Viper path hit an adaptive encode/integrity error that was intentionally caught before fallback.
+- Dev.15 addresses that diagnostic gap rather than changing the algorithm again. It records each real encode attempt/rejection and adds a synthetic real-toolchain integration gate that must prove the adaptive orchestration can select a lower-frame result when the byte savings genuinely support it.
 
 ## v1 UI scope
 
@@ -86,11 +89,12 @@
 - Fit background color and source positioning.
 - Output folder chooser; default Downloads.
 - Conversion progress percentage.
-- Development adaptive completion readout reports dimensions, decimal MB, and actual effective FPS.
+- Development adaptive completion readout reports dimensions, decimal MB, actual effective FPS, and—only for dev.15 Favor-resolution diagnostics—the generated sidecar filename.
 - Footer icon buttons: Check Updates, GitHub, Ko-fi, Patreon, Discord.
 - Automatic update check while app is open; no service/daemon.
-- Dev.14 first-launch geometry is 1080x800 with a 900x700 minimum so the added GIF-priority section no longer crushes the settings rail at the old 720px default height.
+- Dev.14 first-launch geometry is 1080x800 with a 900x700 minimum so the GIF-priority section no longer crushes the settings rail at the old 720px default height.
 - Dev.14 enforces minimum visual heights for sections/radio/input controls and adds concise hover tooltips to primary controls while preserving the existing restrained UI.
+- Human validation confirmed the dev.14 default sizing renders correctly and the new hover tooltips work as intended.
 
 ## Update policy
 
@@ -102,10 +106,11 @@
 
 ## Known follow-ups
 
-- Complete the ongoing real Viper dev.13/dev.14 Favor-resolution human test. Because dev.14 leaves conversion code unchanged, the same encode result validates the carried-forward decimation behavior.
-- If stride 2 is selected, validate whether ~12.53 effective FPS is acceptably smooth at the recovered resolution and whether the single 40 ms closure interval is visually seamless.
-- Validate dev.14 first-launch layout at the user's normal Windows DPI/scaling: right-side fields/radio text must render normally without manually increasing window height, and hover tooltips should appear on the primary controls.
-- If adaptive behavior is validated, test at least one harder HeroForge spin with thin geometry/hair/transparent or overlapping elements before stable promotion.
+- Run the real Viper once through dev.15 Favor resolution and inspect the generated `*_ADAPTIVE_DIAGNOSTIC.json`; do not change adaptive thresholds/timing again until that trace identifies the concrete rejection/error stage.
+- Require the dev.15 Windows process-level adaptive integration gate to select a lower-frame, >=8%-larger result on its deterministic synthetic workload before handing out the tester.
+- If the Viper trace shows the measured stride itself does not buy >=8% spatial gain, treat that as a real GIF-compression limitation rather than a control-flow bug and reconsider the product tradeoff deliberately.
+- If the trace shows an adaptive encode/integrity failure, fix only that concrete failure and retain the existing measured-gain safeguards.
+- If adaptive behavior is eventually validated, test at least one harder HeroForge spin with thin geometry/hair/transparent or overlapping elements before stable promotion.
 - Favor resolution performs extra measurement encodes by design; optimize conversion time only after cadence/result behavior is validated.
 - First public release still requires a deliberate project-license choice and final release packaging/release-workflow review.
 
