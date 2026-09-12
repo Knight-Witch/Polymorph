@@ -5,8 +5,8 @@
 - Project: Polymorph
 - Repository: `Knight-Witch/Polymorph`
 - Platform target: Windows 10/11 x64
-- Status: functional scaffold on `dev`; MP4 human-validated; Preserve-motion GIF quality/smoothness human-validated; decimal-MB ceiling validated; updater hardening validated; dev.9 full-resolution interpolation visually validated; dev.10-dev.12 adaptive fallbacks human-validated; dev.13 tests exact source-frame decimation for Favor resolution / no public release
-- Current development version: `0.1.0-dev.13`
+- Status: functional scaffold on `dev`; MP4 human-validated; Preserve-motion GIF quality/smoothness human-validated; decimal-MB ceiling validated; updater hardening validated; dev.9 full-resolution interpolation visually validated; dev.10-dev.12 adaptive fallbacks human-validated; dev.13 exact source-frame decimation is under human Viper validation; dev.14 adds requested first-launch layout/tooltips without changing conversion behavior / no public release
+- Current development version: `0.1.0-dev.14`
 
 ## Canonical conversion behavior
 
@@ -38,6 +38,7 @@
 - If a full candidate fit fails the same realized-gain test, Polymorph continues to the next deeper stride rather than immediately returning the baseline.
 - If the source frame count is not divisible by the selected stride, only the final GIF delay is shortened to the exact source-frame remainder so the loop keeps its original total duration/angular speed.
 - Keeps gifski quality 100, `--extra`, explicit width, infinite repeat, dev.8 smart-fit sizing, and post-encode integrity verification.
+- Dev.14 does not change any Favor-resolution conversion behavior; it only changes presentation/hover help.
 
 ### MP4
 
@@ -88,6 +89,8 @@
 - Development adaptive completion readout reports dimensions, decimal MB, and actual effective FPS.
 - Footer icon buttons: Check Updates, GitHub, Ko-fi, Patreon, Discord.
 - Automatic update check while app is open; no service/daemon.
+- Dev.14 first-launch geometry is 1080x800 with a 900x700 minimum so the added GIF-priority section no longer crushes the settings rail at the old 720px default height.
+- Dev.14 enforces minimum visual heights for sections/radio/input controls and adds concise hover tooltips to primary controls while preserving the existing restrained UI.
 
 ## Update policy
 
@@ -99,9 +102,9 @@
 
 ## Known follow-ups
 
-- Run full Windows CI for dev.13, including exact every-second-frame decimation, final-delay patch verification, standard Preserve-motion/MP4 gates, packaged app smoke, installer, and checksum.
-- Retest real Viper at GIF / Original / 99 MB / Favor resolution. The expected meaningful difference is a lower retained-frame count and larger spatial output; if dev.13 still returns the exact 25 FPS baseline, inspect the measured stride sample instead of changing interpolation again.
+- Complete the ongoing real Viper dev.13/dev.14 Favor-resolution human test. Because dev.14 leaves conversion code unchanged, the same encode result validates the carried-forward decimation behavior.
 - If stride 2 is selected, validate whether ~12.53 effective FPS is acceptably smooth at the recovered resolution and whether the single 40 ms closure interval is visually seamless.
+- Validate dev.14 first-launch layout at the user's normal Windows DPI/scaling: right-side fields/radio text must render normally without manually increasing window height, and hover tooltips should appear on the primary controls.
 - If adaptive behavior is validated, test at least one harder HeroForge spin with thin geometry/hair/transparent or overlapping elements before stable promotion.
 - Favor resolution performs extra measurement encodes by design; optimize conversion time only after cadence/result behavior is validated.
 - First public release still requires a deliberate project-license choice and final release packaging/release-workflow review.
