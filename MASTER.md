@@ -5,10 +5,10 @@
 - Project: Polymorph
 - Repository: `Knight-Witch/Polymorph`
 - Platform target: Windows 10/11 x64
-- Current development version: `0.1.0-dev.19`
+- Current development version: `0.1.0-dev.20`
 - Public release: not yet published.
 - Core conversion machine is considered functionally complete for the current v1 scope: MP4 is human-validated; Preserve-motion GIF quality/smoothness is human-validated; decimal-MB ceiling behavior is validated; updater hardening is validated; Favor-resolution GIF behavior is diagnostically and visually validated on Viper plus two kitbash/decal-heavy HeroForge variants; Crop/Fit preview and real exported output are human-validated end to end; Windows probe/encode console flashes are eliminated.
-- UI work is now the active development phase. dev.18 established the black/gold/red visual language; dev.19 replaces the old three-column development scaffold with the branded two-column composition and bundled Cinzel/Inter typography.
+- UI work is now the active development phase. dev.18 established the black/gold/red visual language; dev.19 replaced the old three-column scaffold with a branded two-column composition; dev.20 tightens that composition against the approved mockup, fixes right-rail clipping, compresses padding, and adds richer file-queue/status/footer presentation.
 - The loading/working animation and final application emblem remain separate design work.
 
 ## Canonical conversion behavior
@@ -79,15 +79,20 @@
 ## Branded UI state
 
 - Branded runtime composition is two columns:
-  - left: file queue above the large animated preview;
-  - right: scrollable Output Format, Sizing, GIF Priority, Framing, Aspect Ratio, and Output Folder cards plus `Cast Polymorph`.
-- Queue actions are colocated with the file queue: Add Files, Remove, and Clear.
+  - left: compact file queue above the large animated preview;
+  - right: fixed-width, vertically scrollable settings rail that must never require horizontal scrolling or clip controls.
+- Queue header follows the approved mockup: `FILES` and count share one row with Add Files, a selected-item trash action, separator, and red-hover `Clear All`.
+- Queue rows show a first-frame thumbnail plus source filename, decimal source file size, dimensions, runtime, and an overflow menu with Open / Open file location / Remove from queue.
+- Settings cards use icon + title + separator headers and intentionally reduced padding/density.
+- `OUTPUT FORMAT` is a side-by-side two-choice group; `SIZING` uses clean editable numeric fields with no spinner ticker arrows.
+- `FRAMING` and `ASPECT RATIO` share one row as paired cards, matching the approved concept. Crop Zoom is its own compact slider card.
 - Visible framing uses Original/Crop/Fit radio buttons synchronized to the established framing combo/state path.
+- Fit background color remains supported by the engine but is reduced to a small Fit-only utility instead of occupying a dedicated card.
+- The bottom status strip uses a compact ring plus two-line idle copy: `Ready` and `<N> files imported. Choose your settings and begin.` Conversion progress stays compact until the dedicated loader is designed.
+- Footer actions are labeled Check for Updates / GitHub / Ko-fi / Patreon / Discord with separators instead of icon-only buttons.
 - Header lockup is `POLYMORPH`, version, then `MEDIA CONVERSION MAGIC — BY KNIGHT WITCH™`.
-- Cinzel is the packaged display/primary-action family; Inter is the packaged body/UI family.
-- Current palette: near-black/charcoal, ivory text, champagne-gold structure, restrained crimson active states.
-- Radio buttons use ordinary hollow-circle / centered-dot selection language.
-- Footer icon controls remain Check Updates, GitHub, Ko-fi, Patreon, Discord.
+- Cinzel remains the temporary packaged display family and Inter the packaged body/UI family; the user intends to provide a closer final display font later.
+- Current palette: near-black/charcoal, ivory text, champagne-gold structure, restrained crimson active states, with subtle gradients.
 - The later loader animation remains open between the arcane/magic-circle concept and the user's D20 roll/spin concept.
 
 ## Windows subprocess behavior
@@ -106,7 +111,7 @@
 
 ## Known follow-ups
 
-- Human-review the dev.19 two-column composition: workspace/rail proportions, queue height, card density, preview dominance, type hierarchy, and general resemblance to the approved mockup.
+- Human-review dev.20 against the approved concept side-by-side: clipping/responsiveness, compact card density, queue metadata/menu behavior, paired Framing/Aspect cards, status strip, footer links, and overall visual fidelity.
 - Design and implement the working/loading animation after the structural UI is accepted.
 - Decide final application emblem/icon.
 - Favor resolution performs extra measurement encodes by design; conversion-time optimization can be investigated later but must not change selected outputs.

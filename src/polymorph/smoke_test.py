@@ -6,13 +6,13 @@ import traceback
 from pathlib import Path
 
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QApplication, QFrame, QLabel, QSplitter
+from PySide6.QtWidgets import QApplication, QFrame, QLabel, QScrollArea, QSplitter
 
 from .models import FramingMode, GifMotionMode
 from .resources import asset_path
 from .tools import find_toolchain
 from .ui.adaptive_main_window import MainWindow
-from .ui.branded_layout import rebuild_brand_layout
+from .ui.branded_layout import QueueRow, rebuild_brand_layout
 from .ui.styles import apply_brand_skin
 
 _ASSETS = (
@@ -76,36 +76,47 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
         window = MainWindow()
         rebuild_brand_layout(window)
         apply_brand_skin(window)
+        window.show()
+        app.processEvents()
         if window.converter is None:
             raise RuntimeError("Main window could not resolve the bundled conversion toolchain")
 
-        if window.width() < 1200 or window.height() < 840:
+        if window.width() < 1200 or window.height() < 800:
             raise RuntimeError(
                 f"Default window geometry regressed: got {window.width()}x{window.height()}, "
-                "expected at least 1200x840"
+                "expected at least 1200x800"
             )
-        if window.minimumWidth() < 1000 or window.minimumHeight() < 700:
+        if window.minimumWidth() < 1080 or window.minimumHeight() < 700:
             raise RuntimeError(
                 f"Minimum window geometry regressed: got {window.minimumWidth()}x"
-                f"{window.minimumHeight()}, expected >=1000x700"
+                f"{window.minimumHeight()}, expected >=1080x700"
             )
-        lines.append("PASS branded default window geometry")
+        lines.append("PASS compact concept-matched default geometry")
 
         subtitle = window.findChild(QLabel, "BrandSubtitle")
-        if window.property("polymorphSkin") != "occult-gold-v2":
+        if window.property("polymorphSkin") != "occult-gold-v3":
             raise RuntimeError("Branded presentation skin was not applied")
-        if window.property("polymorphLayout") != "two-column-v1":
-            raise RuntimeError("Branded two-column layout was not applied")
+        if window.property("polymorphLayout") != "concept-match-v1":
+            raise RuntimeError("Concept-matched branded layout was not applied")
         if subtitle is None or subtitle.text() != "MEDIA CONVERSION MAGIC — BY KNIGHT WITCH™":
             raise RuntimeError("Branded subtitle/byline copy is missing")
-        if window.convert_btn.text() != "Cast Polymorph":
-            raise RuntimeError("Primary action copy regressed")
+        if window.convert_btn.accessibleName() != "Cast Polymorph":
+            raise RuntimeError("Primary action accessible copy regressed")
+        cast_title = window.findChild(QLabel, "CastTitle")
+        if cast_title is None or cast_title.text() != "CAST POLYMORPH":
+            raise RuntimeError("Concept-style Cast Polymorph face is missing")
         splitter = window.findChild(QSplitter, "BrandMainSplitter")
         if splitter is None or splitter.count() != 2:
-            raise RuntimeError("Main workspace did not collapse to the two-column composition")
+            raise RuntimeError("Main workspace is not the two-column composition")
+        rail = window.findChild(QScrollArea, "ControlRail")
+        if rail is None:
+            raise RuntimeError("Right settings rail is missing")
+        app.processEvents()
+        if rail.horizontalScrollBar().maximum() != 0:
+            raise RuntimeError("Right settings rail requires horizontal scrolling/clips content")
         if len(window.findChildren(QFrame, "ControlCard")) < 6:
             raise RuntimeError("Right control rail is missing branded section cards")
-        lines.append("PASS branded two-column shell, byline, and section cards")
+        lines.append("PASS concept shell, byline, paired controls, and unclipped rail")
 
         tooltip_widgets = {
             "file queue": window.file_list,
@@ -141,13 +152,22 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
             raise RuntimeError("Selected radio controls do not use the centered filled-dot style")
         if '"Cinzel"' not in stylesheet or '"Inter"' not in stylesheet:
             raise RuntimeError("Branded type families are missing from the packaged stylesheet")
-        lines.append("PASS branded typography, tooltips, and radio selection styling")
+        if "QAbstractSpinBox::up-button" not in stylesheet:
+            raise RuntimeError("Resolution controls did not suppress ticker-arrow styling")
+        lines.append("PASS compact branded typography, tooltips, and field styling")
 
         window._add_files([sample])
         app.processEvents()
 
         if window.file_list.count() != 1:
             raise RuntimeError("Main window did not accept the smoke-test WebP")
+        item_widget = window.file_list.itemWidget(window.file_list.item(0))
+        if not isinstance(item_widget, QueueRow):
+            raise RuntimeError("File queue did not create concept-style media rows")
+        meta = item_widget.findChild(QLabel, "QueueMeta")
+        if meta is None or "×" not in meta.text() or "s" not in meta.text():
+            raise RuntimeError(f"File row metadata is incomplete: {meta.text() if meta else None!r}")
+        lines.append("PASS file queue thumbnail/metadata row")
 
         movie = window.preview._movie
         if movie is None or not movie.isValid():
