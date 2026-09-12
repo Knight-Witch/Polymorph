@@ -3,7 +3,7 @@ from __future__ import annotations
 import copy
 from pathlib import Path
 
-from PySide6.QtWidgets import QButtonGroup, QLabel, QRadioButton, QVBoxLayout
+from PySide6.QtWidgets import QButtonGroup, QLabel, QPushButton, QRadioButton, QVBoxLayout
 
 from ..adaptive_converter import AdaptiveConverter
 from ..converter import ConversionCancelled
@@ -51,6 +51,8 @@ class MainWindow(BaseMainWindow):
         if self.converter is not None:
             self.converter = AdaptiveConverter(find_toolchain())
         self._install_gif_priority_controls()
+        self._apply_layout_polish()
+        self._install_hover_tooltips()
         self._sync_enabled_state()
 
     def _install_gif_priority_controls(self) -> None:
@@ -66,13 +68,6 @@ class MainWindow(BaseMainWindow):
         self.motion_preserve_radio = QRadioButton("Preserve motion")
         self.motion_favor_radio = QRadioButton("Favor resolution")
         self.motion_preserve_radio.setChecked(True)
-        self.motion_preserve_radio.setToolTip(
-            "Keep the source frame rate and every source frame."
-        )
-        self.motion_favor_radio.setToolTip(
-            "Measure evenly spaced original source-frame subsets and only sacrifice motion "
-            "when the real encoded result can buy a meaningfully larger image."
-        )
         self.motion_group = QButtonGroup(self)
         self.motion_group.addButton(self.motion_preserve_radio)
         self.motion_group.addButton(self.motion_favor_radio)
@@ -89,6 +84,100 @@ class MainWindow(BaseMainWindow):
         self.gif_radio.toggled.connect(self._sync_enabled_state)
         self.mp4_radio.toggled.connect(self._sync_enabled_state)
         self.res_radio.toggled.connect(self._sync_enabled_state)
+
+    def _apply_layout_polish(self) -> None:
+        # The adaptive GIF-priority controls add a full section to the right rail.
+        # The old 720px default was tall enough before that section existed but now
+        # compresses line edits/radios on first launch. Give the normal layout the
+        # vertical room it actually needs while retaining a smaller resizable floor.
+        self.resize(1080, 800)
+        self.setMinimumSize(900, 700)
+        controls_layout = self.convert_btn.parentWidget().layout()
+        controls_layout.setSpacing(10)
+
+    def _install_hover_tooltips(self) -> None:
+        tooltips = (
+            (
+                self.file_list,
+                "Conversion queue. Select a file to preview it; files are processed one at a time.",
+            ),
+            (
+                self.preview,
+                "Live source preview. In Crop or Fit modes, drag the image to reposition it.",
+            ),
+            (
+                self.gif_radio,
+                "Create an animated GIF with infinite looping.",
+            ),
+            (
+                self.mp4_radio,
+                "Create a high-quality H.264 MP4. Looping is controlled by the player or platform.",
+            ),
+            (
+                self.size_radio,
+                "Keep encoder quality fixed and adjust image dimensions to stay under the file-size limit.",
+            ),
+            (
+                self.max_mb,
+                "Maximum output size in decimal MB. 1 MB = 1,000,000 bytes.",
+            ),
+            (
+                self.res_radio,
+                "Use exact output dimensions. Polymorph will not upscale beyond the source.",
+            ),
+            (
+                self.width_spin,
+                "Output width in pixels. Height follows the active framed aspect ratio.",
+            ),
+            (
+                self.height_spin,
+                "Output height in pixels. Width follows the active framed aspect ratio.",
+            ),
+            (
+                self.motion_preserve_radio,
+                "Keep every source frame and the original frame rate. Best motion smoothness.",
+            ),
+            (
+                self.motion_favor_radio,
+                "Trade some original source frames for a larger GIF only when Polymorph measures a worthwhile resolution gain. No synthetic frames are created.",
+            ),
+            (
+                self.frame_mode,
+                "Original keeps the full source. Crop fills a ratio by trimming edges. Fit keeps all content and adds padding.",
+            ),
+            (
+                self.ratio_combo,
+                "Target aspect ratio used by Crop to ratio and Fit to ratio.",
+            ),
+            (
+                self.center_btn,
+                "Reset Crop or Fit positioning to the center.",
+            ),
+            (
+                self.color_btn,
+                "Choose the padding color used by Fit to ratio.",
+            ),
+            (
+                self.output_path,
+                "Converted files are saved in this folder.",
+            ),
+            (
+                self.convert_btn,
+                "Start converting the queued files with the selected settings.",
+            ),
+        )
+        for widget, text in tooltips:
+            widget.setToolTip(text)
+
+        button_tooltips = {
+            "Add Files": "Add one or more animated WebP files to the conversion queue.",
+            "Remove Selected": "Remove the selected item from the queue. The source file is not deleted.",
+            "Cancel": "Stop the current conversion.",
+        }
+        for button in self.findChildren(QPushButton):
+            tooltip = button_tooltips.get(button.text())
+            if tooltip:
+                button.setToolTip(tooltip)
 
     def _sync_enabled_state(self) -> None:
         super()._sync_enabled_state()
