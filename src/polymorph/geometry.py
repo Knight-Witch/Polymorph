@@ -31,25 +31,45 @@ def _axis_position(extra: int, offset: float) -> int:
     return int(round((normalized + 1.0) * 0.5 * extra))
 
 
-def native_geometry(info: MediaInfo, framing: FramingSettings) -> FrameGeometry:
-    sw, sh = info.width, info.height
+def native_geometry_for_size(sw: int, sh: int, framing: FramingSettings) -> FrameGeometry:
+    """Resolve native framing geometry from source pixel dimensions.
+
+    This is shared by the encoder and animated preview so Crop/Fit cannot drift into
+    separate interpretations of the same framing controls.
+    """
+    if sw <= 0 or sh <= 0:
+        raise ValueError("Source dimensions must be positive")
+
     if framing.mode is FramingMode.ORIGINAL or not framing.ratio:
-        return FrameGeometry(width=even(sw), height=even(sh), content_width=even(sw), content_height=even(sh))
+        return FrameGeometry(
+            width=even(sw),
+            height=even(sh),
+            content_width=even(sw),
+            content_height=even(sh),
+        )
 
     ratio = max(0.05, framing.ratio)
     source_ratio = sw / sh
 
     if framing.mode is FramingMode.CROP:
+        zoom = max(1.0, float(framing.zoom or 1.0))
         if source_ratio > ratio:
-            ch = sh
-            cw = min(sw, even(sh * ratio))
-            cx = _axis_position(sw - cw, framing.offset_x)
-            cy = 0
+            # Source is wider than the requested canvas. Height is the limiting
+            # dimension at 1x; zoom reduces both crop dimensions proportionally.
+            ch = min(sh, even(sh / zoom))
+            cw = min(sw, even(ch * ratio))
+            # Re-derive height after even rounding so the crop stays as close as
+            # possible to the requested ratio without exceeding the source.
+            ch = min(sh, even(cw / ratio))
         else:
-            cw = sw
-            ch = min(sh, even(sw / ratio))
-            cx = 0
-            cy = _axis_position(sh - ch, framing.offset_y)
+            # Source is taller/narrower than the requested canvas. Width is the
+            # limiting dimension at 1x; zoom again reduces both dimensions.
+            cw = min(sw, even(sw / zoom))
+            ch = min(sh, even(cw / ratio))
+            cw = min(sw, even(ch * ratio))
+
+        cx = _axis_position(sw - cw, framing.offset_x)
+        cy = _axis_position(sh - ch, framing.offset_y)
         return FrameGeometry(
             width=even(cw),
             height=even(ch),
@@ -80,6 +100,10 @@ def native_geometry(info: MediaInfo, framing: FramingSettings) -> FrameGeometry:
         content_width=even(sw),
         content_height=even(sh),
     )
+
+
+def native_geometry(info: MediaInfo, framing: FramingSettings) -> FrameGeometry:
+    return native_geometry_for_size(info.width, info.height, framing)
 
 
 def scaled_dimensions(native: FrameGeometry, scale: float) -> tuple[int, int]:

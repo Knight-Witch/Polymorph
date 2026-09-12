@@ -20,7 +20,25 @@ QLabel#Section {
 }
 QRadioButton {
     min-height: 20px;
-    spacing: 6px;
+    spacing: 7px;
+}
+QRadioButton::indicator {
+    width: 13px;
+    height: 13px;
+    border: 1px solid #727a86;
+    border-radius: 7px;
+    background: #111317;
+}
+QRadioButton::indicator:hover {
+    border-color: #aeb5bf;
+}
+QRadioButton::indicator:checked {
+    border: 4px solid #e8ebef;
+    background: #111317;
+}
+QRadioButton::indicator:disabled {
+    border-color: #4d535d;
+    background: #181b20;
 }
 QPushButton, QToolButton, QComboBox, QSpinBox, QDoubleSpinBox {
     background: #262a31;
@@ -75,6 +93,30 @@ QListWidget::item {
     border-radius: 7px;
 }
 QListWidget::item:selected { background: #2a2f37; }
+QSlider::groove:horizontal {
+    height: 4px;
+    background: #111317;
+    border-radius: 2px;
+}
+QSlider::sub-page:horizontal {
+    background: #8f98a5;
+    border-radius: 2px;
+}
+QSlider::handle:horizontal {
+    width: 14px;
+    margin: -5px 0;
+    background: #e8ebef;
+    border: 1px solid #b9c0c9;
+    border-radius: 7px;
+}
+QSlider::groove:horizontal:disabled,
+QSlider::sub-page:horizontal:disabled {
+    background: #24272d;
+}
+QSlider::handle:horizontal:disabled {
+    background: #555c66;
+    border-color: #555c66;
+}
 QProgressBar {
     background: #111317;
     border: 1px solid rgba(255,255,255,0.08);

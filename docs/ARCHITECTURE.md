@@ -4,18 +4,19 @@
 
 - `src/polymorph/converter.py`: proven conversion orchestration.
 - `src/polymorph/adaptive_converter.py`: experimental GIF motion/resolution balancing layered over the proven converter; preserve-motion calls the base behavior unchanged.
-- `src/polymorph/diagnostic_adaptive_converter.py`: dev.15-only observation wrapper around `AdaptiveConverter`; records decisions/measurements but does not change them.
+- `src/polymorph/diagnostic_adaptive_converter.py`: development observation wrapper around `AdaptiveConverter`; records decisions/measurements but does not change them.
 - `src/polymorph/motion_planner.py`: adaptive source-frame decimation and measured-gain planning math.
 - `src/polymorph/gif_timing.py`: pure GIF frame-delay inspection/patching used only to preserve exact loop closure timing after source-frame decimation.
-- `src/polymorph/probe.py`: media metadata and WebP RIFF fallback parsing.
+- `src/polymorph/probe.py`: media metadata and WebP RIFF fallback parsing; ffprobe is launched with `CREATE_NO_WINDOW` on Windows.
 - `src/polymorph/integrity.py`: post-encode dimension/frame-count/timing verification.
-- `src/polymorph/geometry.py`: deterministic Crop/Fit geometry and no-upscale validation.
+- `src/polymorph/geometry.py`: deterministic shared Crop/Fit/zoom geometry and no-upscale validation used by both export and preview.
 - `src/polymorph/size_optimizer.py`: pure GIF smart-fit scale selection ported from the user-tested patched Python reference.
-- `src/polymorph/filters.py`: proven spatial FFmpeg filter construction.
-- `src/polymorph/ui/main_window.py`: existing novice-facing desktop UI and live preview.
-- `src/polymorph/ui/adaptive_main_window.py`: development UI extension for GIF priority plus decimal-MB/effective-FPS completion reporting; dev.15 uses the diagnostic wrapper only for development Favor-resolution traces.
+- `src/polymorph/filters.py`: proven spatial FFmpeg filter construction driven from shared framing geometry.
+- `src/polymorph/ui/preview.py`: animated preview renderer driven from the same native framing geometry as export.
+- `src/polymorph/ui/main_window.py`: novice-facing desktop UI and queue/framing state.
+- `src/polymorph/ui/adaptive_main_window.py`: development UI extension for GIF priority, Crop zoom, decimal-MB/effective-FPS completion reporting, and diagnostic traces.
 - `src/polymorph/update_service.py`: official-release discovery, exact asset pairing, bounded streaming download, checksum verification, installer launch.
-- `build/`: executable packaging and CI-only diagnostics, including the dev.15 real-toolchain adaptive-selection integration gate.
+- `build/`: executable packaging and CI-only diagnostics, including the real-toolchain adaptive-selection integration gate.
 - `installer/`: per-user Windows installer.
 
 ## Conversion ordering
@@ -35,10 +36,25 @@
 13. Probe output and verify requested dimensions, exact retained frame count, exact internal/final GIF delay pattern, and bounded duration drift.
 14. If no candidate survives both measured gates, return the Preserve-motion baseline unchanged.
 
+## Shared framing geometry
+
+- `native_geometry_for_size()` is the single source of truth for Original/Crop/Fit framing geometry from source pixel dimensions.
+- Encoder paths call the same logic through `native_geometry(info, framing)`; the animated preview calls `native_geometry_for_size()` directly from the current frame dimensions.
+- Crop returns a source crop rectangle with the requested aspect ratio. Drag offsets choose that crop window within the source.
+- Crop zoom is a framing zoom, not an output upscale. At zoom >1, the retained source crop window shrinks proportionally and the native framed maximum shrinks with it. This preserves the project-wide no-upscale rule.
+- Fit never stretches source content. It computes a larger target canvas, keeps source content at its native aspect ratio, and positions that content inside padding according to the same offsets used by the FFmpeg `pad` filter.
+- Because preview and export use the same geometry object, a framing mismatch must now originate downstream of the shared geometry rather than from duplicate UI/backend math.
+
+## Windows subprocess behavior
+
+- FFmpeg and gifski encoding subprocesses use `CREATE_NO_WINDOW` on Windows.
+- ffprobe is invoked on initial media probing and after encode passes for integrity verification. Dev.16 applies the same `CREATE_NO_WINDOW` flag to those `subprocess.run` calls so GUI use does not flash/steal focus with a console window.
+- Non-Windows platforms receive a zero creation flag and retain normal subprocess behavior.
+
 ## Development adaptive tracing
 
-- Dev.15 does not alter steps 1-14 above.
-- `DiagnosticAdaptiveConverter` wraps the same `AdaptiveConverter` and records:
+- The diagnostic wrapper does not alter conversion ordering or selection policy.
+- `DiagnosticAdaptiveConverter` records:
   - source/native geometry and byte ceiling;
   - every baseline/adaptive encode pass with dimensions and real byte size;
   - stride metadata and expected frame timing;
@@ -46,7 +62,7 @@
   - full adaptive-fit results/errors;
   - measured predicted gain and realized gain classification;
   - final selected result or Preserve-motion fallback.
-- Each Favor-resolution run writes `*_ADAPTIVE_DIAGNOSTIC.json` beside the output GIF. Preserve-motion and MP4 runs do not create the sidecar.
+- Each development Favor-resolution run writes `*_ADAPTIVE_DIAGNOSTIC.json` beside the output GIF. Preserve-motion and MP4 runs do not create the sidecar.
 - Diagnostic write failure never changes the conversion result.
 - The sidecar is temporary development instrumentation and is not part of the intended stable output contract.
 
@@ -70,7 +86,7 @@
 ## Adaptive GIF motion planning
 
 - Preserve motion remains default and keeps source FPS/frame count.
-- Favor resolution applies only to GIF + file-size mode and remains experimental.
+- Favor resolution applies only to GIF + file-size mode.
 - Preferred spatial target is the native framed long edge capped at 2048 px.
 - Dev.9-dev.12 proved that uniformly synthesized intermediate frames can erase the expected GIF byte savings even when the output frame count is reduced.
 - Dev.13 therefore stops synthesizing frames. Candidate plans retain only original decoded source frames at a constant integer stride.
@@ -79,6 +95,7 @@
 - The measured sample projects achievable spatial size against the patched-Python 97/99 target. A candidate must predict at least about 8% linear gain.
 - The planner never requests dimensions above native framed geometry or the 2048 px soft target.
 - A selected candidate must independently realize the same minimum gain after the full smart-fit search or Polymorph continues to the next stride.
+- Real dev.15 Viper and two kitbash/decal-heavy HeroForge variants selected stride 2 successfully, so the current policy is considered technically validated pending ordinary release hardening rather than algorithm redesign.
 
 ## Exact source-frame decimation and loop timing
 
@@ -88,12 +105,13 @@
 - Most output frame delays are exactly `N * source_frame_delay`.
 - If the source frame count is not divisible by `N`, the final retained frame has a smaller source-angle remainder before the loop returns to frame 0. Polymorph patches only that final GIF delay to `remainder_steps * source_frame_delay`.
 - This preserves the original total loop duration and constant source angular speed instead of creating a periodic micro-skip. Example: Viper stride 2 retains 188 frames, uses 187 intervals at 80 ms and one 40 ms closure interval, totaling the original 15.0 seconds.
-- GIF image data is not rewritten by the closure patch; only the final Graphic Control Extension delay field changes.
+- When the source frame count divides evenly by the stride, every output delay remains uniform. The two 500-frame / stride-2 regression variants contain exactly 250 frames at 80 ms each.
+- GIF image data is not rewritten by the closure patch; only the final Graphic Control Extension delay field changes when needed.
 - Post-encode verification checks the complete delay pattern as well as dimensions/frame count/duration.
 
 ## Adaptive process integration gate
 
-- Dev.15 adds `build/verify_adaptive_converter.py` and runs it against the exact pinned Windows FFmpeg 9.0.1 + gifski 1.32.0 toolchain before packaging.
+- `build/verify_adaptive_converter.py` runs against the exact pinned Windows FFmpeg 9.0.1 + gifski 1.32.0 toolchain before packaging.
 - The script creates a deterministic high-entropy 25 FPS animated WebP, measures full-resolution Preserve-motion and stride-2 byte cost, and chooses a byte ceiling where full-frame output must spatially downscale while stride 2 has enough real savings to be useful.
 - It then runs the actual `Converter` and `AdaptiveConverter` file-size orchestration, not hand-written command approximations.
 - CI fails unless Favor resolution returns fewer frames, stays under the same byte ceiling, and realizes at least the production 8% linear spatial-gain threshold over Preserve motion.
@@ -113,7 +131,7 @@
 
 - Patched-Python timing measurements: `HISTORY/DIAGNOSTICS/GIF_REFERENCE_TIMING_2026-09-10.md`.
 - Adaptive cadence probe and human validation: `HISTORY/DIAGNOSTICS/GIF_ADAPTIVE_MOTION_2026-09-10.md`.
-- Dev.15 CI integration emits `build-smoke/adaptive-integration.json` and uploads it as `Polymorph-adaptive-integration`.
+- CI integration emits `build-smoke/adaptive-integration.json` and uploads it as `Polymorph-adaptive-integration`.
 
 ## Update safety
 

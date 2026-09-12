@@ -6,6 +6,7 @@ from PySide6.QtCore import QPoint, QRect, QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QMovie, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import QWidget
 
+from ..geometry import native_geometry_for_size
 from ..models import FramingMode, FramingSettings
 
 
@@ -58,20 +59,32 @@ class AnimatedPreview(QWidget):
             self._draw_border(painter, inner)
             return
 
-        source = QRectF(self._pixmap.rect())
-        target_ratio = self._framing.ratio if self._framing.mode is not FramingMode.ORIGINAL else None
-        display_rect = self._fit_rect(inner, target_ratio or (source.width() / source.height()))
+        source_width = self._pixmap.width()
+        source_height = self._pixmap.height()
+        geometry = native_geometry_for_size(source_width, source_height, self._framing)
+        display_rect = self._fit_rect(inner, geometry.width / geometry.height)
 
-        if self._framing.mode is FramingMode.CROP and target_ratio:
-            crop = self._crop_rect(source, target_ratio)
-            painter.drawPixmap(display_rect, self._pixmap, crop)
-        elif self._framing.mode is FramingMode.FIT and target_ratio:
+        if self._framing.mode is FramingMode.CROP and geometry.crop_width and geometry.crop_height:
+            source_rect = QRectF(
+                geometry.crop_x,
+                geometry.crop_y,
+                geometry.crop_width,
+                geometry.crop_height,
+            )
+            painter.drawPixmap(display_rect, self._pixmap, source_rect)
+        elif self._framing.mode is FramingMode.FIT and self._framing.ratio:
             painter.fillRect(display_rect, QColor(self._framing.background))
-            content_rect = self._content_rect_for_fit(display_rect, source.width() / source.height())
-            content_rect = self._offset_fit_rect(content_rect, display_rect)
-            painter.drawPixmap(content_rect, self._pixmap, source)
+            content_width = geometry.content_width or source_width
+            content_height = geometry.content_height or source_height
+            content_rect = QRectF(
+                display_rect.x() + display_rect.width() * geometry.pad_x / geometry.width,
+                display_rect.y() + display_rect.height() * geometry.pad_y / geometry.height,
+                display_rect.width() * content_width / geometry.width,
+                display_rect.height() * content_height / geometry.height,
+            )
+            painter.drawPixmap(content_rect, self._pixmap, QRectF(self._pixmap.rect()))
         else:
-            painter.drawPixmap(display_rect, self._pixmap, source)
+            painter.drawPixmap(display_rect, self._pixmap, QRectF(self._pixmap.rect()))
 
         self._draw_border(painter, display_rect.toRect())
 
@@ -87,37 +100,6 @@ class AnimatedPreview(QWidget):
         x = bounds.x() + (bw - w) / 2
         y = bounds.y() + (bh - h) / 2
         return QRectF(x, y, w, h)
-
-    def _crop_rect(self, source: QRectF, ratio: float) -> QRectF:
-        sr = source.width() / source.height()
-        if sr > ratio:
-            h = source.height()
-            w = h * ratio
-            extra = source.width() - w
-            x = ((self._framing.offset_x + 1) / 2) * extra
-            return QRectF(x, 0, w, h)
-        w = source.width()
-        h = w / ratio
-        extra = source.height() - h
-        y = ((self._framing.offset_y + 1) / 2) * extra
-        return QRectF(0, y, w, h)
-
-    @staticmethod
-    def _content_rect_for_fit(canvas: QRectF, source_ratio: float) -> QRectF:
-        if canvas.width() / canvas.height() > source_ratio:
-            h = canvas.height()
-            w = h * source_ratio
-        else:
-            w = canvas.width()
-            h = w / source_ratio
-        return QRectF(canvas.x() + (canvas.width() - w) / 2, canvas.y() + (canvas.height() - h) / 2, w, h)
-
-    def _offset_fit_rect(self, content: QRectF, canvas: QRectF) -> QRectF:
-        max_x = max(0.0, canvas.width() - content.width())
-        max_y = max(0.0, canvas.height() - content.height())
-        x = canvas.x() + ((self._framing.offset_x + 1) / 2) * max_x
-        y = canvas.y() + ((self._framing.offset_y + 1) / 2) * max_y
-        return QRectF(x, y, content.width(), content.height())
 
     @staticmethod
     def _draw_border(painter: QPainter, rect: QRect) -> None:

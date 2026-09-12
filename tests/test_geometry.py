@@ -14,6 +14,16 @@ class GeometryTests(unittest.TestCase):
         self.assertEqual((g.width, g.height), (2048, 1152))
         self.assertEqual((g.crop_x, g.crop_y), (0, 448))
 
+    def test_crop_zoom_reduces_source_window_without_distortion(self):
+        g = native_geometry(
+            self.info,
+            FramingSettings(mode=FramingMode.CROP, ratio=16 / 9, zoom=2.0),
+        )
+        self.assertEqual((g.width, g.height), (1024, 576))
+        self.assertEqual((g.crop_width, g.crop_height), (1024, 576))
+        self.assertEqual((g.crop_x, g.crop_y), (512, 736))
+        self.assertAlmostEqual(g.width / g.height, 16 / 9, places=3)
+
     def test_fit_16_9_preserves_native_content(self):
         g = native_geometry(self.info, FramingSettings(mode=FramingMode.FIT, ratio=16 / 9))
         self.assertEqual(g.height, 2048)

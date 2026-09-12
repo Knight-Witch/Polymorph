@@ -3,11 +3,20 @@ from __future__ import annotations
 import copy
 from pathlib import Path
 
-from PySide6.QtWidgets import QButtonGroup, QLabel, QPushButton, QRadioButton, QVBoxLayout
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
+    QButtonGroup,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QRadioButton,
+    QSlider,
+    QVBoxLayout,
+)
 
 from ..converter import ConversionCancelled
 from ..diagnostic_adaptive_converter import DiagnosticAdaptiveConverter
-from ..models import GifMotionMode
+from ..models import FramingMode, GifMotionMode
 from ..size_units import bytes_to_mb
 from ..tools import find_toolchain
 from .main_window import ConversionWorker, MainWindow as BaseMainWindow
@@ -47,15 +56,18 @@ class AdaptiveConversionWorker(ConversionWorker):
 
 
 class MainWindow(BaseMainWindow):
-    """Development UI extension for adaptive GIF motion/resolution balancing."""
+    """Development UI extension for adaptive GIF and framing controls."""
 
     def __init__(self) -> None:
         super().__init__()
         if self.converter is not None:
             self.converter = DiagnosticAdaptiveConverter(find_toolchain())
         self._install_gif_priority_controls()
+        self._install_crop_zoom_control()
         self._apply_layout_polish()
         self._install_hover_tooltips()
+        self.frame_mode.currentIndexChanged.connect(self._sync_crop_zoom_state)
+        self._sync_crop_zoom_state()
         self._sync_enabled_state()
 
     def _install_gif_priority_controls(self) -> None:
@@ -88,15 +100,85 @@ class MainWindow(BaseMainWindow):
         self.mp4_radio.toggled.connect(self._sync_enabled_state)
         self.res_radio.toggled.connect(self._sync_enabled_state)
 
+    def _install_crop_zoom_control(self) -> None:
+        layout = self.convert_btn.parentWidget().layout()
+        framing_index = -1
+        for index in range(layout.count()):
+            widget = layout.itemAt(index).widget()
+            if isinstance(widget, QLabel) and widget.text() == "Framing":
+                framing_index = index
+                break
+        if framing_index < 0:
+            return
+
+        self.crop_zoom_label = QLabel("Zoom 100%")
+        self.crop_zoom_label.setObjectName("Muted")
+        self.crop_zoom_slider = QSlider(Qt.Horizontal)
+        self.crop_zoom_slider.setRange(100, 300)
+        self.crop_zoom_slider.setSingleStep(5)
+        self.crop_zoom_slider.setPageStep(25)
+        self.crop_zoom_slider.setValue(100)
+        self.crop_zoom_slider.valueChanged.connect(self._crop_zoom_changed)
+
+        row = QHBoxLayout()
+        row.setContentsMargins(0, 0, 0, 0)
+        row.setSpacing(8)
+        row.addWidget(self.crop_zoom_label)
+        row.addWidget(self.crop_zoom_slider, 1)
+        # Framing section layout is: heading, mode, ratio row, action row. Insert
+        # zoom between the ratio selector and Center/Background actions.
+        layout.insertLayout(framing_index + 3, row)
+
+    def _framing_changed(self) -> None:
+        """Normalize Qt item data back into a real FramingMode before use.
+
+        Qt/PyInstaller can round-trip str-backed Enum item data as the underlying
+        string rather than preserving Python object identity. Treat the combo data
+        as a serialized enum value instead of relying on `is` semantics.
+        """
+        self.framing.mode = FramingMode(self.frame_mode.currentData())
+        self.framing.ratio = (
+            self.ratio_combo.currentData()
+            if self.framing.mode != FramingMode.ORIGINAL
+            else None
+        )
+        self.preview.set_framing(self.framing)
+        self._sync_enabled_state()
+        row = self.file_list.currentRow()
+        if 0 <= row < len(self.files):
+            self._update_probe_label(self.files[row])
+
+    def _crop_zoom_changed(self, value: int) -> None:
+        if not hasattr(self, "crop_zoom_label"):
+            return
+        self.crop_zoom_label.setText(f"Zoom {value}%")
+        self.framing.zoom = max(1.0, value / 100.0)
+        self.preview.set_framing(self.framing)
+        row = self.file_list.currentRow()
+        if 0 <= row < len(self.files):
+            self._update_probe_label(self.files[row])
+
+    def _sync_crop_zoom_state(self) -> None:
+        if not hasattr(self, "crop_zoom_slider"):
+            return
+        busy = self.worker is not None and self.worker.isRunning()
+        try:
+            mode = FramingMode(self.frame_mode.currentData())
+        except (TypeError, ValueError):
+            mode = FramingMode.ORIGINAL
+        crop = mode == FramingMode.CROP
+        self.crop_zoom_slider.setEnabled(crop and not busy)
+        self.crop_zoom_label.setEnabled(crop and not busy)
+
     def _apply_layout_polish(self) -> None:
         # The adaptive GIF-priority controls add a full section to the right rail.
         # The old 720px default was tall enough before that section existed but now
         # compresses line edits/radios on first launch. Give the normal layout the
         # vertical room it actually needs while retaining a smaller resizable floor.
-        self.resize(1080, 800)
+        self.resize(1080, 820)
         self.setMinimumSize(900, 700)
         controls_layout = self.convert_btn.parentWidget().layout()
-        controls_layout.setSpacing(10)
+        controls_layout.setSpacing(9)
 
     def _install_hover_tooltips(self) -> None:
         tooltips = (
@@ -106,7 +188,7 @@ class MainWindow(BaseMainWindow):
             ),
             (
                 self.preview,
-                "Live source preview. In Crop or Fit modes, drag the image to reposition it.",
+                "Live output framing preview. In Crop or Fit modes, drag the media to reposition it.",
             ),
             (
                 self.gif_radio,
@@ -146,15 +228,19 @@ class MainWindow(BaseMainWindow):
             ),
             (
                 self.frame_mode,
-                "Original keeps the full source. Crop fills a ratio by trimming edges. Fit keeps all content and adds padding.",
+                "Original keeps the source unchanged. Crop trims to the chosen ratio without stretching. Fit expands the frame with padding while preserving the source aspect ratio.",
             ),
             (
                 self.ratio_combo,
                 "Target aspect ratio used by Crop to ratio and Fit to ratio.",
             ),
             (
+                self.crop_zoom_slider,
+                "Crop only: zoom into the source from 100% to 300%. Drag the preview to choose which area stays visible.",
+            ),
+            (
                 self.center_btn,
-                "Reset Crop or Fit positioning to the center.",
+                "Center the media within the current Crop or Fit frame.",
             ),
             (
                 self.color_btn,
@@ -194,9 +280,11 @@ class MainWindow(BaseMainWindow):
         )
         self.motion_preserve_radio.setEnabled(enabled)
         self.motion_favor_radio.setEnabled(enabled)
+        self._sync_crop_zoom_state()
 
     def _make_settings(self):
         settings = super()._make_settings()
+        settings.framing.mode = FramingMode(settings.framing.mode)
         settings.gif_motion_mode = (
             GifMotionMode.FAVOR_RESOLUTION
             if self.motion_favor_radio.isChecked()

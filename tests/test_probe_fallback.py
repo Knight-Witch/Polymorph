@@ -1,10 +1,12 @@
+import os
 import struct
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from polymorph.probe import ProbeError, probe_media
+from polymorph.probe import ProbeError, _creation_flags, probe_media
 
 
 def u24(value: int) -> bytes:
@@ -31,6 +33,12 @@ class ProbeFallbackTests(unittest.TestCase):
         self.assertEqual(info.frame_count, 2)
         self.assertAlmostEqual(info.duration_s, 0.1)
         self.assertAlmostEqual(info.fps, 20.0)
+
+    def test_windows_ffprobe_uses_no_console_window_flag(self):
+        if os.name == "nt":
+            self.assertEqual(_creation_flags(), subprocess.CREATE_NO_WINDOW)
+        else:
+            self.assertEqual(_creation_flags(), 0)
 
 
 if __name__ == "__main__":

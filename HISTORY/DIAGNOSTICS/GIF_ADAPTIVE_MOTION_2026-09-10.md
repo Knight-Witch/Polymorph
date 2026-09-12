@@ -128,9 +128,9 @@ The image sequence therefore uses an even every-other-source-frame sacrifice acr
 
 For Viper the resulting effective average rate is `188 / 15 = 12.5333 FPS`. The human test must decide whether that motion trade is acceptable for the spatial gain.
 
-### Dev.13 real Viper result
+### Dev.13-era Viper result — later caveat
 
-The user supplied the completed dev.13 GIF. Direct inspection showed it is not merely similar to the earlier Preserve-motion fallback — it is the exact same file again:
+A dev.13-era user-supplied GIF was the exact Preserve-motion baseline:
 
 - dimensions: `1552x1552`;
 - bytes: `93,630,962`;
@@ -139,34 +139,63 @@ The user supplied the completed dev.13 GIF. Direct inspection showed it is not m
 - duration: `15.0 s`;
 - SHA-256: `dbfd1be7211b801f3a3a8d0ffaaf1058a1974f6b27141ef5f3be5ce55452e5af`.
 
-Therefore no stride-2 or stride-3 result survived dev.13. The final GIF does **not** reveal why. Three materially different paths can all produce this exact fallback:
-
-1. the stride sample encoded successfully but its real byte cost predicted less than the 8% spatial-gain floor;
-2. the stride sample passed, but the completed smart-fit result failed the 8% realized-gain floor;
-3. the adaptive sample/full-fit hit an encode or integrity error, which the experimental orchestration intentionally catches and skips before returning the known-good baseline.
-
-Changing the cadence/threshold again without distinguishing those cases would be another blind iteration.
+At the time, this was interpreted as proof that no source-decimated candidate survived. That conclusion is now weakened by a later UI discovery: the checked radio button had no visible selected mark, making `Preserve motion` and `Favor resolution` visually ambiguous. During dev.15 testing, a run the user believed was Favor resolution was proven from the UI screenshot to still have Preserve motion selected. Therefore the older dev.13 fallback file cannot, by itself, establish that the stride path was actually invoked.
 
 ## Dev.15 diagnostic boundary
 
-Dev.15 therefore does **not** change Favor-resolution conversion decisions.
-
-It adds two development-only diagnostics:
+Dev.15 does **not** change Favor-resolution conversion decisions. It adds two development-only diagnostics:
 
 1. A `DiagnosticAdaptiveConverter` wrapper records every baseline/adaptive encode attempt, dimensions, bytes, stride metadata, predicted linear gain, full-fit result/error, and final selected/fallback result. Each Favor-resolution conversion writes a compact `*_ADAPTIVE_DIAGNOSTIC.json` sidecar beside the GIF.
 2. Windows CI runs a deterministic, high-entropy animated-WebP integration workload through the actual `AdaptiveConverter` + pinned FFmpeg/gifski toolchain. The test dynamically chooses a byte cap where Preserve motion must spatially downscale but stride-2 fits cheaply enough to earn at least 8% linear resolution. CI fails unless the real adaptive orchestration actually returns the lower-frame/larger-image result.
 
-This separates two questions cleanly:
+The process-level CI integration passed and proved the orchestration can select stride 2 when measured byte economics support it.
 
-- **Does the adaptive code path work end-to-end when the economics support it?** CI answers this without human intervention.
-- **Why does real Viper still fall back?** The dev.15 sidecar answers this from the user's exact workload.
+## Confirmed real Viper Favor-resolution result
 
-## Release boundary
+Once the radio selection was explicitly verified, the real Viper dev.15 diagnostic showed the adaptive path working as designed:
+
+- source: `2048x2048`, 375 frames, 25 FPS, 15.0 s;
+- Preserve baseline: `1552x1552`, 93,630,962 bytes;
+- stride-2 sample at baseline dimensions: 51,558,287 bytes;
+- selected result: `2048x2048`, 188 frames, 82,147,387 bytes;
+- duration: exactly 15.0 s;
+- timing: 187 frames at 80 ms plus one final 40 ms closure frame;
+- effective average rate: 12.5333 FPS.
+
+The stride sample's measured savings were large enough to recover the complete native 2048px spatial ceiling. The user visually checked the final GIF and reported that the frame rate/motion looked consistent.
+
+## Harder HeroForge regression variants
+
+Two additional variants of a much more complex HeroForge scene were tested. The scene contains heavy kitbash usage and many decals, providing a stronger spatial-detail/compression workload than Viper.
+
+### 2048px / 500-frame variant
+
+- source: 2048px class, 500 frames, 20.0 s;
+- selected stride: 2;
+- output: `1810x1810`;
+- output frames: 250;
+- output size: approximately 97.22 MB decimal;
+- timing: every output frame exactly 80 ms.
+
+The Preserve-motion baseline long edge was 1312px, so the selected result recovered about 38% linear resolution.
+
+### 3072px / 500-frame variant
+
+- source: 3072px class, 500 frames, 20.0 s;
+- selected stride: 2;
+- output: `1752x1752`;
+- output frames: 250;
+- output size: approximately 94.69 MB decimal;
+- timing: every output frame exactly 80 ms.
+
+The Preserve-motion baseline long edge was 1266px, so the selected result recovered about 38.4% linear resolution. Because 500 divides evenly by stride 2, both complex-scene variants need no shortened final closure delay and have perfectly uniform timing.
+
+## Current release boundary
 
 - Preserve motion remains the default and unchanged.
-- Favor resolution remains experimental.
-- Dev.9 validates that 20 FPS optical-flow interpolation can look smooth, but not that it improves spatial output.
-- Dev.10-dev.12 prove synthesized-frame approaches can legitimately fall back to the exact Preserve-motion result on Viper.
-- Dev.13 proves exact source-frame decimation also fell back on the real Viper workload, but did not expose the rejection stage.
-- Dev.15 is diagnostic-first: no further adaptive policy change should be made until the real trace identifies the concrete limiting stage.
-- No public release should promote Favor resolution until the adaptive trade is both technically explained and human-validated.
+- The synthesized-frame branch from dev.9-dev.12 remains rejected for this workload because it did not buy spatial resolution.
+- Exact source-frame decimation is now validated by deterministic CI plus three real HeroForge workloads: Viper and two kitbash/decal-heavy variants.
+- Viper recovered the full 2048px native spatial ceiling and was visually reported as having consistent motion.
+- Both 500-frame complex variants selected stride 2 and produced uniform 80 ms cadence with substantial (~38%) linear spatial gains over their Preserve baselines.
+- The current adaptive thresholds, stride order, and timing policy should not be changed without new contradictory evidence.
+- Remaining work is ordinary release hardening, UI/framing validation, and potential conversion-time optimization that preserves identical selection/output behavior.

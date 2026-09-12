@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import struct
 import subprocess
 from pathlib import Path
@@ -49,6 +50,10 @@ def probe_webp_riff(path: Path) -> tuple[int, int, list[int]]:
     return width, height, durations
 
 
+def _creation_flags() -> int:
+    return getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" else 0
+
+
 def _ffprobe_json(ffprobe: Path, path: Path) -> dict:
     cmd = [
         str(ffprobe),
@@ -63,7 +68,13 @@ def _ffprobe_json(ffprobe: Path, path: Path) -> dict:
         "json",
         str(path),
     ]
-    proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    proc = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        check=False,
+        creationflags=_creation_flags(),
+    )
     if proc.returncode != 0:
         raise ProbeError(proc.stderr.strip() or "ffprobe failed")
     try:

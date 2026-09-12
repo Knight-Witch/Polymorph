@@ -8,7 +8,7 @@ from pathlib import Path
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
-from .models import GifMotionMode
+from .models import FramingMode, GifMotionMode
 from .resources import asset_path
 from .tools import find_toolchain
 from .ui.adaptive_main_window import MainWindow
@@ -81,6 +81,7 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
             "favor resolution": window.motion_favor_radio,
             "framing mode": window.frame_mode,
             "aspect ratio": window.ratio_combo,
+            "crop zoom": window.crop_zoom_slider,
             "center framing": window.center_btn,
             "fit background": window.color_btn,
             "output folder": window.output_path,
@@ -93,7 +94,9 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
             raise RuntimeError(
                 "Missing hover tooltip(s): " + ", ".join(missing_tooltips)
             )
-        lines.append("PASS primary control hover tooltips")
+        if "QRadioButton::indicator:checked" not in window.styleSheet():
+            raise RuntimeError("Selected radio controls do not have an explicit visible style")
+        lines.append("PASS primary control hover tooltips and radio selection styling")
 
         window._add_files([sample])
         app.processEvents()
@@ -124,7 +127,15 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
 
         window.frame_mode.setCurrentIndex(1)  # Crop to ratio
         window.ratio_combo.setCurrentText("16:9")
+        window.crop_zoom_slider.setValue(150)
         app.processEvents()
+        settings = window._make_settings()
+        if settings.framing.mode is not FramingMode.CROP:
+            raise RuntimeError("Crop framing UI did not map to conversion settings")
+        if abs(settings.framing.zoom - 1.5) > 1e-6:
+            raise RuntimeError("Crop zoom UI did not map to conversion settings")
+        lines.append("PASS crop zoom framing controls")
+
         window.res_radio.setChecked(True)
         window.width_spin.setValue(64)
         app.processEvents()
