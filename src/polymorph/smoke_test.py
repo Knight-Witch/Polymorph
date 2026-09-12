@@ -6,12 +6,13 @@ import traceback
 from pathlib import Path
 
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QLabel
 
 from .models import FramingMode, GifMotionMode
 from .resources import asset_path
 from .tools import find_toolchain
 from .ui.adaptive_main_window import MainWindow
+from .ui.styles import apply_brand_skin
 
 _ASSETS = ("update.svg", "github.svg", "kofi.svg", "patreon.svg", "discord.svg")
 
@@ -53,6 +54,7 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
         lines.append("PASS packaged footer SVG resources")
 
         window = MainWindow()
+        apply_brand_skin(window)
         if window.converter is None:
             raise RuntimeError("Main window could not resolve the bundled conversion toolchain")
 
@@ -66,6 +68,15 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
                 f"Minimum window height regressed: got {window.minimumHeight()}, expected >=700"
             )
         lines.append("PASS comfortable default window geometry")
+
+        subtitle = window.findChild(QLabel, "Subtitle")
+        if window.property("polymorphSkin") != "occult-gold-v1":
+            raise RuntimeError("Branded presentation skin was not applied")
+        if subtitle is None or subtitle.text() != "MEDIA CONVERSION MAGIC":
+            raise RuntimeError("Branded subtitle copy is missing")
+        if window.convert_btn.text() != "Cast Polymorph":
+            raise RuntimeError("Primary action copy regressed")
+        lines.append("PASS branded visual shell and primary copy")
 
         tooltip_widgets = {
             "file queue": window.file_list,

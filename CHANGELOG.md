@@ -2,6 +2,45 @@
 
 Historical entries through dev.15 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV15.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV15.md).
 
+## POLY-2026-09-12-029 — 2026-09-12 04:20 PDT — Establish first branded visual skin
+
+### Summary
+
+- Closed the framing-validation loop before visual work: the user completed one real Crop export and one real Fit export after the dev.16/17 geometry fixes and reported that both matched expectations and worked great. Crop/Fit preview/export parity is now human-validated end to end.
+- Replaced the generic gray development appearance with the first Polymorph visual system: near-black/charcoal surfaces, ivory text, muted champagne-gold borders/section hierarchy, and restrained crimson active/selection states.
+- Increased the general UI type scale to `11pt`, enlarged the title treatment, and increased default window width so the larger text has room without compressing the controls.
+- Changed the header subtitle from `Media Transmutation Utility` to `MEDIA CONVERSION MAGIC`.
+- Changed the main action from `POLYMORPH` to `Cast Polymorph`.
+- Added a dedicated gold-outlined `+ Add Files` treatment and strengthened file-selection, input-focus, slider, progress, tooltip, and footer hover states.
+- Gave `Cast Polymorph` a deep-crimson/gold primary treatment with distinct hover and pressed states as immediate feedback. No looping or decorative button animation is introduced yet.
+- Intentionally did not add the mockup-only slogans `Same motion. A brighter form.` or `Artifacts to new forms.`.
+- The loading/working animation remains deliberately deferred. Both the previously discussed alchemic/magic-circle concept and the user's D20 roll/spin concept remain open for the next design phase.
+- Kept the proven widget layout and every conversion/framing behavior unchanged; presentation changes are applied after the validated adaptive MainWindow has fully constructed.
+- Extended the packaged smoke path so it applies the same branded skin as the normal app and fails if the new subtitle/action copy is missing.
+- Incremented the development tester to `0.1.0-dev.18`.
+
+### Touched files
+
+- `src/polymorph/ui/styles.py`
+- `src/polymorph/app.py`
+- `src/polymorph/smoke_test.py`
+- `src/polymorph/__init__.py`
+- `src/polymorph/constants.py`
+- `pyproject.toml`
+- `installer/Polymorph.iss`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert this commit to restore dev.17's neutral gray development skin and previous `POLYMORPH`/`Media Transmutation Utility` copy. Conversion, framing, adaptive GIF behavior, updater behavior, and toolchain state are independent of this presentation-only pass.
+
+### Test notes
+
+- Full Windows CI must pass the unchanged unit suite, pinned FFmpeg/gifski smoke, adaptive integration, reference diagnostic, PyInstaller build, packaged-app smoke, installer compilation, checksum generation, and artifact uploads.
+- The frozen-app smoke now applies the first branded skin and asserts `MEDIA CONVERSION MAGIC`, `Cast Polymorph`, and the skin marker before running the normal UI/preview/framing/adaptive checks.
+- Human dev.18 review is visual: verify readability at normal Windows scaling, confirm the gold/red/black hierarchy feels right, confirm the larger default window is comfortable, and decide what should be pushed further before implementing the loader animation.
+
 ## POLY-2026-09-12-028 — 2026-09-12 03:45 PDT — Use conventional radio selection dots
 
 ### Summary

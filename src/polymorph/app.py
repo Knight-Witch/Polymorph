@@ -6,6 +6,7 @@ from pathlib import Path
 from PySide6.QtWidgets import QApplication
 
 from .ui.adaptive_main_window import MainWindow
+from .ui.styles import apply_brand_skin
 
 
 def main() -> int:
@@ -22,6 +23,7 @@ def main() -> int:
         return run_packaged_smoke_test(app, Path(sys.argv[index + 1]))
 
     window = MainWindow()
+    apply_brand_skin(window)
     window.show()
 
     # Dragging files onto the installed EXE/shortcut passes them as command-line args.

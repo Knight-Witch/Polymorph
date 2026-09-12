@@ -2,6 +2,20 @@
 
 Historical entries through dev.15 are preserved verbatim in [`HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV15.md`](HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV15.md).
 
+## PFC-2026-09-12-029 — First branded visual skin
+
+- Target files: `src/polymorph/ui/styles.py`, `src/polymorph/app.py`, `src/polymorph/smoke_test.py`, development version metadata, and required tracking files.
+- Required review completed before editing: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, `docs/UX_SPEC.md`, current base/adaptive UI composition, shared stylesheet, packaged smoke test, and current version/installer metadata.
+- Human validation incorporated: the user completed one real Crop export and one real Fit export after the dev.16/17 framing work and reported that both worked great; preview/export framing parity is therefore considered human-validated end to end. Console popup suppression and the real-media adaptive GIF paths were already validated.
+- Visual direction is user-directed: black/charcoal base, ivory/white text, muted champagne-gold structure, and restrained crimson active accents; larger general text for readability; the preview remains the visual centerpiece.
+- Copy direction is user-directed: header subtitle becomes `MEDIA CONVERSION MAGIC`; primary action becomes `Cast Polymorph`; no "Same motion. A brighter form." or "Artifacts to new forms." marketing filler is added.
+- Recommended action: make the first aesthetic pass presentation-only through the shared QSS plus a small post-build skin helper; retain the proven control layout and conversion behavior while establishing the palette, hierarchy, larger type scale, richer selection states, and primary-action treatment.
+- Primary-action interaction in this pass is intentionally limited to styled hover/pressed states. A true animated cast pulse and the working/loading treatment remain separate follow-up work so the loader can be designed deliberately rather than mixed into the first skin change.
+- Loader concepts explicitly remain open: the prior alchemic/magic-circle treatment and the user's D20 rolling/spinning idea can be compared later. No loader behavior changes are made here.
+- Conflict risks: larger text can compress the control rail, Qt stylesheet gradients can render differently in the frozen Windows build, and post-build object naming/copy changes must not disturb control wiring or tooltips.
+- Safeguards: the branded helper runs only after the validated MainWindow has finished constructing; no converter, adaptive planner, framing geometry, preview math, subprocess, optimizer, updater, or toolchain code is touched; the packaged smoke test now applies the brand helper and asserts the branded subtitle/action copy before exercising the unchanged functional gates.
+- Versioning: increment development tester from `0.1.0-dev.17` to `0.1.0-dev.18`.
+
 ## PFC-2026-09-12-028 — Normalize radio selection indicators
 
 - Target files: `src/polymorph/ui/styles.py`, `src/polymorph/smoke_test.py`, development version metadata, `MASTER.md`, `docs/UX_SPEC.md`, and required tracking files.
