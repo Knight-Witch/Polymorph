@@ -1,10 +1,11 @@
 import struct
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from polymorph.probe import ProbeError, probe_media
+from polymorph.probe import ProbeError, _ffprobe_json, probe_media
 
 
 def u24(value: int) -> bytes:
@@ -31,6 +32,20 @@ class ProbeFallbackTests(unittest.TestCase):
         self.assertEqual(info.frame_count, 2)
         self.assertAlmostEqual(info.duration_s, 0.1)
         self.assertAlmostEqual(info.fps, 20.0)
+
+    def test_ffprobe_uses_no_window_creation_flag(self):
+        completed = subprocess.CompletedProcess(
+            args=["ffprobe"],
+            returncode=0,
+            stdout='{"streams": [], "format": {}}',
+            stderr="",
+        )
+        with patch("polymorph.probe.subprocess.run", return_value=completed) as run:
+            _ffprobe_json(Path("ffprobe"), Path("sample.webp"))
+        self.assertEqual(
+            run.call_args.kwargs["creationflags"],
+            getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
 
 
 if __name__ == "__main__":
