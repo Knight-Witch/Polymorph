@@ -5,8 +5,12 @@
 - Project: Polymorph
 - Repository: `Knight-Witch/Polymorph`
 - Platform target: Windows 10/11 x64
-- Status: functional scaffold on `dev`; MP4 human-validated; Preserve-motion GIF quality/smoothness human-validated; decimal-MB ceiling validated; updater hardening validated; dev.9 full-resolution interpolation visually validated; dev.10-dev.13 adaptive tests all returned the Preserve-motion Viper baseline; dev.14 first-launch layout/tooltips human-validated; dev.15 adds adaptive decision tracing + a real process-level adaptive integration gate without changing conversion decisions / no public release
-- Current development version: `0.1.0-dev.15`
+- Current development version: `0.1.0-dev.16`
+- No public stable release yet.
+- MP4 is human-validated and remains unchanged.
+- Preserve-motion GIF quality/smoothness, decimal-MB sizing, pinned gifski 1.32.0, updater hardening, first-launch geometry, and hover help are human-validated.
+- Favor-resolution source-frame decimation is now validated on three real HeroForge workloads: Viper plus two kitbash/decal-heavy 500-frame variants including a 3072x3072 source. All selected stride 2 and produced substantial spatial gains with visually even/acceptable motion.
+- Dev.16 addresses framing/preview correctness and Windows process focus-stealing before final visual skinning: hidden ffprobe execution, shared aspect-safe Crop/Fit placement, drag + zoom framing controls, and explicit selected radio indicators.
 
 ## Canonical conversion behavior
 
@@ -14,105 +18,93 @@
 
 - Default mode.
 - Input focus: animated WebP.
-- Decode/process through FFmpeg.
-- Stream YUV4MPEG directly to gifski 1.32.0.
+- FFmpeg -> YUV4MPEG -> gifski 1.32.0.
 - gifski quality 100, `--extra`, explicit width, infinite repeat.
-- Production currently uses explicit `yuv420p` for deterministic compatibility on bundled FFmpeg 9.0.1.
-- Explicitly pass source FPS to gifski and verify exact source frame count/timing.
-- Do not intentionally drop, duplicate, or lower frames to meet a size target.
-- In file-size mode, reduce spatial resolution only as needed to fit the user ceiling.
-- User-entered MB ceilings are decimal; default `99 MB` means exactly 99,000,000 bytes.
-- GIF file-size search uses the patched-Python smart-fit resolution algorithm introduced in dev.8.
+- Explicit `yuv420p` on the pinned FFmpeg 9.0.1 toolchain.
+- Explicit source FPS to gifski with exact frame-count/timing verification.
+- File-size mode changes spatial resolution, never hidden temporal quality.
+- 99 MB means exactly 99,000,000 bytes.
+- GIF file-size fitting uses the patched-Python smart-fit search introduced in dev.8.
 
 ### GIF — Favor resolution
 
-- Experimental and must be explicitly selected by the user.
-- Available only for GIF + Fit under file size.
+- Explicit opt-in, available only for GIF + Fit under file size.
 - Starts from the Preserve-motion fitted result.
-- Preferred long edge remains native resolution capped at 2048 px; never upscale.
-- Dev.9-dev.12 proved that uniformly synthesized lower-FPS frames can erase the expected byte savings under gifski, so dev.13 does not synthesize intermediate frames.
-- Dev.13 measures exact source-frame decimation candidates instead: every 2nd source frame first, then every 3rd frame while the effective motion remains above the automatic 8 FPS floor.
-- Candidate samples are encoded at the Preserve-motion dimensions and measured by real gifski byte cost.
-- The patched-Python 97/99 byte target is used to project how much spatial resolution that measured cost can realistically buy.
-- A candidate must predict roughly 8% or greater linear spatial gain before the full adaptive size search runs.
-- If a full candidate fit fails the same realized-gain test, Polymorph continues to the next deeper stride rather than immediately returning the baseline.
-- If the source frame count is not divisible by the selected stride, only the final GIF delay is shortened to the exact source-frame remainder so the loop keeps its original total duration/angular speed.
-- Keeps gifski quality 100, `--extra`, explicit width, infinite repeat, dev.8 smart-fit sizing, and post-encode integrity verification.
-- Dev.14 changes only presentation/hover help.
-- Dev.15 changes only development diagnostics around the same decisions: Favor-resolution runs emit an adaptive JSON sidecar containing baseline/pass sizes, stride probe sizes, predicted gain, full-fit results/errors, and the final selection/fallback reason.
+- Tests exact original-source-frame strides nearest motion first: stride 2, then stride 3 while effective motion remains above the automatic 8 FPS floor.
+- No optical-flow or blended synthetic frames are used in dev.13+.
+- Real gifski sample byte cost at Preserve dimensions is authoritative.
+- A candidate must predict about 8% linear spatial gain before a full fit and must realize about 8% after the fit.
+- Preferred adaptive long edge remains native framed size capped at 2048 px; never source-upscale.
+- If source frame count is not divisible by the stride, only the final GIF delay is shortened to preserve exact source duration/angular speed.
+- Preserve quality 100, `--extra`, explicit width, infinite repeat, dev.8 smart-fit sizing, and post-encode integrity verification.
+- Dev.15 diagnostics remain development instrumentation and write an adaptive JSON sidecar for Favor-resolution jobs.
+
+### Confirmed real adaptive results
+
+- Viper source: 2048x2048, 375 frames, 25 FPS, 15.0 s.
+  - Preserve baseline: 1552x1552, 93,630,962 bytes, 375 frames.
+  - Stride-2 sample at baseline dimensions: 51,558,287 bytes.
+  - Favor result: 2048x2048, 82,147,387 bytes, 188 frames, 15.0 s, ~12.53 effective FPS.
+  - Timing: 187 x 80 ms plus one 40 ms closure interval.
+  - Human validation: frame rate/motion looked consistent.
+- Kitbash/decal-heavy 2048 source: 500 frames / 20 s.
+  - Preserve baseline edge 1312 px, 95,925,855 bytes.
+  - Favor stride-2 result: 1810x1810, 97,223,964 bytes, 250 frames / 12.5 FPS.
+  - Realized linear gain ~37.96%; every output frame is exactly 80 ms.
+- Kitbash/decal-heavy 3072 source: 500 frames / 20 s.
+  - Preserve baseline edge 1266 px, 95,361,393 bytes.
+  - Favor stride-2 result: 1752x1752, 94,690,307 bytes, 250 frames / 12.5 FPS.
+  - Realized linear gain ~38.39%; every output frame is exactly 80 ms.
+
+### Correction to earlier adaptive interpretation
+
+- The historical dev.13/dev.15 files that matched the Preserve baseline remain valid measurements of those output files, but they are no longer reliable proof that Favor resolution actually executed.
+- The UI stylesheet did not provide an explicit checked-radio indicator: the selected option could appear to have no circle while the unselected option showed a hollow circle. A dev.15 screenshot proved the user believed Favor resolution was selected while the UI state was actually Preserve motion.
+- The first diagnostic run with Favor resolution unambiguously active selected stride 2 successfully on Viper. The adaptive algorithm itself therefore does not require another policy change based on the earlier fallback interpretation.
 
 ### MP4
 
-- Output: H.264 MP4 for broad compatibility.
-- Preserve source timing/frame sequence.
-- High-quality encoder settings remain internal and hidden from normal UI.
-- MP4 file-size search remains the previously human-validated implementation.
-- Produced video should be cleanly loop-ready; actual repeat playback is controlled by the player/platform.
-- Hands-on HeroForge media testing reported no MP4 quality issues.
+- H.264 / libx264, preset slow, CRF 16, yuv420p, +faststart.
+- Source timing/frame sequence preserved.
+- File-size search remains the separately human-validated implementation.
+- Treat as done unless a real regression appears.
 
-## Human validation and OG reference
+## Framing behavior — dev.16
 
-- The only canonical OG behavioral reference is the patched Python `HeroForge_WebP_to_Reddit_GIF.py` actually run by the user.
-- The separately packaged Discord build is unvalidated and excluded from parity decisions.
-- Width-corrected Polymorph GIF is visually on par with OG and was reported slightly smoother.
-- Earlier full-frame dev.3 produced `1592x1592` under the old larger binary-MiB allowance.
-- True-decimal 99 MB Preserve-motion Viper output is `1552x1552`; quality/smoothness remained good.
-- OG result was `1756x1756` but real-source inspection confirmed it contains 300 frames from a 375-frame / 25 FPS / 15 s source, i.e. exactly 20 FPS.
-- Controlled CI independently quantified the same timing effect and explained the spatial advantage; OG 1756px is not a valid full-frame parity target.
-- Possible slight red/pink difference remains visually inconclusive and is not treated as a blocker.
+- Original: source framing unchanged.
+- Crop: target canvas is filled by an aspect-preserving source placement; overflow is clipped, never stretched.
+- Fit: target canvas keeps the source aspect and pads uncovered area with the selected background color, never stretches the source.
+- Preview and encode now use the same shared aspect-preserving placement model rather than separate Crop/Fit calculations.
+- Crop/Fit support drag positioning and 100%-400% manual zoom. Mouse wheel over the preview also changes zoom.
+- Manual zoom changes composition inside the framing canvas; it does not raise the native output-resolution ceiling or bypass no-upscale sizing rules.
+- Center resets position but intentionally keeps the chosen zoom.
 
-## Adaptive motion validation
+## Windows subprocess behavior — dev.16
 
-- Real Viper source: 2048x2048, 375 frames, 25 FPS, 15.0 s, every source frame 40 ms.
-- Simple 25 -> 20 frame selection showed a strong repeating motion-change spike every fourth interval.
-- Motion-compensated interpolation removed that periodic cadence spike in a 512px diagnostic.
-- Dev.9 full-resolution 20 FPS motion interpolation was reported by the user as looking **really good**, but still produced `1552x1552`, i.e. no spatial gain.
-- Dev.10 changed selection to measured candidate cost and final actual-gain veto; Viper returned `1552x1552 • 93.6 MB • 25 FPS`.
-- Dev.11 extended optical-flow probing through 12.5 FPS; Viper again returned the identical 25 FPS baseline.
-- Dev.12 replaced optical flow with lower-complexity temporal blending; Viper again returned the exact same output. The dev.11 and dev.12 user-supplied GIFs are byte-for-byte identical: 93,630,962 bytes, SHA-256 `dbfd1be7211b801f3a3a8d0ffaaf1058a1974f6b27141ef5f3be5ce55452e5af`, 375 frames at 40 ms.
-- Dev.13 switched to original-source-frame decimation. For Viper stride 2 would retain 188 original frames with 187 x 80 ms intervals plus one 40 ms loop closure.
-- The user-supplied dev.13 output nevertheless returned the **exact same Preserve-motion file** again: 1552x1552, 93,630,962 bytes, 375 frames at 40 ms, SHA-256 `dbfd1be7211b801f3a3a8d0ffaaf1058a1974f6b27141ef5f3be5ce55452e5af`.
-- Therefore dev.13 did not select a source-decimated candidate. The final file alone cannot distinguish whether stride probes were rejected by measured byte economics, a full-fit result missed the 8% gain floor, or the real Viper path hit an adaptive encode/integrity error that was intentionally caught before fallback.
-- Dev.15 addresses that diagnostic gap rather than changing the algorithm again. It records each real encode attempt/rejection and adds a synthetic real-toolchain integration gate that must prove the adaptive orchestration can select a lower-frame result when the byte savings genuinely support it.
+- FFmpeg/gifski conversion processes already used `CREATE_NO_WINDOW`.
+- The remaining focus-stealing console flashes were traced to ffprobe, which runs when media is loaded and during post-encode integrity checks.
+- Dev.16 applies `CREATE_NO_WINDOW` to the shared ffprobe subprocess path as well.
 
-## v1 UI scope
+## UI state
 
-- Drag/drop and Add Files.
-- Multiple-file queue; one active conversion at a time.
-- Animated live preview as visual centerpiece.
-- Output: GIF / MP4.
-- Sizing: Fit under file size / Set resolution.
-- GIF priority in file-size GIF mode: Preserve motion / Favor resolution.
-- Framing: Original / Crop / Fit.
-- Ratio presets plus expandable aspect-ratio guide.
-- Crop repositioning via preview drag.
-- Fit background color and source positioning.
-- Output folder chooser; default Downloads.
-- Conversion progress percentage.
-- Development adaptive completion readout reports dimensions, decimal MB, actual effective FPS, and—only for dev.15 Favor-resolution diagnostics—the generated sidecar filename.
-- Footer icon buttons: Check Updates, GitHub, Ko-fi, Patreon, Discord.
-- Automatic update check while app is open; no service/daemon.
-- Dev.14 first-launch geometry is 1080x800 with a 900x700 minimum so the GIF-priority section no longer crushes the settings rail at the old 720px default height.
-- Dev.14 enforces minimum visual heights for sections/radio/input controls and adds concise hover tooltips to primary controls while preserving the existing restrained UI.
-- Human validation confirmed the dev.14 default sizing renders correctly and the new hover tooltips work as intended.
+- Development window opens around 1080x800; minimum 900x700.
+- Primary controls have concise hover tooltips.
+- Dev.16 explicitly styles selected and unselected radio indicators so checked state is visually unambiguous.
+- Final aesthetic skin, final Polymorph emblem, and final arcane progress treatment remain deferred until behavior is stable.
 
 ## Update policy
 
 - Check only official GitHub releases from `Knight-Witch/Polymorph`.
 - Require exact versioned installer plus matching `.sha256` companion.
-- Download only official repository HTTPS release assets.
-- Verify SHA-256 before launching installer.
-- No background service, startup daemon, unattended updater, or silent install.
+- Download only official repository HTTPS release assets and verify SHA-256 before launch.
+- No background service, startup daemon, unattended updater, telemetry, or cloud processing.
 
 ## Known follow-ups
 
-- Run the real Viper once through dev.15 Favor resolution and inspect the generated `*_ADAPTIVE_DIAGNOSTIC.json`; do not change adaptive thresholds/timing again until that trace identifies the concrete rejection/error stage.
-- Require the dev.15 Windows process-level adaptive integration gate to select a lower-frame, >=8%-larger result on its deterministic synthetic workload before handing out the tester.
-- If the Viper trace shows the measured stride itself does not buy >=8% spatial gain, treat that as a real GIF-compression limitation rather than a control-flow bug and reconsider the product tradeoff deliberately.
-- If the trace shows an adaptive encode/integrity failure, fix only that concrete failure and retain the existing measured-gain safeguards.
-- If adaptive behavior is eventually validated, test at least one harder HeroForge spin with thin geometry/hair/transparent or overlapping elements before stable promotion.
-- Favor resolution performs extra measurement encodes by design; optimize conversion time only after cadence/result behavior is validated.
-- First public release still requires a deliberate project-license choice and final release packaging/release-workflow review.
+- Windows CI must validate dev.16 unit tests, real bundled toolchain, adaptive integration, frozen-app framing/zoom smoke, packaging, and installer before human testing.
+- Human dev.16 validation should confirm: no console flash on load/encode/optimize; checked radios are obvious; Crop actually crops without distortion; Fit pads without distortion; drag/zoom preview behavior matches encoded output.
+- Favor-resolution performance optimization may be considered later; correctness is now established.
+- First public release still requires final app icon/emblem, deliberate project-license choice, stable packaging/release workflow review, code-signing/SmartScreen decision, and release-facing README polish.
 
 ## Deferred
 
@@ -120,5 +112,6 @@
 - ETA/time remaining.
 - Advanced codec controls.
 - Parallel jobs.
-- Final aesthetic skin and final Polymorph emblem.
+- Custom aspect-ratio workflow polish.
+- Final aesthetic skin / emblem / arcane progress treatment.
 - macOS/Linux packaging.
