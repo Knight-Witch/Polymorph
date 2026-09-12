@@ -5,6 +5,10 @@ from dataclasses import dataclass
 from .models import FramingMode, FramingSettings, MediaInfo
 
 
+MIN_FRAMING_ZOOM = 1.0
+MAX_FRAMING_ZOOM = 4.0
+
+
 @dataclass(frozen=True, slots=True)
 class FrameGeometry:
     width: int
@@ -19,16 +23,87 @@ class FrameGeometry:
     content_height: int | None = None
 
 
+@dataclass(frozen=True, slots=True)
+class ContentPlacement:
+    """Aspect-preserving source placement inside a framing canvas.
+
+    x/y are relative to the canvas and may be negative when zoom/cover causes the
+    source to extend beyond an edge. width/height always preserve source aspect.
+    """
+
+    x: float
+    y: float
+    width: float
+    height: float
+
+
 def even(value: float | int, minimum: int = 2) -> int:
     n = max(minimum, int(round(value)))
     return n if n % 2 == 0 else n - 1 if n > minimum else n + 1
 
 
+def clamp_framing_zoom(value: float) -> float:
+    return max(MIN_FRAMING_ZOOM, min(MAX_FRAMING_ZOOM, float(value)))
+
+
+def _clamp_offset(value: float) -> float:
+    return max(-1.0, min(1.0, float(value)))
+
+
 def _axis_position(extra: int, offset: float) -> int:
     if extra <= 0:
         return 0
-    normalized = max(-1.0, min(1.0, offset))
+    normalized = _clamp_offset(offset)
     return int(round((normalized + 1.0) * 0.5 * extra))
+
+
+def _placed_axis_origin(canvas_size: float, content_size: float, offset: float) -> float:
+    """Place content within/over a canvas using the same -1..+1 position model.
+
+    When content is smaller than the canvas, -1/+1 align to the near/far padded
+    edge. When content is larger, -1/+1 reveal the near/far cropped edge.
+    """
+
+    normalized = _clamp_offset(offset)
+    travel = abs(canvas_size - content_size)
+    fraction = (normalized + 1.0) * 0.5
+    if content_size <= canvas_size:
+        return travel * fraction
+    return -travel * fraction
+
+
+def content_placement(
+    source_width: float,
+    source_height: float,
+    canvas_width: float,
+    canvas_height: float,
+    framing: FramingSettings,
+) -> ContentPlacement:
+    """Return aspect-preserving content placement for Crop/Fit preview + encode.
+
+    Crop starts at the minimum scale that covers the canvas; Fit starts at the
+    maximum scale that contains the whole source. Manual zoom multiplies that base
+    scale while position offsets choose which padded/cropped edge is visible.
+    """
+
+    sw = max(1.0, float(source_width))
+    sh = max(1.0, float(source_height))
+    cw = max(1.0, float(canvas_width))
+    ch = max(1.0, float(canvas_height))
+
+    if framing.mode is FramingMode.CROP:
+        base_scale = max(cw / sw, ch / sh)
+    else:
+        # FIT is the only other caller in normal use. ORIGINAL also behaves as a
+        # contain operation here so the helper remains safe in isolation.
+        base_scale = min(cw / sw, ch / sh)
+
+    zoom = clamp_framing_zoom(framing.zoom)
+    width = sw * base_scale * zoom
+    height = sh * base_scale * zoom
+    x = _placed_axis_origin(cw, width, framing.offset_x)
+    y = _placed_axis_origin(ch, height, framing.offset_y)
+    return ContentPlacement(x=x, y=y, width=width, height=height)
 
 
 def native_geometry(info: MediaInfo, framing: FramingSettings) -> FrameGeometry:
@@ -39,6 +114,9 @@ def native_geometry(info: MediaInfo, framing: FramingSettings) -> FrameGeometry:
     ratio = max(0.05, framing.ratio)
     source_ratio = sw / sh
 
+    # Native canvas dimensions intentionally remain independent of manual zoom.
+    # Zoom changes composition inside this canvas; it never silently raises the
+    # user's output-resolution ceiling.
     if framing.mode is FramingMode.CROP:
         if source_ratio > ratio:
             ch = sh
@@ -57,8 +135,8 @@ def native_geometry(info: MediaInfo, framing: FramingSettings) -> FrameGeometry:
             crop_y=cy,
             crop_width=even(cw),
             crop_height=even(ch),
-            content_width=even(cw),
-            content_height=even(ch),
+            content_width=even(sw),
+            content_height=even(sh),
         )
 
     if source_ratio < ratio:
