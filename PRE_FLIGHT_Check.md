@@ -1,5 +1,17 @@
 # Polymorph Pre-Flight Log
 
+## PFC-2026-09-11-025 — Fix first-launch UI compression and add hover tooltips
+
+- Target files: `src/polymorph/ui/adaptive_main_window.py`, `src/polymorph/ui/styles.py`, `src/polymorph/smoke_test.py`, development version metadata, `docs/UX_SPEC.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, and `CHANGELOG.md`.
+- Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `docs/UX_SPEC.md`, current `main_window.py`, `adaptive_main_window.py`, `styles.py`, packaged smoke test, dev.13 version metadata, and the user-supplied screenshots showing the default-height control rail vertically compressed until the window is made taller.
+- Diagnosis: the base window still opened at 1080x720, a size chosen before the additional GIF-priority section existed. The adaptive section increased the right rail's vertical content enough that Qt compressed radio/input rows at first launch, visibly clipping field values and labels. The same controls render normally once the user manually increases window height.
+- Requested presentation change: make the default UI open at a comfortable height and add concise hover tooltips so controls can remain visually restrained without permanent explanatory copy.
+- Connected modules reviewed: base main-window geometry, adaptive section insertion, shared stylesheet, primary/disabled control states, footer tooltips, packaged application smoke path, version/installer metadata. Conversion engine, adaptive encoder, optimizer, preview framing behavior, updater, and dependency/toolchain code are not changed.
+- Conflict risks: making the minimum window too tall for smaller displays; over-explaining controls or cluttering the visual design; accidentally touching conversion behavior while a dev.13 Viper encode is still under human test.
+- Recommended action: open the adaptive UI at 1080x800, retain a smaller 900x700 resize floor, slightly tighten the right-rail layout spacing, enforce minimum visual heights for section/radio/input controls, improve disabled-state readability, and add hover tooltips to the queue/preview/output/sizing/GIF-priority/framing/output-folder/conversion controls. Extend the packaged smoke test to gate the default geometry and presence of primary tooltips.
+- Versioning: increment the UI tester from `0.1.0-dev.13` to `0.1.0-dev.14` so the layout build is unambiguous.
+- Unchanged: dev.13 exact source-frame-decimation conversion behavior, Preserve-motion GIF, MP4, framing math/drag semantics, updater, 99 MB decimal ceiling, gifski/FFmpeg toolchain, visual palette, footer destinations, and public release state.
+
 ## PFC-2026-09-11-024 — Replace synthesized adaptive frames with exact source-frame decimation
 
 - Target files: `src/polymorph/adaptive_converter.py`, `src/polymorph/motion_planner.py`, new `src/polymorph/gif_timing.py`, adaptive/UI wording, planner/timing/orchestration tests, Windows toolchain smoke coverage, version metadata, architecture/UX/status/reference/diagnostic docs, and required tracking files.
@@ -67,7 +79,7 @@
 - Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, `HISTORY/REFERENCE_GIF_CONVERTER.md`, the completed CI timing diagnostic, current converter/geometry/size-unit paths, and the full user-tested patched `HeroForge_WebP_to_Reddit_GIF.py`.
 - Canonical-source boundary: only the patched Python converter actually run by the user is behavioral evidence. The later Discord distribution package is unvalidated and excluded from parity decisions.
 - Confirmed timing result recorded: patched-Python timing retained 41/50 frames and used 82.1878% of the bytes of an otherwise matched full-frame 25 FPS path; the derived 1.10305x linear factor maps the comparable 1592px result to 1756.06px, matching the OG 1756px result.
-- Optimizer diagnosis: current Polymorph GIF search can stop at roughly 90.27 MB under a 99 MB ceiling because its current acceptance condition is based on `0.97 * 0.94`; the patched Python instead uses a 97 MB target and 93 MB acceptance floor, plus different measured-size and pass/fail-bracketing logic.
+- Optimizer diagnosis: current Polymorph GIF search can stop at roughly 90.27 MB under a 99 MB ceiling because its current acceptance condition is based on `0.97 * 0.94`; the patched Python instead uses a 97 MB target and a 93 MB acceptance floor, plus different measured-size and pass/fail-bracketing logic.
 - Connected modules reviewed: GIF encoder/timing/integrity safeguards, shared size dispatcher, MP4 file-size search, geometry even-dimension handling, decimal-MB conversion, cancellation/progress behavior, installer/version metadata.
 - Conflict risks: replacing the shared size search would alter already-human-validated MP4 sizing; changing encoder/timing/color settings alongside the optimizer would make the Viper comparison ambiguous.
 - Recommended action: route GIF file-size mode through a pure port of the patched Python smart-fit search generalized by 97/99 and 93/99 threshold ratios; preserve six normal attempts and 128px emergency long-edge fallback without upscaling; retain the existing MP4 size search unchanged; add pure optimizer regression tests.
@@ -102,7 +114,7 @@
 - Target files: file-size unit helper, converter ceiling calculation, unit tests, development version metadata, architecture/status docs, required tracking files.
 - Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, current `src/polymorph/converter.py`, `src/polymorph/models.py`, current sizing UI, and dev.5 Windows CI/artifact results.
 - Connected modules reviewed: file-size optimizer, user `MB` input, conversion result byte accounting, GIF frame/FPS safeguards, MP4 path, installer/version metadata.
-- Confirmed bug: the UI labels the ceiling in `MB`, but the converter multiplied by `1024 * 1024`, making `99 MB` equal 103,809,024 bytes and allowing a nominal 99 MB job to exceed a platform's decimal 100 MB upload limit.
+- Confirmed bug: the UI labels the ceiling in `MB`, but the converter multiplied by `1024 * 1024`, making `99 MB` equal 103,809,024 bytes and allowing a nominal 99 MB job to exceed a platform's decimal 100 MB limit.
 - Conflict risks: correcting the ceiling will slightly reduce spatial resolution for outputs that were previously using the extra binary-MiB allowance; altering optimizer thresholds at the same time would make that expected change harder to audit.
 - Recommended action: define decimal megabytes centrally as 1,000,000 bytes, use that helper only for the user-defined ceiling, add direct unit coverage, and leave optimizer search behavior, GIF quality/frame preservation, MP4 encoding, framing, and UI layout unchanged.
 - Versioning: increment development tester from `0.1.0-dev.5` to `0.1.0-dev.6`.
@@ -112,7 +124,7 @@
 - Target files: Windows gifski build dependency, development version metadata, GIF architecture/history/status docs, third-party/build docs, required tracking files.
 - Relevant history checked: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `HISTORY/REFERENCE_GIF_CONVERTER.md`, `docs/ARCHITECTURE.md`, current Windows workflow, current converter, current third-party/build docs, the exact standalone `HeroForge_WebP_to_Reddit_GIF.py`, and gifski 1.34.0 CLI/Y4M source handling.
 - Human validation: dev.4 changed only gifski 1.32.0 -> 1.34.0 and regressed the same Viper conversion from dev.3's `1592x1592` to `1532x1532`.
-- Confirmed root cause of the larger standalone `1756x1756` result: the standalone wrote source FPS into Y4M with FFmpeg `-r` but omitted gifski `--fps`; gifski defaults Y4M/video input to 20 FPS and its Y4M decoder skips frames when required to meet that target.
+- Confirmed root cause of the larger standalone `1756x1756` result: the standalone wrote source FPS into Y4M with FFmpeg `-r <source fps>` but omitted gifski `--fps`; gifski defaults Y4M/video input to 20 FPS and its Y4M decoder skips frames when required to meet that target.
 - Connected modules reviewed: GIF invocation, `yuv420p` handoff, explicit source-FPS argument, exact frame-count/timing integrity guard, file-size optimizer, MP4 path, Windows toolchain smoke gate, installer/version metadata.
 - Conflict risks: chasing `1756x1756` as a spatial parity target would require sacrificing the user's explicit no-frame-loss requirement or changing another quality dimension; changing optimizer logic now would confuse the confirmed timing tradeoff.
 - Recommended action: restore gifski 1.32.0, keep dev.3's `yuv420p` + explicit source FPS + exact frame verification, record the standalone converter as visual-quality but not frame-preservation canonical, and do not alter optimizer or MP4 behavior in this update.
