@@ -94,9 +94,12 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
             raise RuntimeError(
                 "Missing hover tooltip(s): " + ", ".join(missing_tooltips)
             )
-        if "QRadioButton::indicator:checked" not in window.styleSheet():
+        stylesheet = window.styleSheet()
+        if "QRadioButton::indicator:checked" not in stylesheet:
             raise RuntimeError("Selected radio controls do not have an explicit visible style")
-        lines.append("PASS primary control hover tooltips and radio selection styling")
+        if "qradialgradient" not in stylesheet:
+            raise RuntimeError("Selected radio controls do not use the centered filled-dot style")
+        lines.append("PASS primary control hover tooltips and radio dot selection styling")
 
         window._add_files([sample])
         app.processEvents()

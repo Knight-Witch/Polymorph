@@ -33,12 +33,30 @@ QRadioButton::indicator:hover {
     border-color: #aeb5bf;
 }
 QRadioButton::indicator:checked {
-    border: 4px solid #e8ebef;
-    background: #111317;
+    border: 1px solid #e8ebef;
+    background: qradialgradient(
+        cx: 0.5, cy: 0.5, radius: 0.5,
+        fx: 0.5, fy: 0.5,
+        stop: 0 #e8ebef,
+        stop: 0.38 #e8ebef,
+        stop: 0.39 #111317,
+        stop: 1 #111317
+    );
 }
 QRadioButton::indicator:disabled {
     border-color: #4d535d;
     background: #181b20;
+}
+QRadioButton::indicator:checked:disabled {
+    border-color: #555c66;
+    background: qradialgradient(
+        cx: 0.5, cy: 0.5, radius: 0.5,
+        fx: 0.5, fy: 0.5,
+        stop: 0 #69717d,
+        stop: 0.38 #69717d,
+        stop: 0.39 #181b20,
+        stop: 1 #181b20
+    );
 }
 QPushButton, QToolButton, QComboBox, QSpinBox, QDoubleSpinBox {
     background: #262a31;

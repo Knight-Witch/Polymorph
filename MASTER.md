@@ -5,8 +5,8 @@
 - Project: Polymorph
 - Repository: `Knight-Witch/Polymorph`
 - Platform target: Windows 10/11 x64
-- Status: functional scaffold on `dev`; MP4 human-validated; Preserve-motion GIF quality/smoothness human-validated; decimal-MB ceiling validated; updater hardening validated; dev.14 first-launch layout/tooltips human-validated; dev.15 diagnostics proved exact source-frame decimation works on real HeroForge media; Viper plus two kitbash/decal-heavy variants are human/diagnostically validated; dev.16 fixes framing-preview parity, adds crop zoom, makes radio selection explicit, and suppresses ffprobe console flashes / no public release
-- Current development version: `0.1.0-dev.16`
+- Status: functional scaffold on `dev`; MP4 human-validated; Preserve-motion GIF quality/smoothness human-validated; decimal-MB ceiling validated; updater hardening validated; dev.14 first-launch layout/tooltips human-validated; dev.15 diagnostics proved exact source-frame decimation works on real HeroForge media; Viper plus two kitbash/decal-heavy variants are human/diagnostically validated; dev.16 framing preview and ffprobe-console fixes are human-validated in-app; dev.17 normalizes radio selection to a conventional centered-dot indicator / no public release
+- Current development version: `0.1.0-dev.17`
 
 ## Canonical conversion behavior
 
@@ -82,6 +82,7 @@
 - Crop supports drag repositioning and a 100-300% zoom control. Zoom reduces the retained source crop window rather than upscaling output content, preserving the no-upscale rule.
 - Fit preserves the complete source aspect ratio and expands the canvas with user-selectable padding color; drag repositioning moves the source within available padding.
 - Dev.16 replaces the preview's separate Crop/Fit geometry implementation with the same `native_geometry` rules used by FFmpeg filter construction so the preview cannot silently stretch while export uses different math.
+- Human dev.16 desktop validation confirmed the popup windows are gone and Crop/Fit now behave correctly in the live viewer. One real Crop export and one real Fit export remain the final end-to-end framing parity check.
 
 ## v1 UI scope
 
@@ -101,12 +102,13 @@
 - Footer icon buttons: Check Updates, GitHub, Ko-fi, Patreon, Discord.
 - Automatic update check while app is open; no service/daemon.
 - Dev.14 first-launch sizing/tooltips were human-validated.
-- Dev.16 explicitly styles checked radio indicators so selection state is no longer visually ambiguous.
+- Dev.17 uses conventional radio indicators: hollow circle when unselected, centered filled dot when selected, with a dimmed equivalent for disabled selected controls.
 
 ## Windows subprocess behavior
 
 - FFmpeg and gifski encoding subprocesses already use `CREATE_NO_WINDOW` on Windows.
 - Dev.16 applies the same flag to ffprobe, eliminating the remaining console flashes when loading media and during post-encode integrity probes.
+- Human dev.16 testing confirmed those popup windows are gone.
 
 ## Update policy
 
@@ -118,8 +120,7 @@
 
 ## Known follow-ups
 
-- Human-test dev.16 Crop and Fit preview/export parity, including drag positioning and crop zoom, before treating framing as fully validated.
-- Confirm ffprobe no longer flashes a console window in the packaged Windows build.
+- Complete one real Crop export and one real Fit export from dev.16+ and compare them against the live preview before marking framing end-to-end validated.
 - Favor resolution performs extra measurement encodes by design; conversion-time optimization can now be investigated because behavior is validated, but it must not change selected outputs.
 - Final aesthetic skin, arcane progress treatment, and application emblem remain separate from functional framing work.
 - First public release still requires a deliberate project-license choice and final release packaging/release-workflow review.

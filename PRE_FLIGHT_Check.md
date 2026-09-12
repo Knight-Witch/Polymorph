@@ -2,6 +2,17 @@
 
 Historical entries through dev.15 are preserved verbatim in [`HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV15.md`](HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV15.md).
 
+## PFC-2026-09-12-028 — Normalize radio selection indicators
+
+- Target files: `src/polymorph/ui/styles.py`, `src/polymorph/smoke_test.py`, development version metadata, `MASTER.md`, `docs/UX_SPEC.md`, and required tracking files.
+- Required review completed before editing: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, `docs/UX_SPEC.md`, `HISTORY/DIAGNOSTICS/GIF_ADAPTIVE_MOTION_2026-09-10.md`, current shared stylesheet, packaged smoke test, and dev.16 version/installer metadata.
+- Human validation incorporated: packaged dev.16 no longer flashes console windows during normal use, and Crop/Fit now behave correctly in the live viewer. End-to-end export parity still needs one real Crop export and one real Fit export before framing is fully closed.
+- Diagnosis: dev.16 fixed the invisible checked state, but its thick-border radio treatment still reads more like a ring than a conventional radio control. The user requested the normal visual language: hollow circle when off, centered filled dot when selected.
+- Recommended action: keep the existing 13 px radio circle and add a small centered radial fill only for `:checked`; retain a dimmed checked-dot treatment for disabled controls; strengthen the packaged smoke gate so future builds must retain the centered-dot stylesheet.
+- Conflict risks: Qt stylesheet gradients rendering differently in the frozen Windows app; selected disabled radios losing their checked state visually; accidentally touching conversion/framing behavior while doing presentation-only work.
+- Safeguards: no widget logic, conversion settings, framing geometry, preview behavior, subprocess handling, encoder paths, adaptive policy, optimizer, updater, or toolchain dependency changes; packaged smoke continues to gate the frozen application.
+- Versioning: increment development tester from `0.1.0-dev.16` to `0.1.0-dev.17` so the visual tester is unambiguous.
+
 ## PFC-2026-09-12-027 — Fix framing preview parity and suppress Windows probe consoles
 
 - Target files: `src/polymorph/models.py`, `src/polymorph/geometry.py`, `src/polymorph/probe.py`, `src/polymorph/ui/preview.py`, `src/polymorph/ui/adaptive_main_window.py`, `src/polymorph/ui/styles.py`, `src/polymorph/smoke_test.py`, `tests/test_geometry.py`, `tests/test_probe_fallback.py`, development version metadata, UX/architecture/adaptive-history/status docs, and required tracking files.

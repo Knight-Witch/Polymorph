@@ -13,7 +13,7 @@ Files -> Output Format -> Sizing Constraint -> GIF Priority -> Framing -> Polymo
 - Tooltips cover the file queue/preview, output formats, sizing modes and fields, GIF priority choices, framing controls, output folder, and conversion action.
 - Existing footer icon controls retain their service-specific hover tooltips.
 - Dev.14 layout sizing and hover help were human-validated on the user's normal Windows desktop setup.
-- Dev.16 gives radio buttons an explicit checked indicator so the selected option cannot appear visually blank/ambiguous.
+- Radio buttons use conventional state styling: hollow circle when unselected, centered filled dot when selected. Disabled selected radios keep the same dot treatment in the dimmed disabled palette.
 
 ## Main preview
 
@@ -82,6 +82,7 @@ Visible only as meaningful controls for GIF + Fit under file size.
 - External conversion/probe tools must not steal focus or flash console windows during ordinary GUI use.
 - FFmpeg/gifski encoding already runs with Windows `CREATE_NO_WINDOW`.
 - Dev.16 applies the same behavior to ffprobe, which is invoked when media loads and during output-integrity verification.
+- Human dev.16 testing confirmed the popup windows no longer appear.
 
 ## Footer
 

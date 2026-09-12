@@ -2,6 +2,39 @@
 
 Historical entries through dev.15 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV15.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV15.md).
 
+## POLY-2026-09-12-028 — 2026-09-12 03:45 PDT — Use conventional radio selection dots
+
+### Summary
+
+- Incorporated dev.16 human validation: console popup windows are gone in normal desktop use, and Crop/Fit behave correctly in the live viewer. End-to-end export parity still needs one real Crop export and one real Fit export.
+- Replaced dev.16's thick-border checked-radio treatment with the conventional state users expect: hollow circle when unselected, small centered filled dot when selected.
+- Added an equivalent dimmed centered-dot treatment for disabled selected radios so checked state remains visible without making disabled controls look active.
+- Strengthened the frozen-app smoke gate so the packaged stylesheet must retain the centered-dot radio treatment.
+- No conversion, framing, preview geometry, subprocess, encoder, adaptive-planning, optimizer, updater, or toolchain behavior changed.
+- Incremented the development tester to `0.1.0-dev.17`.
+
+### Touched files
+
+- `src/polymorph/ui/styles.py`
+- `src/polymorph/smoke_test.py`
+- `src/polymorph/__init__.py`
+- `src/polymorph/constants.py`
+- `pyproject.toml`
+- `installer/Polymorph.iss`
+- `MASTER.md`
+- `docs/UX_SPEC.md`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert this commit to restore dev.16's explicit thick-border checked indicator. All conversion/framing behavior is independent of this presentation-only change.
+
+### Test notes
+
+- Full Windows CI must pass the unchanged unit/toolchain/adaptive/reference/build/installer gates plus the packaged-app radio-dot style assertion before dev.17 is handed out.
+- Human dev.17 check is visual only: selected radio controls should read as ordinary hollow-circle/filled-dot radio buttons.
+
 ## POLY-2026-09-12-027 — 2026-09-12 03:24 PDT — Unify framing preview and suppress console flashes
 
 ### Summary
