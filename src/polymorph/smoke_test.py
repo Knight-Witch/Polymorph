@@ -55,6 +55,46 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
         window = MainWindow()
         if window.converter is None:
             raise RuntimeError("Main window could not resolve the bundled conversion toolchain")
+
+        if window.width() < 1080 or window.height() < 800:
+            raise RuntimeError(
+                f"Default window geometry regressed: got {window.width()}x{window.height()}, "
+                "expected at least 1080x800"
+            )
+        if window.minimumHeight() < 700:
+            raise RuntimeError(
+                f"Minimum window height regressed: got {window.minimumHeight()}, expected >=700"
+            )
+        lines.append("PASS comfortable default window geometry")
+
+        tooltip_widgets = {
+            "file queue": window.file_list,
+            "preview": window.preview,
+            "GIF format": window.gif_radio,
+            "MP4 format": window.mp4_radio,
+            "file-size mode": window.size_radio,
+            "file-size limit": window.max_mb,
+            "resolution mode": window.res_radio,
+            "width": window.width_spin,
+            "height": window.height_spin,
+            "preserve motion": window.motion_preserve_radio,
+            "favor resolution": window.motion_favor_radio,
+            "framing mode": window.frame_mode,
+            "aspect ratio": window.ratio_combo,
+            "center framing": window.center_btn,
+            "fit background": window.color_btn,
+            "output folder": window.output_path,
+            "convert": window.convert_btn,
+        }
+        missing_tooltips = [
+            name for name, widget in tooltip_widgets.items() if not widget.toolTip().strip()
+        ]
+        if missing_tooltips:
+            raise RuntimeError(
+                "Missing hover tooltip(s): " + ", ".join(missing_tooltips)
+            )
+        lines.append("PASS primary control hover tooltips")
+
         window._add_files([sample])
         app.processEvents()
 
