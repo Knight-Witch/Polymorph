@@ -12,19 +12,37 @@ QFrame#Card {
 }
 QLabel#Muted { color: #9aa2ad; }
 QLabel#Title { font-size: 18pt; font-weight: 600; }
-QLabel#Section { font-size: 10pt; font-weight: 600; color: #d9dee5; }
+QLabel#Section {
+    min-height: 18px;
+    font-size: 10pt;
+    font-weight: 600;
+    color: #d9dee5;
+}
+QRadioButton {
+    min-height: 20px;
+    spacing: 6px;
+}
 QPushButton, QToolButton, QComboBox, QSpinBox, QDoubleSpinBox {
     background: #262a31;
     border: 1px solid rgba(255,255,255,0.10);
     border-radius: 7px;
     padding: 7px 10px;
 }
+QComboBox, QSpinBox, QDoubleSpinBox {
+    min-height: 20px;
+}
 QPushButton:hover, QToolButton:hover, QComboBox:hover, QSpinBox:hover, QDoubleSpinBox:hover {
     background: #2d323a;
     border-color: rgba(255,255,255,0.18);
 }
 QPushButton:pressed, QToolButton:pressed { background: #20242a; }
-QPushButton:disabled, QToolButton:disabled { color: #666d77; background: #202329; }
+QPushButton:disabled, QToolButton:disabled,
+QComboBox:disabled, QSpinBox:disabled, QDoubleSpinBox:disabled {
+    color: #69717d;
+    background: #202329;
+    border-color: rgba(255,255,255,0.06);
+}
+QRadioButton:disabled { color: #69717d; }
 QPushButton#Primary {
     background: #e8ebef;
     color: #15171a;
@@ -71,6 +89,6 @@ QToolTip {
     background: #0f1114;
     color: #f1f3f5;
     border: 1px solid #3a4048;
-    padding: 5px;
+    padding: 6px 7px;
 }
 """
