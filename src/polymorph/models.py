@@ -52,6 +52,7 @@ class FramingSettings:
     offset_x: float = 0.0  # -1 .. +1
     offset_y: float = 0.0  # -1 .. +1
     background: str = "#000000"
+    zoom: float = 1.0  # 1.0 .. 4.0 for manual Crop/Fit framing
 
 
 @dataclass(slots=True)
