@@ -6,71 +6,98 @@ Files -> Output Format -> Sizing Constraint -> GIF Priority -> Framing -> Polymo
 
 ## Window and interaction ergonomics
 
-- Default development window opens at 1080x800 so the full right-side control rail has enough vertical room after the GIF-priority section was added.
-- Minimum window size is 900x700; users can still resize freely above that floor.
-- Core form controls have minimum visual heights so labels and field values do not collapse or clip when the window is resized.
-- Primary controls expose concise hover tooltips rather than adding permanent explanatory text to the interface.
-- Tooltips cover the file queue/preview, output formats, sizing modes and fields, GIF priority choices, framing controls, output folder, and conversion action.
-- Existing footer icon controls retain their service-specific hover tooltips.
-- Dev.14 layout sizing and hover help have been human-validated on the user's normal Windows desktop setup.
+- Development window opens at 1080x800; minimum size is 900x700.
+- Core controls keep minimum visual heights so values/labels do not collapse when resized.
+- Primary controls use concise hover tooltips instead of permanent explanatory clutter.
+- Selected radio buttons must have an unmistakable visible checked indicator. A checked state must never be represented by making the indicator disappear.
+- External conversion/probe tools must not open console windows or steal focus during normal use.
+- Final visual skin remains deferred until behavior is stable.
 
 ## Main preview
 
-- Animated source preview is the visual centerpiece.
-- Original mode shows the full source.
-- Crop mode shows the selected ratio and supports drag-to-reposition; dragging behaves as moving the visible source image.
-- Fit mode preserves the full source and pads to the chosen ratio; supports drag-to-reposition and background color.
+The animated preview is the visual centerpiece and is expected to represent the actual framing semantics, not merely approximate the target aspect ratio.
+
+### Original
+
+- Shows the source without framing changes.
+- Drag and manual framing zoom are disabled.
+
+### Crop to ratio
+
+- The target frame is the selected aspect ratio.
+- Source aspect ratio is always preserved.
+- The source is scaled only enough to cover the target frame, then overflow is clipped.
+- It must never stretch or squash the source to become the target ratio.
+- Dragging moves the visible source composition under the frame.
+- Zoom is available from 100% to 400% for deliberate tighter composition.
+- Mouse wheel over the preview also adjusts zoom.
+
+### Fit to ratio
+
+- The target frame is the selected aspect ratio.
+- Source aspect ratio is always preserved.
+- At 100% framing zoom, the complete source is contained and the remaining canvas is padded with the chosen background color.
+- Dragging repositions contained content within available padded space.
+- Zoom is available from 100% to 400%; once zoom makes the source larger than a canvas axis, that axis may be intentionally cropped while the source itself remains undistorted.
+- Mouse wheel over the preview also adjusts zoom.
+
+### Position and zoom controls
+
+- `Center` resets X/Y positioning but intentionally leaves zoom unchanged.
+- The visible Zoom slider and mouse-wheel zoom control the same `FramingSettings.zoom` value.
+- Preview and exported output use the same shared placement model, so the composition shown to the user should match the conversion result.
 
 ## Sizing modes
 
 ### Fit under file size
 
-- Default: 99 MB.
+- Default ceiling: 99 MB, decimal.
 - User specifies only the ceiling.
-- Encoder quality remains fixed.
-- Resolution is automatically adjusted to fit.
+- Encoder quality remains fixed; output dimensions are adjusted to fit.
 - Preserve motion keeps source timing/frame sequence fixed.
-- Favor resolution may intentionally retain fewer source frames only when real encoded measurements show that doing so buys a worthwhile spatial gain.
+- Favor resolution may retain fewer original source frames only when measured byte savings buy a worthwhile spatial gain.
 
 ### Set resolution
 
 - User specifies output pixel dimensions.
-- Width and height stay automatically linked to the active framed aspect ratio; no extra aspect-lock control is exposed.
+- Width/height stay linked to the active framed canvas ratio.
 - File-size target is disabled.
-- Source content cannot be upscaled above native size.
-- Adaptive GIF frame reduction is disabled because the user has already chosen the spatial target explicitly.
+- Output canvas cannot exceed its native framed size.
+- Manual Crop/Fit zoom changes composition inside that canvas; it does not secretly increase the output-resolution ceiling.
+- Favor-resolution temporal reduction is disabled because the user has explicitly chosen spatial output size.
 
 ## GIF priority
-
-Visible only as meaningful controls for GIF + Fit under file size.
 
 ### Preserve motion
 
 - Default.
-- Keeps the source frame rate and every source frame.
+- Keeps every source frame and the source frame rate.
 - Uses spatial resolution as the file-size tradeoff.
 
 ### Favor resolution
 
-- Experimental source-frame-decimation behavior introduced in dev.13 and carried into dev.15 unchanged.
-- The user does not enter an FPS or target pixel size.
-- Polymorph first creates the normal Preserve-motion fitted result.
-- Dev.9-dev.12 proved that uniformly synthesized intermediate frames can consume enough GIF bytes to erase the expected resolution gain, so dev.13 stops synthesizing frames entirely.
-- Polymorph now tests exact every-Nth-source-frame decimation nearest the original motion first and measures the real gifski byte cost at the Preserve-motion dimensions.
-- A candidate must predict at least about 8% linear-resolution gain before Polymorph runs the full adaptive size search.
-- For a 25 FPS source, dev.13 tests retaining every second source frame first (~12.5 FPS nominal), then every third frame (~8.33 FPS nominal) only if needed.
-- Frame sacrifice is deterministic across the spin rather than periodic 1/2-step deletion. If the source frame count is not divisible by the stride, Polymorph shortens only the final GIF frame delay so the loop closes at the original total duration/angular speed.
-- No optical-flow warping or temporal blending is used in dev.13+.
-- If a candidate passes the byte-cost prediction but its full adaptive fit still fails to realize at least about 8% larger dimensions, Polymorph continues to the next source-frame stride instead of immediately returning Preserve motion.
-- Preferred spatial target remains native resolution capped at 2048 px; Polymorph never upscales above native framed geometry.
+- Explicit opt-in for GIF + Fit under file size.
+- Polymorph first obtains the normal Preserve-motion fitted result.
+- It then tests exact every-Nth-original-source-frame candidates, nearest motion first, and measures their actual gifski byte cost at the Preserve dimensions.
+- A candidate must predict about 8% linear spatial gain before full fitting and must independently realize about 8% after fitting.
+- For 25 FPS sources the automatic 8 FPS floor normally permits stride 2 (~12.5 FPS nominal) then stride 3 (~8.33 FPS nominal).
+- No optical-flow or temporal-blend image synthesis is used in dev.13+.
+- If source frame count is not divisible by the stride, only the last GIF delay is shortened to preserve original total duration/angular speed.
+- Preferred adaptive spatial target is native framed size capped at 2048 px; no source upscaling.
+- Human testing has validated stride-2 motion on Viper and two more complex 500-frame kitbash/decal-heavy workloads.
 
 ## Completion readout
 
-- Development adaptive UI reports the actual result dimensions, decimal MB, and effective average output FPS.
-- A decimated loop may have one shorter closure delay when the source frame count is not divisible by the chosen stride; the displayed FPS is therefore `output frames / original duration`.
-- `MB` means decimal megabytes consistently with the file-size ceiling.
-- In dev.15 only, a Favor-resolution run also reports the filename of a compact `*_ADAPTIVE_DIAGNOSTIC.json` sidecar saved beside the GIF. The sidecar is temporary developer instrumentation so the real Viper fallback can be diagnosed without another blind algorithm change.
-- Preserve-motion and MP4 runs do not create that diagnostic sidecar.
+- Development adaptive UI reports final dimensions, decimal MB, and effective average output FPS.
+- A decimated loop may have one shorter closure delay; displayed FPS is output frames divided by original duration.
+- Development Favor-resolution runs currently also report the `*_ADAPTIVE_DIAGNOSTIC.json` sidecar filename.
+- Preserve-motion and MP4 do not emit the adaptive sidecar.
+
+## Windows focus behavior
+
+- Loading media may invoke ffprobe for metadata.
+- Encoding/optimization may invoke ffprobe again for integrity checks.
+- These probes, plus FFmpeg/gifski encode processes, must run without opening visible console windows or interrupting the user's active application.
 
 ## Footer
 
@@ -82,10 +109,12 @@ Icon-only controls with hover tooltips:
 - Support me on Patreon
 - Join the Discord
 
-The service glyphs are monochrome so the footer remains visually restrained. The final Polymorph application emblem is a separate asset and remains deferred.
+The final Polymorph application emblem is separate and remains deferred.
 
 ## Deferred
 
+- Final visual skin and arcane progress treatment.
+- Custom aspect-ratio workflow polish.
 - ETA/time remaining.
-- Advanced codec controls.
+- Advanced codec/adaptive controls.
 - Parallel jobs.
