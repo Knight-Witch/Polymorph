@@ -2,6 +2,16 @@
 
 Historical entries through dev.19 are preserved verbatim in [`HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV19.md`](HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV19.md). Earlier pre-dev.16 history also remains in the existing dev.15 archive.
 
+## PFC-2026-09-13-038 — Prefer sharp vector branded icons without changing behavior
+
+- Required review completed before editing: `PROJECT_CONTRACT.md`, `MASTER.md`, current `PRE_FLIGHT_Check.md`/`CHANGELOG.md`, `docs/ARCHITECTURE.md`, `docs/UX_SPEC.md`, the relevant dev.18/dev.19 UI history, current `brand_widgets.py`, `branded_layout.py`, font loader, package data, packaged smoke, and the existing dev.22 Crop SVG.
+- Diagnosis: the branded layout still requested the original small PNG concept icons, and `tinted_icon_pixmap()` loaded exactly the requested raster file. The newly added Crop SVG therefore was not actually selected by runtime icon rendering, while the other branded controls had no SVG siblings yet. Repeated smooth scaling/tinting of the small raster artwork is the supported cause of the soft icon appearance.
+- Add matching SVG siblings for Aspect Ratio, Crop, Files/Output Folder, GIF Priority, Sizing, trash, and Check for Updates. `tinted_icon_pixmap()` now automatically prefers a sibling SVG when one exists and falls back to the established PNG if SVG loading fails, so no control wiring or layout call sites change.
+- Package metadata now includes `assets/ui/*.svg`; PyInstaller already packages the full assets tree. Existing PNG assets remain intentionally present as compatibility fallback.
+- The public-font boundary is unchanged: Cinzel and Inter remain the redistributable bundled fonts. Trajan remains preferred when legally installed on the user's Windows system or supplied privately to the existing untracked local-development path; Adobe Trajan binaries are not added to the public repository.
+- No conversion, adaptive GIF policy, framing/export geometry, preview playback behavior, responsive layout logic, updater behavior, subprocess behavior, or pinned FFmpeg/gifski toolchain changes in this pass.
+- Version remains `0.1.0-dev.22`; this is a dev.22 presentation/asset-quality patch rather than a new tester feature revision.
+
 ## PFC-2026-09-12-037 — Continue direct mockup-fidelity polish as dev.22
 
 - Required review completed before editing: `PROJECT_CONTRACT.md`, `MASTER.md`, current `PRE_FLIGHT_Check.md`/`CHANGELOG.md`, `docs/ARCHITECTURE.md`, `docs/UX_SPEC.md`, branded layout/widgets/styles, preview, font loader, packaged smoke, and the user's approved mockup plus annotated dev.20 comparison.

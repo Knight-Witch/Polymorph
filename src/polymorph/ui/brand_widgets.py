@@ -50,9 +50,17 @@ def tracked_font(
 
 
 def tinted_icon_pixmap(name: str, size: int, color: QColor = GOLD) -> QPixmap:
-    """Tint a supplied monochrome-alpha PNG without changing its silhouette."""
-    path = asset_path(f"ui/{name}")
-    pixmap = QPixmap(str(path))
+    """Tint a UI icon, preferring a sharp sibling SVG while keeping PNG fallback."""
+    requested = asset_path(f"ui/{name}")
+    preferred = requested
+    if requested.suffix.lower() != ".svg":
+        vector = requested.with_suffix(".svg")
+        if vector.is_file():
+            preferred = vector
+
+    pixmap = QPixmap(str(preferred))
+    if pixmap.isNull() and preferred != requested:
+        pixmap = QPixmap(str(requested))
     if pixmap.isNull():
         return QPixmap()
     target = pixmap.scaled(
