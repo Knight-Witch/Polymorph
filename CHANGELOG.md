@@ -1,297 +1,35 @@
 # Changelog
 
-Historical entries through dev.19 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV19.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV19.md). Earlier pre-dev.16 history also remains in the existing dev.15 archive.
+Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md). Root tracking is intentionally rolling/compact; use archived detail only when a current task needs it.
 
-## POLY-2026-09-13-039 — 2026-09-13 12:40 PDT — Bundle the approved display typography
-
-### Summary
-
-- Corrected the dev.22 packaging mistake that still made Trajan optional at runtime. The Windows tester is now designed to carry the approved Trajan Regular/Bold files inside Polymorph, so friends do not need to install the font separately.
-- Matched the exact approved Regular/Bold binaries byte-for-byte to immutable files in `22is5/cdn` commit `6762f3334c8b7e157f379fc7befb37056a03e937`, then pinned their Git blob identities in the build gate: Regular `b53d6c0b90c0ebc0273ae52a7a2d6959ee904d6e`, Bold `c27f189594483430f8d617fef1b749f85e6ee05a`.
-- The Windows workflow now downloads those two exact Trajan files before packaging, alongside the already pinned Inter/Cinzel assets. `build/verify_font_assets.py` rejects any mismatched font binary before PyInstaller runs.
-- `load_brand_fonts()` now registers bundled Trajan Regular and Bold before `MainWindow` construction and records `bundled-trajan` as the normal packaged display source. Inter remains the body/UI family; system Trajan/Cinzel are fallback paths only for incomplete source checkouts.
-- Added OTF package-data coverage so the Trajan Bold asset is included consistently outside the frozen PyInstaller path. PyInstaller already packages the full assets directory.
-- Strengthened packaged smoke so a tester build fails if either Trajan asset is missing, either logical face fails Qt registration, or the frozen application resolves anything other than its bundled Trajan as the display source.
-- Updated the UX, architecture, and master project state to make self-contained display typography the explicit contract.
-- No GIF/MP4 encoding, adaptive GIF selection, framing/export geometry, preview playback, queue behavior, responsive layout, updater, subprocess, or pinned FFmpeg/gifski behavior changed.
-- Incremented the tester to `0.1.0-dev.23`.
-
-### Touched files
-
-- `.github/workflows/windows-dev-build.yml`
-- `build/verify_font_assets.py`
-- `src/polymorph/ui/fonts.py`
-- `src/polymorph/smoke_test.py`
-- `src/polymorph/__init__.py`
-- `src/polymorph/constants.py`
-- `pyproject.toml`
-- `installer/Polymorph.iss`
-- `MASTER.md`
-- `docs/ARCHITECTURE.md`
-- `docs/UX_SPEC.md`
-- `PRE_FLIGHT_Check.md`
-- `CHANGELOG.md`
-
-### Test notes
-
-- Full Windows CI must verify the four pinned font assets first, then pass the unchanged unit/conversion/toolchain gates, PyInstaller frozen-app smoke, installer compilation, checksum generation, and artifact uploads.
-- Human dev.23 review should launch the installer on the normal Windows machine without separately installing Trajan and confirm that the `POLYMORPH` title, subtitle/byline, card headings, and primary action now use the intended display face.
-
-## POLY-2026-09-13-038 — 2026-09-13 01:12 PDT — Prefer vector branded UI icons
+## POLY-2026-09-13-040 — 2026-09-13 16:47 PDT — Add compact cross-chat handoff architecture
 
 ### Summary
 
-- Continued the dev.22 visual-fidelity pass without changing the accepted two-column layout or conversion behavior.
-- Diagnosed the soft branded control icons: the layout still requested the original PNG files and the tint helper loaded the requested raster asset literally, so the newly added Crop SVG was not yet used and the remaining control icons had no vector sibling.
-- Added consistent SVG siblings for Aspect Ratio, Crop, Files/Output Folder, GIF Priority, Sizing, trash, and Check for Updates.
-- Updated the shared icon renderer to prefer a same-name SVG automatically and fall back to the existing PNG if SVG loading is unavailable. All established call sites, tint colors, scaling hooks, tooltips, click handlers, and responsive behavior remain unchanged.
-- Added `assets/ui/*.svg` to setuptools package data. PyInstaller already includes the complete assets tree, while the PNG files remain as deliberate compatibility fallback.
-- Preserved the public-font licensing boundary: Cinzel + Inter remain the bundled redistributable fonts; installed/private-local Trajan detection remains intact, but Adobe Trajan binaries are not committed to the public repository.
-- No GIF/MP4 encoding, adaptive GIF selection, framing/export geometry, preview playback, queue behavior, updater, subprocess, or pinned FFmpeg/gifski behavior changed.
-- Version remains `0.1.0-dev.22`.
+- Added `ACTIVE_CONTEXT.md` as Polymorph's authoritative current-task router, mirroring the low-context continuation pattern now used successfully for Witch Dock/HeroForge work.
+- Added `CHATGPT_PROJECT_INSTRUCTIONS.md` so future chats can bootstrap from a small durable instruction set instead of rebuilding workflow rules from conversation history.
+- Reworked `PROJECT_CONTRACT.md` so required startup is now: contract -> active context -> only routed/target files. Full master/history/changelog/pre-flight reads are no longer the default.
+- Compacted `MASTER.md` to a repo-wide status and routing index while preserving its exact pre-compaction dev.23 contents in `HISTORY/PROJECT_LOGS/MASTER_DEV23_SNAPSHOT.md`.
+- Rolled the root pre-flight/changelog after dev.23. Exact prior contents are preserved as `HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md` and `HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md`.
+- Recorded the exact current handoff state in `ACTIVE_CONTEXT.md`: dev.23 code commit, successful Windows run #54, installer artifact identity, protected conversion/framing/adaptive state, accepted responsive behavior, self-contained bundled Trajan requirement, and the next human visual gate.
+- The next chat should **not** restart the Trajan/system-font investigation or closed conversion investigations. It should first hand over/use the successful dev.23 tester as needed, obtain human visual feedback, and continue only the presentation work implicated by that feedback.
+- Documentation-only change. No runtime code, UI behavior, conversion/framing/adaptive logic, version metadata, packaging inputs, updater behavior, toolchain pin, installer behavior, `main`, or public release changed.
+- Runtime version remains `0.1.0-dev.23`.
 
-### Touched files
+### Documentation changed
 
-- `src/polymorph/assets/ui/aspect-ratio.svg` (new)
-- `src/polymorph/assets/ui/crop.svg`
-- `src/polymorph/assets/ui/folder.svg` (new)
-- `src/polymorph/assets/ui/priority.svg` (new)
-- `src/polymorph/assets/ui/resize.svg` (new)
-- `src/polymorph/assets/ui/trash.svg` (new)
-- `src/polymorph/assets/ui/update.svg` (new)
-- `src/polymorph/ui/brand_widgets.py`
-- `pyproject.toml`
-- `PRE_FLIGHT_Check.md`
-- `CHANGELOG.md`
-
-### Test notes
-
-- Full Windows CI must still pass the unchanged unit/conversion/toolchain gates, PyInstaller frozen-app smoke, installer compilation, checksum generation, and artifact uploads.
-- Human review should compare the small gold card/header icons, queue trash icon, and update icon at normal Windows scaling; the intended change is sharper edges with no interaction/layout change.
-- Trajan display rendering remains available when a legal local/system installation is visible to Qt; the public tester continues to use Cinzel fallback on machines without Trajan.
-
-## POLY-2026-09-12-037 — 2026-09-12 22:35 PDT — Push the branded UI closer to the approved mockup
-
-### Summary
-
-- Continued the UI phase immediately after the user confirmed dev.21's proportional window scaling is materially better; responsive shrink behavior is preserved unchanged.
-- Added a presentation-only fidelity layer that groups `FILES` and the file count together, leaves Add Files / trash / separator / Clear All as the right-side action cluster, aligns busy-card content under the icon/title column, opens footer spacing, and keeps the three Framing radios as the intentional alignment exception.
-- Expanded Trajan detection to `Trajan Pro 3`, `Trajan Pro`, `Trajan`, and any Qt-visible family beginning with `Trajan`. Cinzel remains the redistributable packaged fallback; Inter remains the body/UI family.
-- Adjusted display hierarchy toward the user's Photoshop references: much wider `POLYMORPH` tracking, proportionate mixed-case subtitle tracking, larger bold card headings, and matching primary-action tracking.
-- Refined dark card rendering with tighter corner radii, richer charcoal gradients, subtle warm center illumination, deterministic grain, inner etched highlights, and stronger brown/gold borders.
-- Refined the primary `POLYMORPH` button into a more expensive-looking crimson/gold inset surface with a left static sigil, architectural line details, centered tracked title area and clearer hover/pressed depth. This is still static; the loader/cast animation remains a later pass.
-- Tightened the preview again: removed the perceptual inner-gray-panel effect, reduced media inset to 5 px, and changed the source frame outline to square corners so black source corners cannot protrude past a rounded frame. Existing real play/pause, seek bar, seconds and frame-count controls remain.
-- Increased queue-menu ellipsis presence, loosened footer link spacing, and gave Crop Zoom a more dimensional red/gold track and gold handle.
-- Strengthened packaged smoke to require the fidelity pass, FILES title/count grouping, alignment styling, and dev.22 footer version metadata.
-- No conversion, adaptive GIF policy, framing geometry/export behavior, output sizing, updater, subprocess, or pinned FFmpeg/gifski behavior changed.
-- Incremented the tester to `0.1.0-dev.22`.
-
-### Touched files
-
-- `src/polymorph/ui/fidelity_pass.py` (new)
-- `src/polymorph/ui/fonts.py`
-- `src/polymorph/ui/styles.py`
-- `src/polymorph/ui/brand_widgets.py`
-- `src/polymorph/ui/preview.py`
-- `src/polymorph/smoke_test.py`
-- `src/polymorph/__init__.py`
-- `src/polymorph/constants.py`
-- `pyproject.toml`
-- `installer/Polymorph.iss`
-- `MASTER.md`
-- `docs/ARCHITECTURE.md`
-- `docs/UX_SPEC.md`
-- `PRE_FLIGHT_Check.md`
-- `CHANGELOG.md`
-
-### Test notes
-
-- Full Windows CI must pass all existing unit/conversion gates, PyInstaller, the frozen packaged-app smoke, installer compilation, checksum generation and artifact uploads.
-- Human review should continue to compare the entire window directly against the approved mockup, particularly Trajan rendering on the user's Windows install, title/card hierarchy, footer breathing room, action-button balance, and the tightened preview frame.
-
-## POLY-2026-09-12-036 — 2026-09-12 19:05 PDT — Repair dev.21 frozen startup
-
-### Summary
-
-- Used the startup checkpoints from Windows run #43 to identify the real failure hidden behind the 120-second process timeout: the frozen EXE failed importing `main_window.py` because it still imported `BASE_STYLESHEET` after the responsive stylesheet refactor had removed that symbol.
-- Restored `BASE_STYLESHEET` as `build_brand_stylesheet(1.0)`, preserving base-window compatibility while the branded responsive layer continues to replace it after composition.
-- Windows Dev Build run #44 passed all 54 unit tests, pinned toolchain checks, adaptive integration, GIF reference comparison, PyInstaller, packaged smoke, Inno Setup, checksum and both artifact uploads; dev.21 was successfully produced.
-- No conversion or user-facing layout behavior changed in this repair.
-
-## POLY-2026-09-12-035 — 2026-09-12 18:30 PDT — Add packaged-startup bootstrap checkpoints
-
-### Summary
-
-- Reclassified the remaining dev.21 CI hang from a playback-seek problem to a pre-smoke startup problem after Windows run #42 again hit the 120-second packaged-process guard without creating even the first incremental smoke checkpoint.
-- Added packaged-smoke-only bootstrap logging to `run_polymorph.py` before/after importing `polymorph.app` and before calling `main()`.
-- Added matching startup checkpoints in `app.py` around `QApplication` creation, brand-font loading, smoke-argument detection, smoke-module import, smoke invocation and smoke return.
-- Bootstrap logging is gated entirely by the existing `POLYMORPH_SMOKE_LOG` environment variable and silently ignores logging failures, so normal desktop startup and release behavior are unchanged.
-- No conversion, framing, adaptive GIF, preview/playback UI, styling, updater, subprocess or package-version behavior changed.
-- Version remains `0.1.0-dev.21` because no dev.21 installer has completed the packaged gate yet.
-
-### Touched files
-
-- `run_polymorph.py`
-- `src/polymorph/app.py`
-- `PRE_FLIGHT_Check.md`
-- `CHANGELOG.md`
-
-### Rollback
-
-- Revert this commit to remove the startup checkpoint instrumentation once the frozen-startup hang is isolated. The instrumentation is intentionally inert in normal launches.
-
-### Test notes
-
-- The next Windows run should either complete the packaged smoke or print a precise last bootstrap stage before the 120-second guard fires. Use that evidence for the next fix rather than weakening the remaining frozen-app assertions.
-
-## POLY-2026-09-12-034 — 2026-09-12 18:20 PDT — Make packaged playback smoke headless-safe
-
-### Summary
-
-- Followed up Windows Dev Build run #41 after the new 120-second guard proved the frozen process still wedged inside the offscreen preview/playback smoke while all conversion/toolchain/package stages before it passed.
-- Added incremental smoke checkpoint persistence so `POLYMORPH_SMOKE_LOG` is rewritten after every PASS/FAIL line; a future timeout now shows the exact last successful stage.
-- Removed the CI-only `QMovie.jumpToFrame()` random-seek assertion from the offscreen frozen smoke. Qt's headless WebP plugin can wedge on random-access seeks and is not a faithful proxy for the normal interactive Windows plugin path.
-- The packaged smoke still requires valid animated WebP initialization, a rendered preview frame, initialized frame-count/duration metadata, playback timeline styling, responsive geometry, queue metadata, framing mappings, adaptive controls, linked resolution, and footer metadata.
-- Desktop play/pause/timeline seeking remains implemented unchanged and is left for human validation in the real Windows GUI.
-- Version remains `0.1.0-dev.21` because no dev.21 tester installer has yet completed CI.
-
-### Touched files
-
-- `src/polymorph/smoke_test.py`
-- `PRE_FLIGHT_Check.md`
-- `CHANGELOG.md`
-
-### Rollback
-
-- Revert the smoke-test commit if a future Qt runtime makes reliable offscreen random-access WebP seeking available again. No production conversion or playback UI code changed in this commit.
-
-### Test notes
-
-- The next Windows run must finish the frozen smoke within the existing 120-second guard and continue through installer/checksum/artifact creation.
-- Human dev.21 validation should explicitly drag the preview timeline backward and forward while paused/running because headless CI no longer attempts that unsupported operation.
-
-## POLY-2026-09-12-033 — 2026-09-12 18:10 PDT — Harden packaged preview smoke teardown
-
-### Summary
-
-- Investigated Windows Dev Build run #40 after it stalled inside the frozen-app smoke step until the 30-minute workflow timeout cancelled the job.
-- Confirmed all 54 unit tests, pinned FFmpeg/gifski toolchain verification, adaptive integration, GIF reference comparison, and PyInstaller packaging had already passed before the stall.
-- Changed preview playback from `QMovie.CacheAll` to `QMovie.CacheNone` to avoid aggressive full-animation caching in the frozen/offscreen Qt path.
-- Preview frame seeks now pause an actively running movie before `jumpToFrame()` so the playback timer cannot race the requested seek.
-- The dedicated `--smoke-test` application path now force-exits after returning its smoke result, preventing native Qt media/plugin teardown from holding the CI process open after assertions finish.
-- The Windows packaged-smoke CI step now has an explicit 120-second process timeout, force-kills a wedged smoke process, and prints the smoke log before failing instead of consuming the full job timeout.
-- No conversion, adaptive GIF, framing/export geometry, optimizer, updater, or user-facing dev.21 UI behavior changed.
-- Version remains `0.1.0-dev.21` because the failed run never produced a dev.21 installer.
-
-### Touched files
-
-- `src/polymorph/ui/preview.py`
-- `src/polymorph/app.py`
-- `.github/workflows/windows-dev-build.yml`
-- `PRE_FLIGHT_Check.md`
-- `CHANGELOG.md`
-
-### Rollback
-
-- Revert commit `2d226bc5d40051554ae7fdd425263aec44804739` to restore the original dev.21 packaged-smoke lifecycle. The visual fidelity work itself is in the preceding dev.21 commit and is independent of this hardening patch.
-
-### Test notes
-
-- The rerun must pass the frozen-app smoke within 120 seconds, then continue through Inno Setup, installer compilation, checksum generation, and both artifact uploads.
-- Human UI validation remains the same as dev.21: compare directly against the approved mockup, verify responsive shrinking at smaller window sizes, and exercise the new playback/timeline controls.
-
-## POLY-2026-09-12-032 — 2026-09-12 15:15 PDT — Fidelity pass against the approved Polymorph mockup
-
-### Summary
-
-- Reworked dev.20 using the user's annotated side-by-side screenshot as the direct visual specification rather than continuing approximate styling.
-- Switched display typography to prefer system-installed `Trajan Pro`; `POLYMORPH` uses wide tracking, the subtitle is now mixed case exactly as requested (`Media conversion magic — by Knight Witch™`), and card headings prefer Trajan Bold with restrained tracking. Bundled Cinzel remains only as the packaged fallback because the supplied Trajan files are Adobe-proprietary and are not committed to the public repository.
-- Removed the version from the title line. The footer now owns version/creator metadata.
-- Re-aligned card content to the heading text column, retained divider lines only on busier cards, and specifically removed those dividers from Crop Zoom and Output Folder.
-- Added the user's supplied resize, priority, crop, aspect-ratio, folder, trash, and update artwork as normalized high-DPI PNG assets. The UI tints the monochrome artwork at runtime to match the gold visual system.
-- Enlarged the file-row overflow ellipsis and tightened the Files header so Add Files, trash, separator, and `Clear All` stay aligned on the right.
-- Removed the branded Fit-only `Fill` button. Fit no longer changes card height when selected; the engine's background-color setting remains intact internally at its current/default value.
-- Simplified the preview card: removed the `PREVIEW` heading/divider, removed the inner gray-looking surface, reduced the media border to a tight square line, and added a divider only at the bottom before source/frame/framed-max metadata.
-- Added functional preview playback UI: play/pause, seekable frame timeline, elapsed/total seconds, and an in-view `FRAME n / total` plus timing readout. These controls operate only on the preview `QMovie` and do not alter export timing or frame selection.
-- Rebuilt the main conversion action back to `POLYMORPH`, centered with Trajan-style tracking over symmetric static sigil/line decoration. The decoration remains separate from the later working/loading animation.
-- Combined Ready/status and service links into one concept-matched footer panel with more breathing room between icon/text controls; added a divider and a second metadata row with `Polymorph v0.1.0-dev.21` at left and `Polymorph 2026, Knight Witch™` at right.
-- Added deterministic runtime film grain over the gradient cards instead of requiring a supplied texture asset.
-- Replaced scroll-dependent small-window behavior with responsive shrink mode. Below the 1260×820 design size, the UI scales typography, padding, control widths, queue rows, preview minimums and rail width down to a 920×640 supported minimum. The right control rail is no longer a vertical scroll area.
-- Strengthened frozen-app smoke coverage for responsive minimum sizing, primary-action visibility, user-supplied icon packaging, hidden Fit Fill control, playback/seek behavior, footer metadata, and the existing framing/adaptive/linked-resolution mappings.
-- No conversion, adaptive GIF, framing geometry, optimizer, updater, subprocess, or pinned toolchain behavior changed.
-- Incremented the tester to `0.1.0-dev.21`.
-
-### Touched files
-
-- `src/polymorph/ui/brand_widgets.py` (new)
-- `src/polymorph/ui/branded_layout.py`
-- `src/polymorph/ui/styles.py`
-- `src/polymorph/ui/preview.py`
-- `src/polymorph/smoke_test.py`
-- `src/polymorph/assets/ui/*.png` (new user-supplied icon artwork, normalized for UI use)
-- `src/polymorph/__init__.py`
-- `src/polymorph/constants.py`
-- `pyproject.toml`
-- `installer/Polymorph.iss`
+- `ACTIVE_CONTEXT.md` (new)
+- `CHATGPT_PROJECT_INSTRUCTIONS.md` (new)
+- `PROJECT_CONTRACT.md`
 - `MASTER.md`
 - `PRE_FLIGHT_Check.md`
 - `CHANGELOG.md`
+- `HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md` (exact snapshot)
+- `HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md` (exact snapshot)
+- `HISTORY/PROJECT_LOGS/MASTER_DEV23_SNAPSHOT.md` (exact snapshot)
+- `HISTORY/PROJECT_LOGS/README.md`
 
-### Rollback
+### Validation notes
 
-- Revert this commit to return to dev.20's first close mockup match. Conversion/framing/adaptive behavior is independent of the dev.21 UI/playback presentation changes.
-
-### Test notes
-
-- Full Windows CI must pass unit tests, pinned font acquisition/verification, pinned FFmpeg/gifski toolchain checks, adaptive integration, GIF reference comparison, PyInstaller build, frozen-app smoke, installer compilation, checksum generation, and artifact uploads.
-- Frozen-app smoke now resizes to the supported minimum and rejects a clipped Polymorph button or failure to enter responsive shrink mode. It also seeks the animated preview by source frame and requires the playback timeline/readout to follow.
-- Human dev.21 review should compare directly against the approved mockup at default size and then resize the window downward to confirm the interface shrinks rather than requiring the user to scroll for the primary action.
-
-## POLY-2026-09-12-031 — 2026-09-12 05:05 PDT — Tighten the branded UI to the approved concept
-
-### Summary
-
-- Used the user's side-by-side dev.19/mockup comparison as the direct design target rather than continuing incremental skinning.
-- Fixed the right settings rail so it has a stable 410 px viewport, vertical scrolling when necessary, and no horizontal scrolling/clipping. Default window geometry is reduced to a more useful `1260x820` while remaining comfortably above the responsive floor.
-- Reduced outer/card/control padding and tightened body typography so the UI no longer feels inflated.
-- Rebuilt card headers around a small gold line icon, title, and explicit separator line.
-- Reworked Output Format into side-by-side GIF/MP4 choices with compact helper text.
-- Reworked Sizing into two compact editable rows and removed spinbox ticker arrows; users type file-size and resolution values directly.
-- Paired Framing and Aspect Ratio as two cards on one row; kept Original/Crop/Fit as real radio controls synchronized to the established framing state.
-- Split Crop Zoom into its own compact card with percentage readout and a small reset/center action.
-- Retained Fit background-color functionality as a small Fit-only `Fill` utility rather than a dedicated background-color card.
-- Rebuilt the Files area to match the concept: title and file count share the action row; Add Files sits beside a selected-item trash button, separator, and `Clear All` text action that turns crimson on hover.
-- Added real queue-row media presentation: first-frame thumbnail, source file name, original decimal file size, source dimensions, runtime, and overflow actions for Open, Open file location, and Remove from queue.
-- Replaced the oversized idle/progress treatment with a compact Ready strip containing a ring glyph, `Ready`, and `<N> files imported. Choose your settings and begin.`; thin progress appears only while conversion is actually advancing.
-- Rebuilt the footer as labeled Check for Updates / GitHub / Ko-fi / Patreon / Discord controls separated by dividers.
-- Rebuilt the Cast Polymorph face with a central sigil, display title, `CONVERT MEDIA` subtitle, symmetric dashes, richer crimson/gold gradient, and the existing real conversion click behavior.
-- Increased letter spacing in the `POLYMORPH` title and subtitle/byline. Cinzel remains temporary until the user provides the closer final display font.
-- Suppressed the old 110 px ArcaneProgress placeholder from the compact status strip; real magic-circle/D20 working animation remains a separate future pass.
-- Strengthened packaged smoke to reject horizontal rail overflow, missing concept Cast face, missing queue thumbnail/metadata rows, or restored spinbox arrow styling.
-- No conversion, adaptive GIF, framing geometry, updater, subprocess, or pinned toolchain behavior changed.
-- Incremented the tester to `0.1.0-dev.20`.
-
-### Touched files
-
-- `src/polymorph/ui/branded_layout.py`
-- `src/polymorph/ui/styles.py`
-- `src/polymorph/smoke_test.py`
-- `src/polymorph/__init__.py`
-- `src/polymorph/constants.py`
-- `pyproject.toml`
-- `installer/Polymorph.iss`
-- `MASTER.md`
-- `PRE_FLIGHT_Check.md`
-- `CHANGELOG.md`
-- `HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV19.md`
-- `HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV19.md`
-
-### Rollback
-
-- Revert this commit to return to dev.19's looser first two-column composition. Conversion/framing/adaptive behavior is independent of this presentation pass.
-
-### Test notes
-
-- Full Windows CI must pass unit tests, pinned font acquisition/verification, pinned FFmpeg/gifski toolchain checks, adaptive integration, GIF reference comparison, PyInstaller build, frozen-app smoke, installer compilation, checksum generation, and artifact uploads.
-- Frozen-app smoke now shows the window offscreen and verifies that the control rail has no horizontal overflow, the concept-style Cast face exists, file rows gain metadata/thumbnail widgets after import, radio/framing mappings still work, spinbox arrow styling remains removed, and linked resolution behavior still passes.
-- Human dev.20 review should compare directly against the approved mockup rather than against dev.19.
+- This commit intentionally changes documentation/continuation routing only. The successful dev.23 runtime candidate remains code commit `81150b0e7007969d260317c9383ed7bacb3362b9`, already green in Windows Dev Build run #54.
+- Future chats should use `ACTIVE_CONTEXT.md` as the handoff baton and fetch historical archives only when the current task explicitly needs them.
