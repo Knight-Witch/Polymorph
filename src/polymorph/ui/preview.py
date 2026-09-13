@@ -165,13 +165,14 @@ class AnimatedPreview(QWidget):
     def paintEvent(self, _event) -> None:
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
-        painter.fillRect(self.rect(), QColor("#090a0b"))
+        # Match the parent preview card instead of creating a visibly separate gray
+        # panel inside it. Only the actual media receives its own tight border.
+        painter.fillRect(self.rect(), QColor("#070809"))
 
-        inner = self.rect().adjusted(10, 9, -10, -9)
+        inner = self.rect().adjusted(5, 5, -5, -5)
         if self._pixmap.isNull():
             painter.setPen(QColor("#77736c"))
             painter.drawText(inner, Qt.AlignmentFlag.AlignCenter, self._empty_text)
-            self._draw_border(painter, inner)
             return
 
         source_width = self._pixmap.width()
@@ -221,7 +222,11 @@ class AnimatedPreview(QWidget):
         metrics = painter.fontMetrics()
         box = QRectF(x - 5, y - metrics.height() + 2, metrics.horizontalAdvance(text) + 10, metrics.height() + 4)
         painter.fillRect(box, QColor(0, 0, 0, 92))
-        painter.drawText(QRectF(x, y - metrics.height(), box.width(), metrics.height() + 2), Qt.AlignmentFlag.AlignVCenter, text)
+        painter.drawText(
+            QRectF(x, y - metrics.height(), box.width(), metrics.height() + 2),
+            Qt.AlignmentFlag.AlignVCenter,
+            text,
+        )
         painter.restore()
 
     @staticmethod
@@ -241,8 +246,8 @@ class AnimatedPreview(QWidget):
 
     @staticmethod
     def _draw_border(painter: QPainter, rect: QRect) -> None:
-        painter.setPen(QPen(QColor(206, 171, 105, 72), 1.0))
-        painter.drawRoundedRect(rect, 1.5, 1.5)
+        painter.setPen(QPen(QColor(211, 174, 104, 86), 1.0))
+        painter.drawRect(rect)
 
     def mousePressEvent(self, event) -> None:
         if event.button() == Qt.MouseButton.LeftButton and self._framing.mode is not FramingMode.ORIGINAL:
