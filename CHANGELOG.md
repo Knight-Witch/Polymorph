@@ -2,6 +2,41 @@
 
 Historical entries through dev.19 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV19.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV19.md). Earlier pre-dev.16 history also remains in the existing dev.15 archive.
 
+## POLY-2026-09-13-039 — 2026-09-13 12:40 PDT — Bundle the approved display typography
+
+### Summary
+
+- Corrected the dev.22 packaging mistake that still made Trajan optional at runtime. The Windows tester is now designed to carry the approved Trajan Regular/Bold files inside Polymorph, so friends do not need to install the font separately.
+- Matched the exact approved Regular/Bold binaries byte-for-byte to immutable files in `22is5/cdn` commit `6762f3334c8b7e157f379fc7befb37056a03e937`, then pinned their Git blob identities in the build gate: Regular `b53d6c0b90c0ebc0273ae52a7a2d6959ee904d6e`, Bold `c27f189594483430f8d617fef1b749f85e6ee05a`.
+- The Windows workflow now downloads those two exact Trajan files before packaging, alongside the already pinned Inter/Cinzel assets. `build/verify_font_assets.py` rejects any mismatched font binary before PyInstaller runs.
+- `load_brand_fonts()` now registers bundled Trajan Regular and Bold before `MainWindow` construction and records `bundled-trajan` as the normal packaged display source. Inter remains the body/UI family; system Trajan/Cinzel are fallback paths only for incomplete source checkouts.
+- Added OTF package-data coverage so the Trajan Bold asset is included consistently outside the frozen PyInstaller path. PyInstaller already packages the full assets directory.
+- Strengthened packaged smoke so a tester build fails if either Trajan asset is missing, either logical face fails Qt registration, or the frozen application resolves anything other than its bundled Trajan as the display source.
+- Updated the UX, architecture, and master project state to make self-contained display typography the explicit contract.
+- No GIF/MP4 encoding, adaptive GIF selection, framing/export geometry, preview playback, queue behavior, responsive layout, updater, subprocess, or pinned FFmpeg/gifski behavior changed.
+- Incremented the tester to `0.1.0-dev.23`.
+
+### Touched files
+
+- `.github/workflows/windows-dev-build.yml`
+- `build/verify_font_assets.py`
+- `src/polymorph/ui/fonts.py`
+- `src/polymorph/smoke_test.py`
+- `src/polymorph/__init__.py`
+- `src/polymorph/constants.py`
+- `pyproject.toml`
+- `installer/Polymorph.iss`
+- `MASTER.md`
+- `docs/ARCHITECTURE.md`
+- `docs/UX_SPEC.md`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Test notes
+
+- Full Windows CI must verify the four pinned font assets first, then pass the unchanged unit/conversion/toolchain gates, PyInstaller frozen-app smoke, installer compilation, checksum generation, and artifact uploads.
+- Human dev.23 review should launch the installer on the normal Windows machine without separately installing Trajan and confirm that the `POLYMORPH` title, subtitle/byline, card headings, and primary action now use the intended display face.
+
 ## POLY-2026-09-13-038 — 2026-09-13 01:12 PDT — Prefer vector branded UI icons
 
 ### Summary
@@ -78,7 +113,7 @@ Historical entries through dev.19 are preserved verbatim in [`HISTORY/PROJECT_LO
 
 ### Summary
 
-- Used the startup checkpoints from Windows run #43 to identify the real failure hidden behind the 120-second process timeout: the frozen EXE failed importing `main_window.py` because it still imported `BASE_STYLESHEET` after the responsive stylesheet refactor removed that symbol.
+- Used the startup checkpoints from Windows run #43 to identify the real failure hidden behind the 120-second process timeout: the frozen EXE failed importing `main_window.py` because it still imported `BASE_STYLESHEET` after the responsive stylesheet refactor had removed that symbol.
 - Restored `BASE_STYLESHEET` as `build_brand_stylesheet(1.0)`, preserving base-window compatibility while the branded responsive layer continues to replace it after composition.
 - Windows Dev Build run #44 passed all 54 unit tests, pinned toolchain checks, adaptive integration, GIF reference comparison, PyInstaller, packaged smoke, Inno Setup, checksum and both artifact uploads; dev.21 was successfully produced.
 - No conversion or user-facing layout behavior changed in this repair.

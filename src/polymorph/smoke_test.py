@@ -32,6 +32,8 @@ _CONCEPT_ICON_ASSETS = (
     "ui/update.png",
 )
 _FONT_ASSETS = (
+    "fonts/Trajan-Regular.ttf",
+    "fonts/Trajan-Bold.otf",
     "fonts/Cinzel-wght.ttf",
     "fonts/Inter-opsz-wght.ttf",
 )
@@ -83,11 +85,21 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
             if not path.is_file():
                 raise RuntimeError(f"Packaged font resource is missing: {path}")
         loaded_fonts = str(app.property("polymorphFontsLoaded") or "")
-        if "Cinzel" not in loaded_fonts or "Inter" not in loaded_fonts:
-            raise RuntimeError(f"Bundled fallback/body fonts did not load: {loaded_fonts!r}")
+        for logical_name in ("Trajan Regular", "Trajan Bold", "Cinzel", "Inter"):
+            if logical_name not in loaded_fonts:
+                raise RuntimeError(
+                    f"Required packaged font did not register ({logical_name}): {loaded_fonts!r}"
+                )
+        if app.property("polymorphDisplaySource") != "bundled-trajan":
+            raise RuntimeError(
+                "Packaged build is not using its bundled Trajan display assets: "
+                f"{app.property('polymorphDisplaySource')!r}"
+            )
         if not str(app.property("polymorphDisplayFont") or "").strip():
-            raise RuntimeError("Display font resolution did not run")
-        lines.append("PASS packaged font resolution with Trajan-capable fallback")
+            raise RuntimeError("Bundled Trajan regular family was not resolved")
+        if not str(app.property("polymorphDisplayBoldFont") or "").strip():
+            raise RuntimeError("Bundled Trajan bold family was not resolved")
+        lines.append("PASS packaged Trajan display fonts and Inter body font")
 
         window = MainWindow()
         rebuild_brand_layout(window)
@@ -230,7 +242,7 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
         lines.append("PASS linked 16:9 resolution controls")
 
         footer_meta = [label.text() for label in window.findChildren(QLabel, "FooterMeta")]
-        if not any(text.startswith("Polymorph v0.1.0-dev.22") for text in footer_meta):
+        if not any(text.startswith("Polymorph v0.1.0-dev.23") for text in footer_meta):
             raise RuntimeError(f"Footer version metadata is missing: {footer_meta}")
         if "Polymorph 2026, Knight Witch™" not in footer_meta:
             raise RuntimeError(f"Footer creator metadata is missing: {footer_meta}")
