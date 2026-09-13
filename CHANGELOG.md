@@ -2,6 +2,36 @@
 
 Historical entries through dev.19 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV19.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV19.md). Earlier pre-dev.16 history also remains in the existing dev.15 archive.
 
+## POLY-2026-09-12-033 — 2026-09-12 18:10 PDT — Harden packaged preview smoke teardown
+
+### Summary
+
+- Investigated Windows Dev Build run #40 after it stalled inside the frozen-app smoke step until the 30-minute workflow timeout cancelled the job.
+- Confirmed all 54 unit tests, pinned FFmpeg/gifski toolchain verification, adaptive integration, GIF reference comparison, and PyInstaller packaging had already passed before the stall.
+- Changed preview playback from `QMovie.CacheAll` to `QMovie.CacheNone` to avoid aggressive full-animation caching in the frozen/offscreen Qt path.
+- Preview frame seeks now pause an actively running movie before `jumpToFrame()` so the playback timer cannot race the requested seek.
+- The dedicated `--smoke-test` application path now force-exits after returning its smoke result, preventing native Qt media/plugin teardown from holding the CI process open after assertions finish.
+- The Windows packaged-smoke CI step now has an explicit 120-second process timeout, force-kills a wedged smoke process, and prints the smoke log before failing instead of consuming the full job timeout.
+- No conversion, adaptive GIF, framing/export geometry, optimizer, updater, or user-facing dev.21 UI behavior changed.
+- Version remains `0.1.0-dev.21` because the failed run never produced a dev.21 installer.
+
+### Touched files
+
+- `src/polymorph/ui/preview.py`
+- `src/polymorph/app.py`
+- `.github/workflows/windows-dev-build.yml`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert commit `2d226bc5d40051554ae7fdd425263aec44804739` to restore the original dev.21 packaged-smoke lifecycle. The visual fidelity work itself is in the preceding dev.21 commit and is independent of this hardening patch.
+
+### Test notes
+
+- The rerun must pass the frozen-app smoke within 120 seconds, then continue through Inno Setup, installer compilation, checksum generation, and both artifact uploads.
+- Human UI validation remains the same as dev.21: compare directly against the approved mockup, verify responsive shrinking at smaller window sizes, and exercise the new playback/timeline controls.
+
 ## POLY-2026-09-12-032 — 2026-09-12 15:15 PDT — Fidelity pass against the approved Polymorph mockup
 
 ### Summary
