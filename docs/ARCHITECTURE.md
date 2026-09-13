@@ -16,10 +16,10 @@
 - `src/polymorph/ui/main_window.py`: novice-facing desktop UI and queue/framing state.
 - `src/polymorph/ui/adaptive_main_window.py`: development UI extension for GIF priority, Crop zoom, decimal-MB/effective-FPS completion reporting, and diagnostic traces.
 - `src/polymorph/ui/branded_layout.py`: presentation composition layer that reparents the already-wired functional widgets into the branded two-column workspace/control-rail layout without duplicating conversion state.
-- `src/polymorph/ui/fonts.py`: bundled Cinzel/Inter registration and application-font setup; missing assets degrade to stylesheet fallbacks in source checkouts.
+- `src/polymorph/ui/fonts.py`: packaged Trajan Regular/Bold plus Inter/Cinzel registration and application-font setup; installed builds use the bundled Trajan files rather than relying on Windows fonts.
 - `src/polymorph/ui/styles.py`: shared branded QSS applied after the functional and branded layout are constructed.
 - `src/polymorph/update_service.py`: official-release discovery, exact asset pairing, bounded streaming download, checksum verification, installer launch.
-- `build/verify_font_assets.py`: verifies the pinned Google Fonts downloads by Git blob SHA-1 before the frozen application is built.
+- `build/verify_font_assets.py`: verifies every pinned UI-font download by Git blob SHA-1 before the frozen application is built.
 - `build/`: executable packaging and CI-only diagnostics, including real-toolchain adaptive-selection and pinned-font gates.
 - `installer/`: per-user Windows installer.
 
@@ -35,12 +35,13 @@
 
 ## Bundled font pipeline
 
-- The Windows workflow downloads Cinzel and Inter from immutable google/fonts commit URLs.
-- `build/verify_font_assets.py` computes the Git blob SHA-1 for each downloaded TTF and fails the build if it does not match the expected upstream blob identity.
-- Matching SIL OFL text files are downloaded from the same pinned commits.
-- `build/Polymorph.spec` already packages the complete `src/polymorph/assets` directory, so the downloaded font files and notices are included in the frozen application.
-- `load_brand_fonts()` registers the packaged TTFs with Qt before `MainWindow` is constructed and sets Inter as the application body font. QSS selects Cinzel for display/primary-action roles.
-- Packaged smoke fails if either font asset is missing or Qt cannot register both logical families.
+- The Windows workflow downloads the approved Trajan Regular/Bold assets from immutable commit `6762f3334c8b7e157f379fc7befb37056a03e937` of `22is5/cdn`. Those two files match the user-supplied font assets byte-for-byte by Git blob identity: `b53d6c0b90c0ebc0273ae52a7a2d6959ee904d6e` for Regular and `c27f189594483430f8d617fef1b749f85e6ee05a` for Bold.
+- The same workflow retains pinned Inter for body/UI typography and Cinzel as an emergency development fallback, both from immutable google/fonts commit URLs.
+- `build/verify_font_assets.py` computes the Git blob SHA-1 for all four downloaded font binaries and fails the build if any file differs from its pinned identity.
+- Matching SIL OFL text files for Inter and Cinzel are downloaded from their pinned google/fonts commits.
+- `build/Polymorph.spec` packages the complete `src/polymorph/assets` directory, so the downloaded Trajan, Inter, Cinzel, and notice files are included inside the frozen application and installer.
+- `load_brand_fonts()` registers the packaged fonts with Qt before `MainWindow` is constructed, sets Inter as the application body font, and selects bundled Trajan Regular/Bold as the branded display source. A system-installed Trajan or Cinzel is only a source-checkout fallback when the packaged Trajan assets are absent.
+- The packaged smoke test fails if either Trajan asset, Inter, or Cinzel is missing, if Qt fails to register the logical Trajan Regular/Bold faces, or if the packaged runtime does not report `bundled-trajan` as its display source. Installed testers therefore do not require any separate font installation.
 
 ## Conversion ordering
 
