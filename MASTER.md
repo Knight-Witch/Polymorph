@@ -5,10 +5,10 @@
 - Project: Polymorph
 - Repository: `Knight-Witch/Polymorph`
 - Platform target: Windows 10/11 x64
-- Current development version: `0.1.0-dev.20`
+- Current development version: `0.1.0-dev.21`
 - Public release: not yet published.
 - Core conversion machine is considered functionally complete for the current v1 scope: MP4 is human-validated; Preserve-motion GIF quality/smoothness is human-validated; decimal-MB ceiling behavior is validated; updater hardening is validated; Favor-resolution GIF behavior is diagnostically and visually validated on Viper plus two kitbash/decal-heavy HeroForge variants; Crop/Fit preview and real exported output are human-validated end to end; Windows probe/encode console flashes are eliminated.
-- UI work is now the active development phase. dev.18 established the black/gold/red visual language; dev.19 replaced the old three-column scaffold with a branded two-column composition; dev.20 tightens that composition against the approved mockup, fixes right-rail clipping, compresses padding, and adds richer file-queue/status/footer presentation.
+- UI work is now the active development phase. dev.18 established the black/gold/red visual language; dev.19 replaced the old three-column scaffold; dev.20 moved much closer to the approved mockup; dev.21 is the fidelity pass driven by the user's direct side-by-side markup: Trajan-preferred display typography, aligned card content, supplied icon artwork, simplified preview chrome, playback/timeline controls, responsive shrink behavior, and a rebuilt two-level status/footer.
 - The loading/working animation and final application emblem remain separate design work.
 
 ## Canonical conversion behavior
@@ -78,21 +78,15 @@
 
 ## Branded UI state
 
-- Branded runtime composition is two columns:
-  - left: compact file queue above the large animated preview;
-  - right: fixed-width, vertically scrollable settings rail that must never require horizontal scrolling or clip controls.
-- Queue header follows the approved mockup: `FILES` and count share one row with Add Files, a selected-item trash action, separator, and red-hover `Clear All`.
-- Queue rows show a first-frame thumbnail plus source filename, decimal source file size, dimensions, runtime, and an overflow menu with Open / Open file location / Remove from queue.
-- Settings cards use icon + title + separator headers and intentionally reduced padding/density.
-- `OUTPUT FORMAT` is a side-by-side two-choice group; `SIZING` uses clean editable numeric fields with no spinner ticker arrows.
-- `FRAMING` and `ASPECT RATIO` share one row as paired cards, matching the approved concept. Crop Zoom is its own compact slider card.
-- Visible framing uses Original/Crop/Fit radio buttons synchronized to the established framing combo/state path.
-- Fit background color remains supported by the engine but is reduced to a small Fit-only utility instead of occupying a dedicated card.
-- The bottom status strip uses a compact ring plus two-line idle copy: `Ready` and `<N> files imported. Choose your settings and begin.` Conversion progress stays compact until the dedicated loader is designed.
-- Footer actions are labeled Check for Updates / GitHub / Ko-fi / Patreon / Discord with separators instead of icon-only buttons.
-- Header lockup is `POLYMORPH`, version, then `MEDIA CONVERSION MAGIC — BY KNIGHT WITCH™`.
-- Cinzel remains the temporary packaged display family and Inter the packaged body/UI family; the user intends to provide a closer final display font later.
-- Current palette: near-black/charcoal, ivory text, champagne-gold structure, restrained crimson active states, with subtle gradients.
+- Branded runtime composition is two columns: left workspace with compact media queue + dominant preview, and a right settings rail. The rail no longer depends on vertical scrolling; below the 1260×820 design size, the UI enters responsive shrink mode and scales typography, card density, control widths, preview minimums, and rail width down to the supported 920×640 floor.
+- Queue header follows the approved mockup: `FILES` and count share one row, while Add Files / supplied trash icon / separator / red-hover `Clear All` stay aligned at the right edge. Queue rows retain thumbnail, source size, dimensions, runtime, and the real Open / Open file location / Remove overflow menu; the overflow dots are larger in dev.21.
+- Busy settings cards use supplied/reworked gold icons, Trajan Pro Bold-preferred headings, a separator, and content indented to the same visual column as the heading text. Crop Zoom and Output Folder intentionally omit the heading divider.
+- `OUTPUT FORMAT` remains side-by-side; `SIZING` uses editable fields without ticker arrows; `FRAMING` and `ASPECT RATIO` remain paired. The dev.20 Fit-only `Fill` control is removed from the branded UI so choosing Fit cannot expand the card.
+- The preview card no longer has a redundant `PREVIEW` header or inner gray panel. Media is drawn against the preview-card background with a tight square/near-square border, playback controls beneath it, a seekable source-frame timeline, seconds readout, and in-view `FRAME n / total` timing readout. A divider separates playback from the source/framed-max metadata line.
+- Header lockup is `POLYMORPH` plus mixed-case `Media conversion magic — by Knight Witch™`; the version moves out of the title line. Trajan Pro is the preferred system display family, with bundled Cinzel retained only as the legal packaged fallback and Inter as the body/UI family. Trajan font binaries supplied by the user are not committed to the public repository.
+- Primary conversion copy is back to `POLYMORPH`; its label uses the same Trajan-preferred tracking language as the application title, centered over static sigil/line decoration that remains separate from the later loader animation.
+- Status + link footer is now one concept-matched two-level panel: top row carries Ready/status plus spaced Check for Updates / GitHub / Ko-fi / Patreon / Discord links and separators; a divider leads to `Polymorph v…` at bottom-left and `Polymorph 2026, Knight Witch™` at bottom-right.
+- Current palette remains near-black/charcoal, ivory, champagne gold and restrained crimson, with layered gradients and a faint deterministic runtime grain overlay; no external grain texture is required.
 - The later loader animation remains open between the arcane/magic-circle concept and the user's D20 roll/spin concept.
 
 ## Windows subprocess behavior
@@ -111,7 +105,7 @@
 
 ## Known follow-ups
 
-- Human-review dev.20 against the approved concept side-by-side: clipping/responsiveness, compact card density, queue metadata/menu behavior, paired Framing/Aspect cards, status strip, footer links, and overall visual fidelity.
+- Human-review dev.21 directly against the approved concept side-by-side: Trajan rendering/tracking, vertical option alignment, supplied icons, preview/player treatment, primary action centering, footer spacing/meta row, and responsive shrink behavior at default and minimum window sizes.
 - Design and implement the working/loading animation after the structural UI is accepted.
 - Decide final application emblem/icon.
 - Favor resolution performs extra measurement encodes by design; conversion-time optimization can be investigated later but must not change selected outputs.
