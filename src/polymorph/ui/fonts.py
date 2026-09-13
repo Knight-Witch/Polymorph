@@ -6,17 +6,15 @@ from PySide6.QtWidgets import QApplication
 from ..resources import asset_path
 
 _FONT_FILES = {
+    "Trajan Regular": "fonts/Trajan-Regular.ttf",
+    "Trajan Bold": "fonts/Trajan-Bold.otf",
     "Cinzel": "fonts/Cinzel-wght.ttf",
     "Inter": "fonts/Inter-opsz-wght.ttf",
 }
-_OPTIONAL_TRAJAN_FILES = (
-    "fonts/Trajan-Regular.ttf",
-    "fonts/Trajan-Bold.otf",
-)
 
 
 def _installed_trajan_family() -> str | None:
-    """Return the best Trajan-family face Qt can actually see on this machine."""
+    """Return a Trajan-family face only as a source-checkout fallback."""
     families = list(QFontDatabase.families())
     preferred = (
         "Trajan Pro 3",
@@ -35,11 +33,11 @@ def _installed_trajan_family() -> str | None:
 
 
 def load_brand_fonts(app: QApplication | None = None) -> dict[str, str]:
-    """Load packaged UI fonts and prefer a legally installed Trajan face.
+    """Register Polymorph's packaged display/body fonts before the UI is built.
 
-    Polymorph's public repository bundles only redistributable Cinzel/Inter assets.
-    If Trajan is installed on the user's Windows system (or supplied locally in
-    an untracked development assets folder), Qt uses it automatically.
+    Packaged Windows builds carry the approved Trajan Regular/Bold files inside
+    the application. Cinzel remains an emergency source-checkout fallback only;
+    normal installed testers do not depend on any system font being present.
     """
     loaded: dict[str, str] = {}
     for logical_name, relative_path in _FONT_FILES.items():
@@ -53,19 +51,18 @@ def load_brand_fonts(app: QApplication | None = None) -> dict[str, str]:
         if families:
             loaded[logical_name] = families[0]
 
-    # Development-only/private local convenience: register Trajan if a legal
-    # local copy exists beside the other assets. These files are not committed.
-    for relative_path in _OPTIONAL_TRAJAN_FILES:
-        path = asset_path(relative_path)
-        if not path.is_file():
-            continue
-        font_id = QFontDatabase.addApplicationFont(str(path))
-        if font_id >= 0:
-            families = QFontDatabase.applicationFontFamilies(font_id)
-            if families:
-                loaded["Trajan"] = families[0]
-
-    display = _installed_trajan_family() or loaded.get("Trajan") or loaded.get("Cinzel", "Cinzel")
+    bundled_regular = loaded.get("Trajan Regular")
+    bundled_bold = loaded.get("Trajan Bold")
+    installed_fallback = _installed_trajan_family()
+    display_regular = bundled_regular or installed_fallback or loaded.get("Cinzel", "Cinzel")
+    display_bold = bundled_bold or bundled_regular or installed_fallback or loaded.get("Cinzel", "Cinzel")
+    display_source = (
+        "bundled-trajan"
+        if bundled_regular and bundled_bold
+        else "system-trajan"
+        if installed_fallback
+        else "cinzel-fallback"
+    )
 
     if app is not None:
         body_family = loaded.get("Inter")
@@ -74,6 +71,8 @@ def load_brand_fonts(app: QApplication | None = None) -> dict[str, str]:
             font.setPointSizeF(10.5)
             app.setFont(font)
         app.setProperty("polymorphFontsLoaded", ",".join(sorted(loaded)))
-        app.setProperty("polymorphDisplayFont", display)
+        app.setProperty("polymorphDisplayFont", display_regular)
+        app.setProperty("polymorphDisplayBoldFont", display_bold)
+        app.setProperty("polymorphDisplaySource", display_source)
 
     return loaded
