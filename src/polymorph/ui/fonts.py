@@ -15,12 +15,31 @@ _OPTIONAL_TRAJAN_FILES = (
 )
 
 
+def _installed_trajan_family() -> str | None:
+    """Return the best Trajan-family face Qt can actually see on this machine."""
+    families = list(QFontDatabase.families())
+    preferred = (
+        "Trajan Pro 3",
+        "Trajan Pro",
+        "Trajan",
+    )
+    folded = {family.casefold(): family for family in families}
+    for candidate in preferred:
+        match = folded.get(candidate.casefold())
+        if match:
+            return match
+    for family in families:
+        if family.casefold().startswith("trajan"):
+            return family
+    return None
+
+
 def load_brand_fonts(app: QApplication | None = None) -> dict[str, str]:
-    """Load packaged UI fonts and prefer legally installed Trajan Pro when present.
+    """Load packaged UI fonts and prefer a legally installed Trajan face.
 
     Polymorph's public repository bundles only redistributable Cinzel/Inter assets.
-    If Trajan Pro is installed on the user's Windows system (or supplied locally in
-    an untracked development assets folder), Qt will use it automatically.
+    If Trajan is installed on the user's Windows system (or supplied locally in
+    an untracked development assets folder), Qt uses it automatically.
     """
     loaded: dict[str, str] = {}
     for logical_name, relative_path in _FONT_FILES.items():
@@ -44,10 +63,9 @@ def load_brand_fonts(app: QApplication | None = None) -> dict[str, str]:
         if font_id >= 0:
             families = QFontDatabase.applicationFontFamilies(font_id)
             if families:
-                loaded["Trajan Pro"] = families[0]
+                loaded["Trajan"] = families[0]
 
-    families = set(QFontDatabase.families())
-    display = "Trajan Pro" if "Trajan Pro" in families else loaded.get("Cinzel", "Cinzel")
+    display = _installed_trajan_family() or loaded.get("Trajan") or loaded.get("Cinzel", "Cinzel")
 
     if app is not None:
         body_family = loaded.get("Inter")
