@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -23,7 +24,15 @@ def main() -> int:
             return 2
         from .smoke_test import run_packaged_smoke_test
 
-        return run_packaged_smoke_test(app, Path(sys.argv[index + 1]))
+        code = run_packaged_smoke_test(app, Path(sys.argv[index + 1]))
+        # The frozen smoke path is a CI probe, not an interactive Qt session.
+        # Force process teardown after the probe has written its log so native
+        # media/plugin teardown cannot keep Start-Process waiting indefinitely.
+        try:
+            sys.stdout.flush()
+            sys.stderr.flush()
+        finally:
+            os._exit(code)
 
     window = MainWindow()
     rebuild_brand_layout(window)

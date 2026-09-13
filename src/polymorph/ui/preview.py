@@ -39,7 +39,11 @@ class AnimatedPreview(QWidget):
         self._current_frame = 0
         if path:
             movie = QMovie(str(path))
-            movie.setCacheMode(QMovie.CacheMode.CacheAll)
+            # CacheAll proved capable of stalling the frozen/offscreen Qt path.
+            # CacheNone was already stable in production preview builds and still
+            # supports frame seeking for animated WebP without retaining the full
+            # loop in memory.
+            movie.setCacheMode(QMovie.CacheMode.CacheNone)
             movie.frameChanged.connect(self._on_frame)
             self._movie = movie
             movie.start()
@@ -99,6 +103,11 @@ class AnimatedPreview(QWidget):
         if total <= 0:
             return False
         target = max(0, min(total - 1, int(frame_index)))
+
+        # Scrubbing should be deterministic. Pause the movie before jumping so
+        # the playback timer cannot advance concurrently with the requested seek.
+        if movie.state() == QMovie.MovieState.Running:
+            movie.setPaused(True)
         ok = movie.jumpToFrame(target)
         if ok:
             self._current_frame = target
