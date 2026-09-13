@@ -13,17 +13,17 @@ Files -> Output Format -> Sizing Constraint -> GIF Priority -> Framing -> Polymo
 - Queue actions live with the queue. `FILES` and the file count are grouped together at the left of the header; Add Files / trash / separator / `Clear All` form a right-side action cluster. Clear removes queue entries only; it never deletes source files.
 - The visible framing selector is Original / Crop / Fit radio controls synchronized to the existing framing state used by preview/export logic.
 - Header lockup is `POLYMORPH` then mixed-case `Media conversion magic — by Knight Witch™`. Version metadata belongs in the footer, not the header.
-- Display typography prefers any Qt-visible Trajan family (`Trajan Pro 3`, `Trajan Pro`, etc.); bundled Cinzel is the redistributable fallback. Inter is the bundled body/UI family.
+- Display typography is self-contained: the approved Trajan Regular and Bold assets are bundled inside the Windows application and registered with Qt before the UI is constructed. The user does not need Trajan installed on Windows. Inter is the bundled body/UI family; Cinzel remains only an emergency fallback if a development/source checkout is missing the approved display assets.
 - Current palette is near-black/charcoal, ivory, champagne gold and restrained crimson. Cards use dark layered gradients, subtle warm illumination, deterministic grain, small-radius etched borders and restrained red selection states.
 - Loader/progress art is not part of the current fidelity pass. Arcane-circle and D20 concepts remain later design work.
 
 ## Typography ratios
 
 - The user's Photoshop references are the visual basis rather than literal Qt point-size values.
-- `POLYMORPH`: all caps, Trajan-preferred, roughly the 120 pt reference with +350 Photoshop tracking; implementation should read distinctly wide-spaced and premium.
-- Subtitle/byline: `Media conversion magic — by Knight Witch™`, mixed/proper case, roughly the 50/120 title-size ratio and +300 tracking reference.
-- Card headings: Trajan-preferred Bold, roughly the 75/120 reference ratio with restrained +100-style tracking, balanced against the denser desktop control rail.
-- Primary `POLYMORPH` action uses the same display/tracking language as the application title.
+- `POLYMORPH`: all caps, bundled Trajan Regular, roughly the 120 pt reference with +350 Photoshop tracking; implementation should read distinctly wide-spaced and premium.
+- Subtitle/byline: `Media conversion magic — by Knight Witch™`, bundled Trajan Regular, mixed/proper case, roughly the 50/120 title-size ratio and +300 tracking reference.
+- Card headings: bundled Trajan Bold, roughly the 75/120 reference ratio with restrained +100-style tracking, balanced against the denser desktop control rail.
+- Primary `POLYMORPH` action uses the same bundled Trajan display/tracking language as the application title.
 - Body/control copy remains Inter for clarity and accessibility.
 
 ## Window and responsive behavior
@@ -118,7 +118,7 @@ Visible only when meaningful for GIF + Fit under file size.
 ## Primary action
 
 - Copy is `POLYMORPH`, not `Cast Polymorph`.
-- Primary action uses a deep crimson/black gradient, champagne-gold border/highlight, Trajan-style tracked title and restrained static sigil/line decoration.
+- Primary action uses a deep crimson/black gradient, champagne-gold border/highlight, bundled Trajan tracked title and restrained static sigil/line decoration.
 - Idle state should feel premium rather than animated. Hover/press may wake the surface up immediately; the later loader/cast animation takes over only when conversion begins.
 
 ## Completion readout
