@@ -2,6 +2,32 @@
 
 Historical entries through dev.19 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV19.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV19.md). Earlier pre-dev.16 history also remains in the existing dev.15 archive.
 
+## POLY-2026-09-12-034 — 2026-09-12 18:20 PDT — Make packaged playback smoke headless-safe
+
+### Summary
+
+- Followed up Windows Dev Build run #41 after the new 120-second guard proved the frozen process still wedged inside the offscreen preview/playback smoke while all conversion/toolchain/package stages before it passed.
+- Added incremental smoke checkpoint persistence so `POLYMORPH_SMOKE_LOG` is rewritten after every PASS/FAIL line; a future timeout now shows the exact last successful assertion.
+- Removed the CI-only `QMovie.jumpToFrame()` random-seek assertion from the offscreen frozen smoke. Qt's headless WebP plugin can wedge on random-access seeks and is not a faithful proxy for the normal interactive Windows plugin path.
+- The packaged smoke still requires valid animated WebP initialization, a rendered preview frame, initialized frame-count/duration metadata, playback timeline styling, responsive geometry, queue metadata, framing mappings, adaptive controls, linked resolution, and footer metadata.
+- Desktop play/pause/timeline seeking remains implemented unchanged and is left for human validation in the real Windows GUI.
+- Version remains `0.1.0-dev.21` because no dev.21 tester installer has yet completed CI.
+
+### Touched files
+
+- `src/polymorph/smoke_test.py`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert the smoke-test commit if a future Qt runtime makes reliable offscreen random-access WebP seeking available again. No production conversion or playback UI code changed in this commit.
+
+### Test notes
+
+- The next Windows run must finish the frozen smoke within the existing 120-second guard and continue through installer/checksum/artifact creation.
+- Human dev.21 validation should explicitly drag the preview timeline backward and forward while paused/running because headless CI no longer attempts that unsupported operation.
+
 ## POLY-2026-09-12-033 — 2026-09-12 18:10 PDT — Harden packaged preview smoke teardown
 
 ### Summary
