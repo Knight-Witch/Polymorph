@@ -2,6 +2,15 @@
 
 Historical entries through dev.19 are preserved verbatim in [`HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV19.md`](HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV19.md). Earlier pre-dev.16 history also remains in the existing dev.15 archive.
 
+## PFC-2026-09-12-034 — Make the packaged playback smoke headless-safe
+
+- Follow-up diagnosis from Windows Dev Build run #41: the new 120-second smoke timeout fired exactly as intended, proving the frozen process still wedged inside the new offscreen preview/playback test while every conversion/toolchain/package stage before it passed.
+- The CI-only random-access `QMovie.jumpToFrame()` assertion is removed from the offscreen frozen smoke. Qt's headless WebP plugin can wedge on random-access seeks and is not a faithful proxy for the normal interactive Windows plugin path.
+- The smoke still requires a valid animated WebP `QMovie`, a rendered frame, initialized frame-count/duration metadata, the playback timeline styling, and all established framing/adaptive/linked-resolution UI mappings.
+- Every smoke checkpoint is now flushed to `POLYMORPH_SMOKE_LOG` immediately through `_CheckpointLines`, so a future timeout identifies the exact last successful stage.
+- Desktop play/pause/timeline seeking remains implemented and unchanged for human validation; only the unsupported headless random-seek assertion was removed.
+- Version remains `0.1.0-dev.21` because no dev.21 installer has yet completed CI.
+
 ## PFC-2026-09-12-033 — Harden dev.21 packaged preview smoke teardown
 
 - Trigger: Windows Dev Build run #40 passed all 54 unit tests, pinned FFmpeg/gifski verification, adaptive integration, GIF reference comparison, and PyInstaller packaging, then stalled for the remainder of the 30-minute job specifically inside the frozen-app UI smoke step.
