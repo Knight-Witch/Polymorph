@@ -108,8 +108,10 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
         lines.append("PASS responsive concept default/minimum geometry")
 
         subtitle = window.findChild(QLabel, "BrandSubtitle")
-        if window.property("polymorphSkin") != "occult-gold-v4":
+        if window.property("polymorphSkin") != "occult-gold-v5":
             raise RuntimeError("Branded presentation skin was not applied")
+        if window.property("polymorphFidelity") != "mockup-v1":
+            raise RuntimeError("Mockup fidelity pass was not applied")
         if window.property("polymorphLayout") != "concept-match-v2":
             raise RuntimeError("Concept v2 layout was not applied")
         if subtitle is None or subtitle.text() != "Media conversion magic — by Knight Witch™":
@@ -122,7 +124,24 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
         rail = window.findChild(QWidget, "ControlRailContent")
         if rail is None:
             raise RuntimeError("Responsive right settings rail is missing")
-        lines.append("PASS title/byline, two-column shell, and POLYMORPH action")
+        lines.append("PASS title/byline, mockup fidelity, two-column shell, and POLYMORPH action")
+
+        file_card = window.findChild(QWidget, "FileCard")
+        file_count = window.findChild(QLabel, "FileCount")
+        if file_card is None or file_count is None or file_card.layout() is None:
+            raise RuntimeError("FILES card/header is missing")
+        files_header = file_card.layout().itemAt(0).layout()
+        if files_header is None:
+            raise RuntimeError("FILES action row is missing")
+        heading_index = -1
+        for index in range(files_header.count()):
+            widget = files_header.itemAt(index).widget()
+            if isinstance(widget, QLabel) and widget.objectName() == "CardHeading":
+                heading_index = index
+                break
+        if heading_index < 0 or files_header.indexOf(file_count) != heading_index + 1:
+            raise RuntimeError("FILES count is not grouped directly with the FILES title")
+        lines.append("PASS FILES title/count/action grouping")
 
         window.resize(920, 640)
         app.processEvents()
@@ -141,7 +160,9 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
             raise RuntimeError("Resolution controls restored ticker-arrow styling")
         if "QSlider#CropZoomSlider" not in stylesheet or "QSlider#PlaybackTimeline" not in stylesheet:
             raise RuntimeError("Concept slider styling is missing")
-        lines.append("PASS concept field and slider styling")
+        if "mockupIndented" not in stylesheet:
+            raise RuntimeError("Mockup content-column alignment styling is missing")
+        lines.append("PASS concept field, alignment, and slider styling")
 
         window.resize(1260, 820)
         app.processEvents()
@@ -209,7 +230,7 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
         lines.append("PASS linked 16:9 resolution controls")
 
         footer_meta = [label.text() for label in window.findChildren(QLabel, "FooterMeta")]
-        if not any(text.startswith("Polymorph v0.1.0-dev.21") for text in footer_meta):
+        if not any(text.startswith("Polymorph v0.1.0-dev.22") for text in footer_meta):
             raise RuntimeError(f"Footer version metadata is missing: {footer_meta}")
         if "Polymorph 2026, Knight Witch™" not in footer_meta:
             raise RuntimeError(f"Footer creator metadata is missing: {footer_meta}")

@@ -2,13 +2,26 @@
 
 Historical entries through dev.19 are preserved verbatim in [`HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV19.md`](HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV19.md). Earlier pre-dev.16 history also remains in the existing dev.15 archive.
 
-## PFC-2026-09-12-036 — Restore base stylesheet compatibility after dev.21 refactor
+## PFC-2026-09-12-037 — Continue direct mockup-fidelity polish as dev.22
 
-- Required review completed before editing: `PROJECT_CONTRACT.md`, `MASTER.md`, current `PRE_FLIGHT_Check.md`/`CHANGELOG.md`, `docs/ARCHITECTURE.md`, `docs/UX_SPEC.md`, `src/polymorph/ui/styles.py`, `src/polymorph/ui/main_window.py`, packaged smoke code, and Windows Dev Build run #43 logs.
-- Confirmed root cause from run #43 startup tracing: the frozen EXE failed while importing `polymorph.app` with `ImportError: cannot import name 'BASE_STYLESHEET' from 'polymorph.ui.styles'` before `QApplication` or the packaged smoke test could start.
-- The failure came from the dev.21 responsive-style refactor replacing the old constant with `build_brand_stylesheet()` while the established base `MainWindow` still imports and applies `BASE_STYLESHEET` during construction.
-- Fix at the presentation boundary: restore `BASE_STYLESHEET` as `build_brand_stylesheet(1.0)`. This preserves standalone/base-window construction and keeps the existing branded flow unchanged because `apply_brand_skin()` immediately replaces that initial sheet with the responsive scale-specific sheet.
-- No conversion, framing, adaptive GIF, preview/playback, updater, subprocess, packaging-toolchain, or version behavior changed. Version remains `0.1.0-dev.21` until the packaged gate actually completes and produces the tester installer.
+- Required review completed before editing: `PROJECT_CONTRACT.md`, `MASTER.md`, current `PRE_FLIGHT_Check.md`/`CHANGELOG.md`, `docs/ARCHITECTURE.md`, `docs/UX_SPEC.md`, branded layout/widgets/styles, preview, font loader, packaged smoke, and the user's approved mockup plus annotated dev.20 comparison.
+- Human validation received for dev.21 responsive behavior: the window now scales its content acceptably instead of hiding the lower settings/action. Preserve that controller and the supported `1260x820` design size / `920x640` floor.
+- This pass focuses only on the remaining visual-fidelity work. A new post-composition fidelity layer groups `FILES` + file count correctly, preserves the action cluster on the right, aligns busy-card content under the icon/title column, opens footer spacing, and makes the three-option Framing row the intentional alignment exception.
+- Display-font selection now accepts installed Trajan variants such as `Trajan Pro 3`, `Trajan Pro`, or any Qt-visible family beginning with `Trajan`; bundled Cinzel remains the redistributable fallback and Inter remains the body family.
+- Typography moves closer to the user's Photoshop ratios: substantially wider `POLYMORPH` tracking, proportional mixed-case subtitle tracking, and materially larger bold card headings. Primary-action tracking is widened to match the title language.
+- Card surfaces are refined with smaller radii, stronger charcoal-to-black tonal gradients, a restrained warm center glow, deterministic grain, etched inner highlights, and darker gold/brown borders. No external grain image is required.
+- The primary action keeps the requested `POLYMORPH` copy and receives a more deliberate red/gold inset treatment with a left static sigil, wider Trajan-style tracking, symmetric detail lines and centered title area; loader animation remains deferred.
+- Preview chrome is tightened again: the nested gray-looking field is replaced with a near-parent background, media inset drops to 5 px, and the media outline is square so dark source corners cannot protrude past a rounded frame. Existing play/pause, seek bar, seconds readout and in-image frame counter remain real controls.
+- Crop Zoom gets a more dimensional gold handle/track treatment; queue overflow dots are enlarged again; footer links get more breathing room; the Files title/count relationship is now packaged-smoke guarded.
+- Conversion, adaptive GIF policy, framing/export geometry, output sizing, updater, subprocess behavior, and the pinned FFmpeg/gifski toolchain are intentionally unchanged.
+- Versioning: increment tester from `0.1.0-dev.21` to `0.1.0-dev.22`.
+
+## PFC-2026-09-12-036 — Resolve dev.21 packaged-startup failure
+
+- Windows Dev Build run #43 startup markers proved the apparent smoke timeout was actually an immediate frozen-app import failure: `main_window.py` still imported `BASE_STYLESHEET` after the responsive stylesheet refactor had removed that symbol.
+- Restored `BASE_STYLESHEET` as the scale-1 compatibility output of `build_brand_stylesheet()` rather than changing base-window state/conversion code.
+- Windows Dev Build run #44 then passed all 54 unit tests, pinned FFmpeg/gifski checks, adaptive integration, GIF reference comparison, PyInstaller build, packaged smoke, Inno Setup, checksum generation, and both artifact uploads.
+- dev.21 tester was produced successfully after this repair; no conversion behavior changed.
 
 ## PFC-2026-09-12-035 — Add packaged-startup bootstrap checkpoints
 

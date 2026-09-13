@@ -5,10 +5,11 @@
 - Project: Polymorph
 - Repository: `Knight-Witch/Polymorph`
 - Platform target: Windows 10/11 x64
-- Current development version: `0.1.0-dev.21`
+- Current development version: `0.1.0-dev.22`
 - Public release: not yet published.
 - Core conversion machine is considered functionally complete for the current v1 scope: MP4 is human-validated; Preserve-motion GIF quality/smoothness is human-validated; decimal-MB ceiling behavior is validated; updater hardening is validated; Favor-resolution GIF behavior is diagnostically and visually validated on Viper plus two kitbash/decal-heavy HeroForge variants; Crop/Fit preview and real exported output are human-validated end to end; Windows probe/encode console flashes are eliminated.
-- UI work is now the active development phase. dev.18 established the black/gold/red visual language; dev.19 replaced the old three-column scaffold; dev.20 moved much closer to the approved mockup; dev.21 is the fidelity pass driven by the user's direct side-by-side markup: Trajan-preferred display typography, aligned card content, supplied icon artwork, simplified preview chrome, playback/timeline controls, responsive shrink behavior, and a rebuilt two-level status/footer.
+- UI work is the active development phase. dev.18 established the black/gold/red visual language; dev.19 replaced the old three-column scaffold; dev.20 moved toward the approved mockup; dev.21 introduced the direct concept composition, playback controls and responsive shrink behavior; dev.22 is the tighter fidelity/polish pass for alignment, Trajan detection/tracking, card rendering, preview chrome, footer density and primary-action treatment.
+- The user has human-validated dev.21's responsive window behavior as materially better. Preserve that proportional scaling behavior unless later evidence requires a change.
 - The loading/working animation and final application emblem remain separate design work.
 
 ## Canonical conversion behavior
@@ -73,20 +74,22 @@
 - Original preserves source framing.
 - Crop trims to the selected aspect ratio without distortion; preview and encoder share the same geometry resolver.
 - Crop supports drag repositioning plus 100-300% zoom. Zoom shrinks the retained source window rather than upscaling.
-- Fit preserves the complete source aspect ratio and expands the canvas with user-selectable padding color; drag repositioning moves the source inside available padding.
-- Human desktop validation confirmed Crop/Fit behavior in the viewer and one real Crop export plus one real Fit export matched expectations. Framing preview/export parity is therefore closed for current scope.
+- Fit preserves the complete source aspect ratio and expands the canvas with padding; drag repositioning moves the source inside available padding.
+- Background color remains in the engine model, but the branded v1 UI intentionally does not expose the old Fit `Fill` button because it expanded the Framing card unexpectedly.
+- Human desktop validation confirmed Crop/Fit behavior in the viewer and one real Crop export plus one real Fit export matched expectations. Framing preview/export parity is closed for current scope.
 
 ## Branded UI state
 
-- Branded runtime composition is two columns: left workspace with compact media queue + dominant preview, and a right settings rail. The rail no longer depends on vertical scrolling; below the 1260×820 design size, the UI enters responsive shrink mode and scales typography, card density, control widths, preview minimums, and rail width down to the supported 920×640 floor.
-- Queue header follows the approved mockup: `FILES` and count share one row, while Add Files / supplied trash icon / separator / red-hover `Clear All` stay aligned at the right edge. Queue rows retain thumbnail, source size, dimensions, runtime, and the real Open / Open file location / Remove overflow menu; the overflow dots are larger in dev.21.
-- Busy settings cards use supplied/reworked gold icons, Trajan Pro Bold-preferred headings, a separator, and content indented to the same visual column as the heading text. Crop Zoom and Output Folder intentionally omit the heading divider.
-- `OUTPUT FORMAT` remains side-by-side; `SIZING` uses editable fields without ticker arrows; `FRAMING` and `ASPECT RATIO` remain paired. The dev.20 Fit-only `Fill` control is removed from the branded UI so choosing Fit cannot expand the card.
-- The preview card no longer has a redundant `PREVIEW` header or inner gray panel. Media is drawn against the preview-card background with a tight square/near-square border, playback controls beneath it, a seekable source-frame timeline, seconds readout, and in-view `FRAME n / total` timing readout. A divider separates playback from the source/framed-max metadata line.
-- Header lockup is `POLYMORPH` plus mixed-case `Media conversion magic — by Knight Witch™`; the version moves out of the title line. Trajan Pro is the preferred system display family, with bundled Cinzel retained only as the legal packaged fallback and Inter as the body/UI family. Trajan font binaries supplied by the user are not committed to the public repository.
-- Primary conversion copy is back to `POLYMORPH`; its label uses the same Trajan-preferred tracking language as the application title, centered over static sigil/line decoration that remains separate from the later loader animation.
-- Status + link footer is now one concept-matched two-level panel: top row carries Ready/status plus spaced Check for Updates / GitHub / Ko-fi / Patreon / Discord links and separators; a divider leads to `Polymorph v…` at bottom-left and `Polymorph 2026, Knight Witch™` at bottom-right.
-- Current palette remains near-black/charcoal, ivory, champagne gold and restrained crimson, with layered gradients and a faint deterministic runtime grain overlay; no external grain texture is required.
+- Runtime composition is two columns: left workspace with compact media queue + dominant preview, and a right settings rail. The rail does not depend on vertical scrolling; below the `1260x820` design size, the UI proportionally shrinks typography, card density, control widths, preview minimums and rail width down to the supported `920x640` floor. Human dev.21 testing accepted this behavior.
+- Queue header follows the approved mockup: supplied folder icon, `FILES` and count grouped together, then Add Files / supplied trash icon / separator / red-hover `Clear All` at the right edge. Queue rows retain thumbnail, source size, dimensions, runtime, and real Open / Open file location / Remove overflow menu; overflow dots are deliberately prominent.
+- Busy settings cards use supplied/reworked gold icons, Trajan-preferred bold headings, a separator, and content aligned to the heading column. Crop Zoom and Output Folder intentionally omit their divider. Framing remains the three-radio alignment exception.
+- `OUTPUT FORMAT` remains side-by-side; `SIZING` uses editable fields without ticker arrows; `FRAMING` and `ASPECT RATIO` remain paired.
+- The preview card has no redundant `PREVIEW` header or nested gray panel. Media uses a tight square border against a near-parent dark surface, with real play/pause, seekable source-frame timeline, seconds readout, in-view `FRAME n / total`, and a bottom divider before source/framed-max metadata.
+- Header lockup is `POLYMORPH` plus mixed-case `Media conversion magic — by Knight Witch™`; version is in the footer. Display-font resolution accepts installed Trajan variants (`Trajan Pro 3`, `Trajan Pro`, etc.), with bundled Cinzel as the legal fallback and Inter as the body/UI family. Trajan font binaries are not committed to the public repository.
+- Title/subtitle/card tracking follows the user's Photoshop ratio references rather than default Qt spacing: very wide title tracking, moderately wide subtitle tracking, restrained tracked bold card titles.
+- Primary conversion copy is `POLYMORPH`; the action uses the same Trajan-preferred wide-tracking language, a crimson/gold inset gradient, left static sigil and restrained architectural line decoration. Animation remains separate future work.
+- Status + link footer is one two-level panel: top row carries Ready/status plus spaced Check for Updates / GitHub / Ko-fi / Patreon / Discord links and separators; divider; then `Polymorph v…` at bottom-left and `Polymorph 2026, Knight Witch™` at bottom-right.
+- Current palette remains near-black/charcoal, ivory, champagne gold and restrained crimson. Cards use layered gradients, faint warm center illumination, deterministic runtime grain and etched inner highlights; no external film-grain asset is required.
 - The later loader animation remains open between the arcane/magic-circle concept and the user's D20 roll/spin concept.
 
 ## Windows subprocess behavior
@@ -105,7 +108,8 @@
 
 ## Known follow-ups
 
-- Human-review dev.21 directly against the approved concept side-by-side: Trajan rendering/tracking, vertical option alignment, supplied icons, preview/player treatment, primary action centering, footer spacing/meta row, and responsive shrink behavior at default and minimum window sizes.
+- Human-review dev.22 directly against the approved concept side-by-side: Trajan rendering/tracking, vertical option alignment, supplied icons, preview/player treatment, primary-action balance, footer spacing/meta row, and overall premium gradient treatment.
+- Human-test preview timeline scrubbing on normal Windows; offscreen frozen CI intentionally does not call random-access `QMovie.jumpToFrame()` because that path can wedge the headless WebP plugin.
 - Design and implement the working/loading animation after the structural UI is accepted.
 - Decide final application emblem/icon.
 - Favor resolution performs extra measurement encodes by design; conversion-time optimization can be investigated later but must not change selected outputs.

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from PySide6.QtCore import QSize, Qt
+from PySide6.QtCore import QSize
 from PySide6.QtWidgets import QLabel, QLayout, QRadioButton, QToolButton, QWidget
 
 
@@ -29,7 +29,7 @@ def _remove_spacer_between(layout: QLayout, first: QWidget, second: QWidget) -> 
 
 
 def apply_mockup_fidelity(window) -> None:
-    """Tighten the branded composition to the approved mockup without changing state."""
+    """Tighten branded composition to the approved mockup without changing state."""
     window.setProperty("polymorphFidelity", "mockup-v1")
 
     # FILES: title + count belong together; actions belong together at the right.
@@ -48,9 +48,8 @@ def apply_mockup_fidelity(window) -> None:
                 _remove_spacer_between(header, heading, file_count)
                 file_count.setContentsMargins(4, 0, 0, 0)
             header.setSpacing(7)
-            header.setAlignment(Qt.AlignmentFlag.AlignVCenter)
 
-    # Busy cards use one clean visual content column underneath their icon/title.
+    # Busy cards use one clean content column underneath their icon/title.
     for title in ("OUTPUT FORMAT", "SIZING", "ASPECT RATIO"):
         card = _card_for_heading(window, title)
         content = _nested_layout(card, 2)
@@ -96,7 +95,3 @@ def apply_mockup_fidelity(window) -> None:
     for button in window.findChildren(QToolButton, "FooterLink"):
         button.setIconSize(QSize(14, 14))
         button.setProperty("mockupFooter", True)
-
-    # Re-polish property-driven selectors immediately.
-    window.style().unpolish(window)
-    window.style().polish(window)

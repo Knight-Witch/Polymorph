@@ -2,29 +2,53 @@
 
 Historical entries through dev.19 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV19.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV19.md). Earlier pre-dev.16 history also remains in the existing dev.15 archive.
 
-## POLY-2026-09-12-036 — 2026-09-12 18:40 PDT — Restore base stylesheet compatibility
+## POLY-2026-09-12-037 — 2026-09-12 22:35 PDT — Push the branded UI closer to the approved mockup
 
 ### Summary
 
-- Used Windows Dev Build run #43 bootstrap markers to identify the real packaged-startup failure: `polymorph.app` could not import because `src/polymorph/ui/main_window.py` still imports `BASE_STYLESHEET`, while the dev.21 responsive-style refactor removed that symbol from `styles.py`.
-- Restored `BASE_STYLESHEET` at the stylesheet boundary as `build_brand_stylesheet(1.0)`. The base window can therefore construct normally again, and the branded path still replaces that initial sheet with the responsive scale-specific stylesheet through `apply_brand_skin()`.
-- This is a presentation compatibility repair only. Conversion, adaptive GIF selection, framing/export geometry, preview playback logic, updater behavior, subprocess handling, and the pinned toolchain are unchanged.
-- Version remains `0.1.0-dev.21` because the packaged gate has not yet completed and produced a tester installer.
+- Continued the UI phase immediately after the user confirmed dev.21's proportional window scaling is materially better; responsive shrink behavior is preserved unchanged.
+- Added a presentation-only fidelity layer that groups `FILES` and the file count together, leaves Add Files / trash / separator / Clear All as the right-side action cluster, aligns busy-card content under the icon/title column, opens footer spacing, and keeps the three Framing radios as the intentional alignment exception.
+- Expanded Trajan detection to `Trajan Pro 3`, `Trajan Pro`, `Trajan`, and any Qt-visible family beginning with `Trajan`. Cinzel remains the redistributable packaged fallback; Inter remains the body/UI family.
+- Adjusted display hierarchy toward the user's Photoshop references: much wider `POLYMORPH` tracking, proportionate mixed-case subtitle tracking, larger bold card headings, and matching primary-action tracking.
+- Refined dark card rendering with tighter corner radii, richer charcoal gradients, subtle warm center illumination, deterministic grain, inner etched highlights, and stronger brown/gold borders.
+- Refined the primary `POLYMORPH` button into a more expensive-looking crimson/gold inset surface with a left static sigil, architectural line details, centered tracked title area and clearer hover/pressed depth. This is still static; the loader/cast animation remains a later pass.
+- Tightened the preview again: removed the perceptual inner-gray-panel effect, reduced media inset to 5 px, and changed the source frame outline to square corners so black source corners cannot protrude past a rounded frame. Existing real play/pause, seek bar, seconds and frame-count controls remain.
+- Increased queue-menu ellipsis presence, loosened footer link spacing, and gave Crop Zoom a more dimensional red/gold track and gold handle.
+- Strengthened packaged smoke to require the fidelity pass, FILES title/count grouping, alignment styling, and dev.22 footer version metadata.
+- No conversion, adaptive GIF policy, framing geometry/export behavior, output sizing, updater, subprocess, or pinned FFmpeg/gifski behavior changed.
+- Incremented the tester to `0.1.0-dev.22`.
 
 ### Touched files
 
+- `src/polymorph/ui/fidelity_pass.py` (new)
+- `src/polymorph/ui/fonts.py`
 - `src/polymorph/ui/styles.py`
+- `src/polymorph/ui/brand_widgets.py`
+- `src/polymorph/ui/preview.py`
+- `src/polymorph/smoke_test.py`
+- `src/polymorph/__init__.py`
+- `src/polymorph/constants.py`
+- `pyproject.toml`
+- `installer/Polymorph.iss`
+- `MASTER.md`
+- `docs/ARCHITECTURE.md`
+- `docs/UX_SPEC.md`
 - `PRE_FLIGHT_Check.md`
 - `CHANGELOG.md`
 
-### Rollback
-
-- Revert this commit to remove the compatibility constant, but only after the base `MainWindow` no longer imports/applies `BASE_STYLESHEET` during construction.
-
 ### Test notes
 
-- The next Windows run must import `polymorph.app` successfully, enter the packaged smoke path, pass the frozen-app assertions within the existing 120-second guard, and continue through installer/checksum/artifact creation.
-- If another failure occurs, use the retained bootstrap and incremental smoke checkpoints rather than inferring a Qt playback hang from the outer timeout.
+- Full Windows CI must pass all existing unit/conversion gates, PyInstaller, the frozen packaged-app smoke, installer compilation, checksum generation and artifact uploads.
+- Human review should continue to compare the entire window directly against the approved mockup, particularly Trajan rendering on the user's Windows install, title/card hierarchy, footer breathing room, action-button balance, and the tightened preview frame.
+
+## POLY-2026-09-12-036 — 2026-09-12 19:05 PDT — Repair dev.21 frozen startup
+
+### Summary
+
+- Used the startup checkpoints from Windows run #43 to identify the real failure hidden behind the 120-second process timeout: the frozen EXE failed importing `main_window.py` because it still imported `BASE_STYLESHEET` after the responsive stylesheet refactor removed that symbol.
+- Restored `BASE_STYLESHEET` as `build_brand_stylesheet(1.0)`, preserving base-window compatibility while the branded responsive layer continues to replace it after composition.
+- Windows Dev Build run #44 passed all 54 unit tests, pinned toolchain checks, adaptive integration, GIF reference comparison, PyInstaller, packaged smoke, Inno Setup, checksum and both artifact uploads; dev.21 was successfully produced.
+- No conversion or user-facing layout behavior changed in this repair.
 
 ## POLY-2026-09-12-035 — 2026-09-12 18:30 PDT — Add packaged-startup bootstrap checkpoints
 
@@ -57,7 +81,7 @@ Historical entries through dev.19 are preserved verbatim in [`HISTORY/PROJECT_LO
 ### Summary
 
 - Followed up Windows Dev Build run #41 after the new 120-second guard proved the frozen process still wedged inside the offscreen preview/playback smoke while all conversion/toolchain/package stages before it passed.
-- Added incremental smoke checkpoint persistence so `POLYMORPH_SMOKE_LOG` is rewritten after every PASS/FAIL line; a future timeout now shows the exact last successful assertion.
+- Added incremental smoke checkpoint persistence so `POLYMORPH_SMOKE_LOG` is rewritten after every PASS/FAIL line; a future timeout now shows the exact last successful stage.
 - Removed the CI-only `QMovie.jumpToFrame()` random-seek assertion from the offscreen frozen smoke. Qt's headless WebP plugin can wedge on random-access seeks and is not a faithful proxy for the normal interactive Windows plugin path.
 - The packaged smoke still requires valid animated WebP initialization, a rendered preview frame, initialized frame-count/duration metadata, playback timeline styling, responsive geometry, queue metadata, framing mappings, adaptive controls, linked resolution, and footer metadata.
 - Desktop play/pause/timeline seeking remains implemented unchanged and is left for human validation in the real Windows GUI.
@@ -124,7 +148,7 @@ Historical entries through dev.19 are preserved verbatim in [`HISTORY/PROJECT_LO
 - Rebuilt the main conversion action back to `POLYMORPH`, centered with Trajan-style tracking over symmetric static sigil/line decoration. The decoration remains separate from the later working/loading animation.
 - Combined Ready/status and service links into one concept-matched footer panel with more breathing room between icon/text controls; added a divider and a second metadata row with `Polymorph v0.1.0-dev.21` at left and `Polymorph 2026, Knight Witch™` at right.
 - Added deterministic runtime film grain over the gradient cards instead of requiring a supplied texture asset.
-- Replaced scroll-dependent small-window behavior with responsive shrink mode. Below the 1260×820 design size, the UI scales typography, padding/control widths, queue rows, preview minimums and rail width down to a 920×640 supported minimum. The right control rail is no longer a vertical scroll area.
+- Replaced scroll-dependent small-window behavior with responsive shrink mode. Below the 1260×820 design size, the UI scales typography, padding, control widths, queue rows, preview minimums and rail width down to a 920×640 supported minimum. The right control rail is no longer a vertical scroll area.
 - Strengthened frozen-app smoke coverage for responsive minimum sizing, primary-action visibility, user-supplied icon packaging, hidden Fit Fill control, playback/seek behavior, footer metadata, and the existing framing/adaptive/linked-resolution mappings.
 - No conversion, adaptive GIF, framing geometry, optimizer, updater, subprocess, or pinned toolchain behavior changed.
 - Incremented the tester to `0.1.0-dev.21`.
