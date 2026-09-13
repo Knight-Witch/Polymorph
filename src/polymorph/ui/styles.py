@@ -337,6 +337,11 @@ QToolTip {{ color: #f1e9dd; background: #0b0c0d; border: 1px solid #665137; padd
 """
 
 
+# Compatibility sheet used by the base MainWindow before branded composition
+# replaces it with the responsive scale-specific stylesheet.
+BASE_STYLESHEET = build_brand_stylesheet(1.0)
+
+
 def _apply_typography(window, scale: float) -> None:
     title = window.findChild(QLabel, "BrandTitle")
     if title is not None:

@@ -2,6 +2,14 @@
 
 Historical entries through dev.19 are preserved verbatim in [`HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV19.md`](HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV19.md). Earlier pre-dev.16 history also remains in the existing dev.15 archive.
 
+## PFC-2026-09-12-036 — Restore base stylesheet compatibility after dev.21 refactor
+
+- Required review completed before editing: `PROJECT_CONTRACT.md`, `MASTER.md`, current `PRE_FLIGHT_Check.md`/`CHANGELOG.md`, `docs/ARCHITECTURE.md`, `docs/UX_SPEC.md`, `src/polymorph/ui/styles.py`, `src/polymorph/ui/main_window.py`, packaged smoke code, and Windows Dev Build run #43 logs.
+- Confirmed root cause from run #43 startup tracing: the frozen EXE failed while importing `polymorph.app` with `ImportError: cannot import name 'BASE_STYLESHEET' from 'polymorph.ui.styles'` before `QApplication` or the packaged smoke test could start.
+- The failure came from the dev.21 responsive-style refactor replacing the old constant with `build_brand_stylesheet()` while the established base `MainWindow` still imports and applies `BASE_STYLESHEET` during construction.
+- Fix at the presentation boundary: restore `BASE_STYLESHEET` as `build_brand_stylesheet(1.0)`. This preserves standalone/base-window construction and keeps the existing branded flow unchanged because `apply_brand_skin()` immediately replaces that initial sheet with the responsive scale-specific sheet.
+- No conversion, framing, adaptive GIF, preview/playback, updater, subprocess, packaging-toolchain, or version behavior changed. Version remains `0.1.0-dev.21` until the packaged gate actually completes and produces the tester installer.
+
 ## PFC-2026-09-12-035 — Add packaged-startup bootstrap checkpoints
 
 - Required review completed before editing: `PROJECT_CONTRACT.md`, `MASTER.md`, current `PRE_FLIGHT_Check.md`/`CHANGELOG.md`, `docs/ARCHITECTURE.md`, `docs/UX_SPEC.md`, `run_polymorph.py`, `src/polymorph/app.py`, packaged smoke code, and the Windows dev workflow.

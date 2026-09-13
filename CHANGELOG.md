@@ -2,6 +2,30 @@
 
 Historical entries through dev.19 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV19.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV19.md). Earlier pre-dev.16 history also remains in the existing dev.15 archive.
 
+## POLY-2026-09-12-036 — 2026-09-12 18:40 PDT — Restore base stylesheet compatibility
+
+### Summary
+
+- Used Windows Dev Build run #43 bootstrap markers to identify the real packaged-startup failure: `polymorph.app` could not import because `src/polymorph/ui/main_window.py` still imports `BASE_STYLESHEET`, while the dev.21 responsive-style refactor removed that symbol from `styles.py`.
+- Restored `BASE_STYLESHEET` at the stylesheet boundary as `build_brand_stylesheet(1.0)`. The base window can therefore construct normally again, and the branded path still replaces that initial sheet with the responsive scale-specific stylesheet through `apply_brand_skin()`.
+- This is a presentation compatibility repair only. Conversion, adaptive GIF selection, framing/export geometry, preview playback logic, updater behavior, subprocess handling, and the pinned toolchain are unchanged.
+- Version remains `0.1.0-dev.21` because the packaged gate has not yet completed and produced a tester installer.
+
+### Touched files
+
+- `src/polymorph/ui/styles.py`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert this commit to remove the compatibility constant, but only after the base `MainWindow` no longer imports/applies `BASE_STYLESHEET` during construction.
+
+### Test notes
+
+- The next Windows run must import `polymorph.app` successfully, enter the packaged smoke path, pass the frozen-app assertions within the existing 120-second guard, and continue through installer/checksum/artifact creation.
+- If another failure occurs, use the retained bootstrap and incremental smoke checkpoints rather than inferring a Qt playback hang from the outer timeout.
+
 ## POLY-2026-09-12-035 — 2026-09-12 18:30 PDT — Add packaged-startup bootstrap checkpoints
 
 ### Summary
@@ -100,7 +124,7 @@ Historical entries through dev.19 are preserved verbatim in [`HISTORY/PROJECT_LO
 - Rebuilt the main conversion action back to `POLYMORPH`, centered with Trajan-style tracking over symmetric static sigil/line decoration. The decoration remains separate from the later working/loading animation.
 - Combined Ready/status and service links into one concept-matched footer panel with more breathing room between icon/text controls; added a divider and a second metadata row with `Polymorph v0.1.0-dev.21` at left and `Polymorph 2026, Knight Witch™` at right.
 - Added deterministic runtime film grain over the gradient cards instead of requiring a supplied texture asset.
-- Replaced scroll-dependent small-window behavior with responsive shrink mode. Below the 1260×820 design size, the UI scales typography, padding, control widths, queue rows, preview minimums and rail width down to a 920×640 supported minimum. The right control rail is no longer a vertical scroll area.
+- Replaced scroll-dependent small-window behavior with responsive shrink mode. Below the 1260×820 design size, the UI scales typography, padding/control widths, queue rows, preview minimums and rail width down to a 920×640 supported minimum. The right control rail is no longer a vertical scroll area.
 - Strengthened frozen-app smoke coverage for responsive minimum sizing, primary-action visibility, user-supplied icon packaging, hidden Fit Fill control, playback/seek behavior, footer metadata, and the existing framing/adaptive/linked-resolution mappings.
 - No conversion, adaptive GIF, framing geometry, optimizer, updater, subprocess, or pinned toolchain behavior changed.
 - Incremented the tester to `0.1.0-dev.21`.
