@@ -39,8 +39,13 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force src\polymorph\assets\fonts | Out-Null
+          $trajanCommit = "6762f3334c8b7e157f379fc7befb37056a03e937"
+          $trajanRegular = "https://raw.githubusercontent.com/22is5/cdn/$trajanCommit/fonts/trajan/trajan-regular.ttf"
+          $trajanBold = "https://raw.githubusercontent.com/22is5/cdn/$trajanCommit/fonts/trajan/trajan-bold.otf"
           $cinzel = "https://raw.githubusercontent.com/google/fonts/45071f07c63e863a539442ef3562b71ab1f147a6/ofl/cinzel/Cinzel%5Bwght%5D.ttf"
           $inter = "https://raw.githubusercontent.com/google/fonts/e1d6480102fed30739fead0faee463101f892c8f/ofl/inter/Inter%5Bopsz%2Cwght%5D.ttf"
+          Invoke-WebRequest $trajanRegular -OutFile src\polymorph\assets\fonts\Trajan-Regular.ttf
+          Invoke-WebRequest $trajanBold -OutFile src\polymorph\assets\fonts\Trajan-Bold.otf
           Invoke-WebRequest $cinzel -OutFile src\polymorph\assets\fonts\Cinzel-wght.ttf
           Invoke-WebRequest $inter -OutFile src\polymorph\assets\fonts\Inter-opsz-wght.ttf
           Invoke-WebRequest "https://raw.githubusercontent.com/google/fonts/45071f07c63e863a539442ef3562b71ab1f147a6/ofl/cinzel/OFL.txt" -OutFile src\polymorph\assets\fonts\OFL-Cinzel.txt
