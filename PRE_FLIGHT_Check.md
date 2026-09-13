@@ -2,6 +2,15 @@
 
 Historical entries through dev.19 are preserved verbatim in [`HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV19.md`](HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV19.md). Earlier pre-dev.16 history also remains in the existing dev.15 archive.
 
+## PFC-2026-09-12-033 — Harden dev.21 packaged preview smoke teardown
+
+- Trigger: Windows Dev Build run #40 passed all 54 unit tests, pinned FFmpeg/gifski verification, adaptive integration, GIF reference comparison, and PyInstaller packaging, then stalled for the remainder of the 30-minute job specifically inside the frozen-app UI smoke step.
+- Diagnosis: the hang is isolated to the new dev.21 preview/playback smoke path rather than conversion behavior. The packaged offscreen Qt process remained alive during animated WebP playback/seek teardown.
+- Fix: switch the preview `QMovie` from `CacheAll` to `CacheNone`, pause running playback before deterministic frame seeks, and force the dedicated `--smoke-test` process to terminate after it has written its result instead of relying on native media/plugin teardown.
+- CI safeguard: the packaged smoke process now has its own 120-second timeout and is force-killed with its smoke log printed if it exceeds that bound, preventing another full-job timeout from hiding the failure point.
+- No conversion, adaptive GIF, framing/export geometry, output sizing, updater, or user-facing dev.21 styling behavior changes in this hardening pass.
+- Version remains `0.1.0-dev.21` because no dev.21 tester installer was produced by the failed run.
+
 ## PFC-2026-09-12-032 — Match dev.21 directly to the approved concept markup
 
 - Target files: branded layout/widgets/styles, animated preview, packaged smoke test, user-supplied concept icons, development version metadata, `MASTER.md`, and required tracking files.
