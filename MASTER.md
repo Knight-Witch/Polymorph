@@ -5,10 +5,10 @@
 - Project: Polymorph
 - Repository: `Knight-Witch/Polymorph`
 - Platform target: Windows 10/11 x64
-- Current development version: `0.1.0-dev.22`
+- Current development version: `0.1.0-dev.23`
 - Public release: not yet published.
 - Core conversion machine is considered functionally complete for the current v1 scope: MP4 is human-validated; Preserve-motion GIF quality/smoothness is human-validated; decimal-MB ceiling behavior is validated; updater hardening is validated; Favor-resolution GIF behavior is diagnostically and visually validated on Viper plus two kitbash/decal-heavy HeroForge variants; Crop/Fit preview and real exported output are human-validated end to end; Windows probe/encode console flashes are eliminated.
-- UI work is the active development phase. dev.18 established the black/gold/red visual language; dev.19 replaced the old three-column scaffold; dev.20 moved toward the approved mockup; dev.21 introduced the direct concept composition, playback controls and responsive shrink behavior; dev.22 is the tighter fidelity/polish pass for alignment, Trajan detection/tracking, card rendering, preview chrome, footer density and primary-action treatment.
+- UI work is the active development phase. dev.18 established the black/gold/red visual language; dev.19 replaced the old three-column scaffold; dev.20 moved toward the approved mockup; dev.21 introduced the direct concept composition, playback controls and responsive shrink behavior; dev.22 tightened fidelity/alignment/visual polish; dev.23 makes the approved Trajan display typography self-contained inside the installer instead of depending on fonts installed on the target PC.
 - The user has human-validated dev.21's responsive window behavior as materially better. Preserve that proportional scaling behavior unless later evidence requires a change.
 - The loading/working animation and final application emblem remain separate design work.
 
@@ -82,12 +82,12 @@
 
 - Runtime composition is two columns: left workspace with compact media queue + dominant preview, and a right settings rail. The rail does not depend on vertical scrolling; below the `1260x820` design size, the UI proportionally shrinks typography, card density, control widths, preview minimums and rail width down to the supported `920x640` floor. Human dev.21 testing accepted this behavior.
 - Queue header follows the approved mockup: supplied folder icon, `FILES` and count grouped together, then Add Files / supplied trash icon / separator / red-hover `Clear All` at the right edge. Queue rows retain thumbnail, source size, dimensions, runtime, and real Open / Open file location / Remove overflow menu; overflow dots are deliberately prominent.
-- Busy settings cards use supplied/reworked gold icons, Trajan-preferred bold headings, a separator, and content aligned to the heading column. Crop Zoom and Output Folder intentionally omit their divider. Framing remains the three-radio alignment exception.
+- Busy settings cards use supplied/reworked gold icons, Trajan bold headings, a separator, and content aligned to the heading column. Crop Zoom and Output Folder intentionally omit their divider. Framing remains the three-radio alignment exception.
 - `OUTPUT FORMAT` remains side-by-side; `SIZING` uses editable fields without ticker arrows; `FRAMING` and `ASPECT RATIO` remain paired.
 - The preview card has no redundant `PREVIEW` header or nested gray panel. Media uses a tight square border against a near-parent dark surface, with real play/pause, seekable source-frame timeline, seconds readout, in-view `FRAME n / total`, and a bottom divider before source/framed-max metadata.
-- Header lockup is `POLYMORPH` plus mixed-case `Media conversion magic — by Knight Witch™`; version is in the footer. Display-font resolution accepts installed Trajan variants (`Trajan Pro 3`, `Trajan Pro`, etc.), with bundled Cinzel as the legal fallback and Inter as the body/UI family. Trajan font binaries are not committed to the public repository.
+- Header lockup is `POLYMORPH` plus mixed-case `Media conversion magic — by Knight Witch™`; version is in the footer. dev.23 bundles the approved Trajan Regular and Bold files inside the application and registers them with Qt before the main window is created, so friends running the installer do not need Trajan installed separately. Inter remains the bundled body/UI family; Cinzel is only an emergency development fallback.
 - Title/subtitle/card tracking follows the user's Photoshop ratio references rather than default Qt spacing: very wide title tracking, moderately wide subtitle tracking, restrained tracked bold card titles.
-- Primary conversion copy is `POLYMORPH`; the action uses the same Trajan-preferred wide-tracking language, a crimson/gold inset gradient, left static sigil and restrained architectural line decoration. Animation remains separate future work.
+- Primary conversion copy is `POLYMORPH`; the action uses the same bundled Trajan wide-tracking language, a crimson/gold inset gradient, left static sigil and restrained architectural line decoration. Animation remains separate future work.
 - Status + link footer is one two-level panel: top row carries Ready/status plus spaced Check for Updates / GitHub / Ko-fi / Patreon / Discord links and separators; divider; then `Polymorph v…` at bottom-left and `Polymorph 2026, Knight Witch™` at bottom-right.
 - Current palette remains near-black/charcoal, ivory, champagne gold and restrained crimson. Cards use layered gradients, faint warm center illumination, deterministic runtime grain and etched inner highlights; no external film-grain asset is required.
 - The later loader animation remains open between the arcane/magic-circle concept and the user's D20 roll/spin concept.
@@ -108,7 +108,7 @@
 
 ## Known follow-ups
 
-- Human-review dev.22 directly against the approved concept side-by-side: Trajan rendering/tracking, vertical option alignment, supplied icons, preview/player treatment, primary-action balance, footer spacing/meta row, and overall premium gradient treatment.
+- Human-review dev.23 directly against the approved concept side-by-side, with special attention to the bundled Trajan title/subtitle/card headings/primary action plus the existing icon, preview, footer and gradient fidelity. The typography check must be done without separately installing Trajan; the tester is intended to be self-contained.
 - Human-test preview timeline scrubbing on normal Windows; offscreen frozen CI intentionally does not call random-access `QMovie.jumpToFrame()` because that path can wedge the headless WebP plugin.
 - Design and implement the working/loading animation after the structural UI is accepted.
 - Decide final application emblem/icon.
