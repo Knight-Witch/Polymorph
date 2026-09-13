@@ -132,7 +132,7 @@ Historical entries through dev.19 are preserved verbatim in [`HISTORY/PROJECT_LO
 
 ### Test notes
 
-- The next Windows run must finish the frozen smoke within the existing 120-second guard and continue through Inno Setup, installer compilation, checksum generation, and both artifact uploads.
+- The next Windows run must finish the frozen smoke within the existing 120-second guard and continue through installer/checksum/artifact creation.
 - Human dev.21 validation should explicitly drag the preview timeline backward and forward while paused/running because headless CI no longer attempts that unsupported operation.
 
 ## POLY-2026-09-12-033 — 2026-09-12 18:10 PDT — Harden packaged preview smoke teardown
@@ -224,7 +224,7 @@ Historical entries through dev.19 are preserved verbatim in [`HISTORY/PROJECT_LO
 - Reworked Sizing into two compact editable rows and removed spinbox ticker arrows; users type file-size and resolution values directly.
 - Paired Framing and Aspect Ratio as two cards on one row; kept Original/Crop/Fit as real radio controls synchronized to the established framing state.
 - Split Crop Zoom into its own compact card with percentage readout and a small reset/center action.
-- Retained Fit background-color functionality as a small Fit-only `Fill` utility rather than a dedicated background-color card the user explicitly did not require.
+- Retained Fit background-color functionality as a small Fit-only `Fill` utility rather than a dedicated background-color card.
 - Rebuilt the Files area to match the concept: title and file count share the action row; Add Files sits beside a selected-item trash button, separator, and `Clear All` text action that turns crimson on hover.
 - Added real queue-row media presentation: first-frame thumbnail, source file name, original decimal file size, source dimensions, runtime, and overflow actions for Open, Open file location, and Remove from queue.
 - Replaced the oversized idle/progress treatment with a compact Ready strip containing a ring glyph, `Ready`, and `<N> files imported. Choose your settings and begin.`; thin progress appears only while conversion is actually advancing.
