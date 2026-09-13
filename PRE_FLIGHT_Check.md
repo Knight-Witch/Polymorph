@@ -2,6 +2,14 @@
 
 Historical entries through dev.19 are preserved verbatim in [`HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV19.md`](HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV19.md). Earlier pre-dev.16 history also remains in the existing dev.15 archive.
 
+## PFC-2026-09-12-035 — Add packaged-startup bootstrap checkpoints
+
+- Required review completed before editing: `PROJECT_CONTRACT.md`, `MASTER.md`, current `PRE_FLIGHT_Check.md`/`CHANGELOG.md`, `docs/ARCHITECTURE.md`, `docs/UX_SPEC.md`, `run_polymorph.py`, `src/polymorph/app.py`, packaged smoke code, and the Windows dev workflow.
+- Evidence from Windows Dev Build run #42: all unit/conversion/toolchain/PyInstaller stages passed, the packaged process again exceeded the 120-second smoke guard, and no incremental smoke checkpoint file existed. Therefore the process is hanging before the first line inside `run_packaged_smoke_test()`, not in the removed random-access playback assertion.
+- Diagnostic change only: `run_polymorph.py` now appends startup markers to `POLYMORPH_SMOKE_LOG` before/after importing `polymorph.app` and before calling `main()`; `app.py` records entry, `QApplication` construction, font loading, smoke-argument detection, smoke-module import, smoke invocation and return.
+- Bootstrap logging is inert in ordinary launches because it runs only when `POLYMORPH_SMOKE_LOG` is present. Logging failures are swallowed so diagnostics cannot block startup.
+- This pass intentionally does not alter conversion, UI layout, playback behavior, framing, updater behavior, or version metadata. Version remains `0.1.0-dev.21` until a tester installer actually completes CI.
+
 ## PFC-2026-09-12-034 — Make the packaged playback smoke headless-safe
 
 - Follow-up diagnosis from Windows Dev Build run #41: the new 120-second smoke timeout fired exactly as intended, proving the frozen process still wedged inside the new offscreen preview/playback test while every conversion/toolchain/package stage before it passed.

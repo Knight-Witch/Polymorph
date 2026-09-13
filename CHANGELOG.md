@@ -2,6 +2,32 @@
 
 Historical entries through dev.19 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV19.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV19.md). Earlier pre-dev.16 history also remains in the existing dev.15 archive.
 
+## POLY-2026-09-12-035 — 2026-09-12 18:30 PDT — Add packaged-startup bootstrap checkpoints
+
+### Summary
+
+- Reclassified the remaining dev.21 CI hang from a playback-seek problem to a pre-smoke startup problem after Windows run #42 again hit the 120-second packaged-process guard without creating even the first incremental smoke checkpoint.
+- Added packaged-smoke-only bootstrap logging to `run_polymorph.py` before/after importing `polymorph.app` and before calling `main()`.
+- Added matching startup checkpoints in `app.py` around `QApplication` creation, brand-font loading, smoke-argument detection, smoke-module import, smoke invocation and smoke return.
+- Bootstrap logging is gated entirely by the existing `POLYMORPH_SMOKE_LOG` environment variable and silently ignores logging failures, so normal desktop startup and release behavior are unchanged.
+- No conversion, framing, adaptive GIF, preview/playback UI, styling, updater, subprocess or package-version behavior changed.
+- Version remains `0.1.0-dev.21` because no dev.21 installer has completed the packaged gate yet.
+
+### Touched files
+
+- `run_polymorph.py`
+- `src/polymorph/app.py`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert this commit to remove the startup checkpoint instrumentation once the frozen-startup hang is isolated. The instrumentation is intentionally inert in normal launches.
+
+### Test notes
+
+- The next Windows run should either complete the packaged smoke or print a precise last bootstrap stage before the 120-second guard fires. Use that evidence for the next fix rather than weakening the remaining frozen-app assertions.
+
 ## POLY-2026-09-12-034 — 2026-09-12 18:20 PDT — Make packaged playback smoke headless-safe
 
 ### Summary
