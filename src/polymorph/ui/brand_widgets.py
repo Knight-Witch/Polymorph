@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from pathlib import Path
 
 from PySide6.QtCore import QEvent, QObject, QRectF, QSize, Qt, QTimer
 from PySide6.QtGui import (
@@ -13,6 +12,7 @@ from PySide6.QtGui import (
     QPainterPath,
     QPen,
     QPixmap,
+    QRadialGradient,
 )
 from PySide6.QtWidgets import QFrame, QLabel, QPushButton
 
@@ -84,7 +84,7 @@ class TintIconLabel(QLabel):
 
 
 class TexturedFrame(QFrame):
-    """Dark gradient panel with deterministic, very low-opacity synthesized grain."""
+    """Dark restrained gradient panel with deterministic synthesized grain."""
 
     def __init__(self, tone: str = "control", parent=None) -> None:
         super().__init__(parent)
@@ -95,55 +95,69 @@ class TexturedFrame(QFrame):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
         rect = QRectF(self.rect()).adjusted(0.5, 0.5, -0.5, -0.5)
-        radius = 5.0
+        radius = 3.25
 
         path = QPainterPath()
         path.addRoundedRect(rect, radius, radius)
         painter.setClipPath(path)
 
+        selected = self.tone == "queue-selected" or bool(self.property("selected"))
         if self.tone == "preview":
-            c0, c1 = QColor("#090a0b"), QColor("#070809")
+            c0, mid, c1 = QColor("#0b0c0d"), QColor("#08090a"), QColor("#060708")
         elif self.tone == "status":
-            c0, c1 = QColor("#0b0c0d"), QColor("#070809")
-        elif self.tone == "queue-selected" or bool(self.property("selected")):
-            c0, c1 = QColor("#1d090c"), QColor("#0e0d0d")
+            c0, mid, c1 = QColor("#0d0e0f"), QColor("#090a0b"), QColor("#060708")
+        elif selected:
+            c0, mid, c1 = QColor("#23090d"), QColor("#16090b"), QColor("#0b0b0c")
         else:
-            c0, c1 = QColor("#101112"), QColor("#090a0b")
+            c0, mid, c1 = QColor("#141311"), QColor("#0d0e0f"), QColor("#08090a")
 
-        gradient = QLinearGradient(rect.topLeft(), rect.bottomRight())
-        gradient.setColorAt(0.0, c0)
-        gradient.setColorAt(0.48, QColor("#0c0d0e"))
-        gradient.setColorAt(1.0, c1)
-        painter.fillPath(path, gradient)
+        base = QLinearGradient(rect.topLeft(), rect.bottomRight())
+        base.setColorAt(0.0, c0)
+        base.setColorAt(0.46, mid)
+        base.setColorAt(1.0, c1)
+        painter.fillPath(path, base)
 
-        # Stable low-density grain. It adds surface depth without becoming visible noise.
+        # Slight warm center illumination keeps the panels from reading as flat
+        # gray boxes while staying substantially darker than the content.
+        glow = QRadialGradient(rect.center(), max(rect.width(), rect.height()) * 0.82)
+        glow.setColorAt(0.0, QColor(198, 153, 86, 8 if not selected else 5))
+        glow.setColorAt(0.52, QColor(111, 74, 37, 3))
+        glow.setColorAt(1.0, QColor(0, 0, 0, 0))
+        painter.fillPath(path, glow)
+
+        # Stable low-density grain. It adds surface depth without visible speckling.
         width = max(1, self.width())
         height = max(1, self.height())
-        samples = min(260, max(40, (width * height) // 8500))
+        samples = min(320, max(48, (width * height) // 7200))
         state = 0x5EED1234
         for index in range(samples):
             state = (1664525 * state + 1013904223 + index) & 0xFFFFFFFF
             x = state % width
             state = (1664525 * state + 1013904223) & 0xFFFFFFFF
             y = state % height
-            alpha = 5 + ((state >> 24) & 0x03)
+            alpha = 4 + ((state >> 24) & 0x03)
             painter.setPen(QColor(255, 244, 226, alpha))
             painter.drawPoint(int(x), int(y))
 
         painter.setClipping(False)
-        if bool(self.property("selected")):
-            border = QColor("#a3262e")
+        if selected:
+            border = QColor("#a92a32")
         elif self.tone == "preview":
-            border = QColor("#54422c")
+            border = QColor("#55422d")
         else:
-            border = QColor("#403326")
+            border = QColor("#493827")
         painter.setPen(QPen(border, 1.0))
         painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.drawRoundedRect(rect, radius, radius)
 
+        # Hairline inner highlight gives the mockup's etched/shadowed card edge.
+        inner = rect.adjusted(1.0, 1.0, -1.0, -1.0)
+        painter.setPen(QPen(QColor(224, 186, 113, 13 if not selected else 18), 1.0))
+        painter.drawRoundedRect(inner, max(1.5, radius - 1.0), max(1.5, radius - 1.0))
+
 
 class PolymorphButton(QPushButton):
-    """Centered branded action button with static alchemic decoration."""
+    """Branded action surface matching the approved concept; animation comes later."""
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
@@ -151,80 +165,107 @@ class PolymorphButton(QPushButton):
         self.setText("POLYMORPH")
         self.setAccessibleName("Polymorph")
         self.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.setMinimumHeight(62)
+        self.setMinimumHeight(66)
         self._scale = 1.0
 
     def apply_scale(self, scale: float) -> None:
         self._scale = scale
-        self.setMinimumHeight(max(48, round(66 * scale)))
+        self.setMinimumHeight(max(49, round(68 * scale)))
         self.update()
 
     def paintEvent(self, _event) -> None:
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
         rect = QRectF(self.rect()).adjusted(0.5, 0.5, -0.5, -0.5)
-        radius = max(4.0, 7.0 * self._scale)
+        radius = max(3.0, 4.5 * self._scale)
 
         enabled = self.isEnabled()
         down = self.isDown()
         hover = self.underMouse()
         if not enabled:
-            left, mid, right = QColor("#180f10"), QColor("#241315"), QColor("#180f10")
-            border = QColor("#4e4030")
+            left, center, right = QColor("#140b0c"), QColor("#241014"), QColor("#140b0c")
+            border = QColor("#50402e")
         elif down:
-            left, mid, right = QColor("#26080c"), QColor("#681119"), QColor("#26080c")
+            left, center, right = QColor("#240609"), QColor("#7a151e"), QColor("#240609")
             border = QColor("#f0ce8a")
         elif hover:
-            left, mid, right = QColor("#28090d"), QColor("#8b1d26"), QColor("#28090d")
+            left, center, right = QColor("#25070a"), QColor("#8e1b25"), QColor("#25070a")
             border = QColor("#e2bd76")
         else:
-            left, mid, right = QColor("#1b0709"), QColor("#68131a"), QColor("#1b0709")
-            border = QColor("#b98d49")
+            left, center, right = QColor("#160608"), QColor("#671018"), QColor("#160608")
+            border = QColor("#bd914b")
 
         path = QPainterPath()
         path.addRoundedRect(rect, radius, radius)
         painter.setClipPath(path)
         gradient = QLinearGradient(rect.left(), rect.center().y(), rect.right(), rect.center().y())
         gradient.setColorAt(0.0, left)
-        gradient.setColorAt(0.48, mid)
-        gradient.setColorAt(0.52, mid)
+        gradient.setColorAt(0.18, QColor("#26080c") if enabled else left)
+        gradient.setColorAt(0.50, center)
+        gradient.setColorAt(0.82, QColor("#26080c") if enabled else right)
         gradient.setColorAt(1.0, right)
         painter.fillPath(path, gradient)
 
-        # Quiet static rings/triangle behind the label; this is not the loader animation.
-        cx, cy = rect.center().x(), rect.center().y()
-        ring_color = QColor(214, 177, 108, 32 if enabled else 14)
-        painter.setPen(QPen(ring_color, 1.0))
-        for radius_px in (22, 30, 39):
-            rr = radius_px * self._scale
-            painter.drawEllipse(QRectF(cx - rr, cy - rr, rr * 2, rr * 2))
-        tri = 15 * self._scale
-        painter.drawLine(int(cx), int(cy - tri), int(cx - tri), int(cy + tri * 0.8))
-        painter.drawLine(int(cx - tri), int(cy + tri * 0.8), int(cx + tri), int(cy + tri * 0.8))
-        painter.drawLine(int(cx + tri), int(cy + tri * 0.8), int(cx), int(cy - tri))
+        # Subtle top/bottom light shaping makes the action look inset rather than flat.
+        sheen = QLinearGradient(rect.left(), rect.top(), rect.left(), rect.bottom())
+        sheen.setColorAt(0.0, QColor(255, 220, 158, 18 if enabled else 6))
+        sheen.setColorAt(0.32, QColor(255, 255, 255, 0))
+        sheen.setColorAt(1.0, QColor(0, 0, 0, 70))
+        painter.fillPath(path, sheen)
 
+        # Mockup-inspired left sigil. It stays static until the dedicated loader pass.
+        sigil_cx = rect.left() + 58 * self._scale
+        cy = rect.center().y()
+        ring_color = QColor(222, 184, 113, 95 if enabled else 35)
+        painter.setPen(QPen(ring_color, max(0.8, 1.0 * self._scale)))
+        for radius_px in (15, 23):
+            rr = radius_px * self._scale
+            painter.drawEllipse(QRectF(sigil_cx - rr, cy - rr, rr * 2, rr * 2))
+        tri = 10.5 * self._scale
+        painter.drawLine(int(sigil_cx), int(cy - tri), int(sigil_cx - tri), int(cy + tri * 0.82))
+        painter.drawLine(int(sigil_cx - tri), int(cy + tri * 0.82), int(sigil_cx + tri), int(cy + tri * 0.82))
+        painter.drawLine(int(sigil_cx + tri), int(cy + tri * 0.82), int(sigil_cx), int(cy - tri))
+
+        # Thin architectural separators, like the concept art, without crowding the title.
+        painter.setPen(QPen(QColor(201, 160, 91, 120 if enabled else 45), 1.0))
         line_y = cy
-        gap = 120 * self._scale
-        line_len = 44 * self._scale
-        painter.setPen(QPen(QColor(191, 148, 80, 135 if enabled else 55), 1.0))
-        painter.drawLine(int(cx - gap - line_len), int(line_y), int(cx - gap), int(line_y))
-        painter.drawLine(int(cx + gap), int(line_y), int(cx + gap + line_len), int(line_y))
+        painter.drawLine(
+            int(rect.left() + 13 * self._scale),
+            int(line_y),
+            int(rect.left() + 27 * self._scale),
+            int(line_y),
+        )
+        painter.drawLine(
+            int(rect.right() - 27 * self._scale),
+            int(line_y),
+            int(rect.right() - 13 * self._scale),
+            int(line_y),
+        )
 
         painter.setClipping(False)
         painter.setPen(QPen(border, 1.0))
         painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.drawRoundedRect(rect, radius, radius)
+        inner = rect.adjusted(1.0, 1.0, -1.0, -1.0)
+        painter.setPen(QPen(QColor(244, 203, 128, 35 if enabled else 12), 1.0))
+        painter.drawRoundedRect(inner, max(2.0, radius - 1.0), max(2.0, radius - 1.0))
 
-        text_color = QColor("#f0d9af") if enabled else QColor("#776a5b")
+        text_color = QColor("#f1ddb7") if enabled else QColor("#776a5b")
         painter.setPen(text_color)
         painter.setFont(
             tracked_font(
-                max(10.0, 14.0 * self._scale),
-                max(1.2, 3.1 * self._scale),
+                max(9.6, 13.2 * self._scale),
+                max(2.6, 5.5 * self._scale),
                 bold=False,
             )
         )
-        painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "POLYMORPH")
+        text_rect = QRectF(
+            rect.left() + 92 * self._scale,
+            rect.top(),
+            max(1.0, rect.width() - 116 * self._scale),
+            rect.height(),
+        )
+        painter.drawText(text_rect, Qt.AlignmentFlag.AlignCenter, "POLYMORPH")
 
 
 @dataclass
@@ -307,6 +348,7 @@ class ResponsiveBrandController(QObject):
         self._last_scale = scale
         self.window.setProperty("brandScale", scale)
         self.apply_callback(scale)
+
 
 class BrandSigil(QFrame):
     """Small static Polymorph mark used in the header; not the working loader."""
