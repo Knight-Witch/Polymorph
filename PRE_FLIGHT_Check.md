@@ -2,6 +2,18 @@
 
 Historical entries through dev.19 are preserved verbatim in [`HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV19.md`](HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV19.md). Earlier pre-dev.16 history also remains in the existing dev.15 archive.
 
+## PFC-2026-09-13-039 — Bundle the approved display font inside Polymorph
+
+- Required review completed before editing: `PROJECT_CONTRACT.md`, `MASTER.md`, current `PRE_FLIGHT_Check.md` / `CHANGELOG.md`, `docs/ARCHITECTURE.md`, `docs/UX_SPEC.md`, current font loader, branded typography call sites, packaged smoke, PyInstaller spec, package-data metadata, and the Windows development workflow.
+- Diagnosis: dev.22 still treated Trajan as an optional system/private-local font and could fall back to Cinzel in an installed tester. That directly violated the requirement that friends running Polymorph must see the intended display typography without separately installing a font.
+- The exact approved Regular/Bold files supplied for Polymorph were independently matched byte-for-byte by Git blob identity to immutable files in `22is5/cdn` commit `6762f3334c8b7e157f379fc7befb37056a03e937`: Regular `b53d6c0b90c0ebc0273ae52a7a2d6959ee904d6e`, Bold `c27f189594483430f8d617fef1b749f85e6ee05a`.
+- The Windows workflow now fetches those exact pinned assets alongside Inter/Cinzel, and `build/verify_font_assets.py` fails CI unless all four binaries match their expected Git blob SHA-1 identities.
+- `load_brand_fonts()` now registers the packaged Trajan Regular and Bold faces before the UI is created and marks `bundled-trajan` as the normal display source. Inter remains the body/UI family. System Trajan and Cinzel are fallback paths only for incomplete source checkouts, not normal installed testers.
+- PyInstaller already packages the entire `src/polymorph/assets` tree. Setuptools package data now also includes `assets/fonts/*.otf`, so the bold OTF is covered consistently outside the frozen build path.
+- Packaged smoke now requires both Trajan files to exist, requires Qt to register both logical Trajan faces, and rejects a frozen build whose display source is anything other than `bundled-trajan`.
+- No GIF/MP4 conversion behavior, adaptive GIF selection, framing/export geometry, preview playback, queue behavior, responsive layout, updater, subprocess behavior, or pinned FFmpeg/gifski toolchain behavior changes in this pass.
+- Versioning: increment tester from `0.1.0-dev.22` to `0.1.0-dev.23`.
+
 ## PFC-2026-09-13-038 — Prefer sharp vector branded icons without changing behavior
 
 - Required review completed before editing: `PROJECT_CONTRACT.md`, `MASTER.md`, current `PRE_FLIGHT_Check.md`/`CHANGELOG.md`, `docs/ARCHITECTURE.md`, `docs/UX_SPEC.md`, the relevant dev.18/dev.19 UI history, current `brand_widgets.py`, `branded_layout.py`, font loader, package data, packaged smoke, and the existing dev.22 Crop SVG.
