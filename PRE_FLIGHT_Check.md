@@ -2,6 +2,22 @@
 
 Historical entries through dev.19 are preserved verbatim in [`HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV19.md`](HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV19.md). Earlier pre-dev.16 history also remains in the existing dev.15 archive.
 
+## PFC-2026-09-12-032 — Match dev.21 directly to the approved concept markup
+
+- Target files: branded layout/widgets/styles, animated preview, packaged smoke test, user-supplied concept icons, development version metadata, `MASTER.md`, and required tracking files.
+- Required review completed before editing: `PROJECT_CONTRACT.md`, `MASTER.md`, `PRE_FLIGHT_Check.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, `docs/UX_SPEC.md`, current dev.20 branded layout/QSS/smoke implementation, `preview.py`, base/adaptive window wiring, the approved concept image, the user's annotated side-by-side dev.20 screenshot, and the supplied Trajan/icon assets.
+- Human diagnosis: dev.20 is materially closer but still differs in vertical alignment, title hierarchy/tracking, card-header divider rules, preview chrome, primary-action alignment, footer spacing/metadata, and responsive behavior. The dev.20 right rail still expects scrolling to reveal the primary action at smaller heights, and the Fit-only `Fill` control expands the framing card unexpectedly.
+- Typography direction: prefer system-installed `Trajan Pro` for `POLYMORPH`, mixed-case `Media conversion magic — by Knight Witch™`, card headings, and primary action; keep bundled Cinzel only as a legal packaged fallback and Inter for body/UI text. The user supplied Trajan binaries are Adobe-proprietary and therefore are intentionally not committed to the public repository; the app will use Trajan automatically when it is installed on Windows.
+- Tracking ratios are based on the user's Photoshop reference: title uses very wide tracking, subtitle moderately wide tracking, card headings use restrained tracking with bold weight, and the primary action returns from `Cast Polymorph` to `POLYMORPH` with the same display language as the application title.
+- Card geometry: busy cards retain icon/title/divider treatment but content is indented to the same visual column as the heading text. Crop Zoom and Output Folder intentionally omit the divider. User-supplied resize/priority/crop/aspect/folder/trash/update artwork replaces the improvised equivalents where applicable.
+- Preview: remove the redundant Preview heading and gray nested surface; draw media against the preview-card background with a tight square border. Add a real play/pause control, seekable source-frame timeline, seconds readout, in-view `FRAME n / total` readout, and a bottom divider before source/framed-max metadata. Playback is preview-only and does not change export timing.
+- Footer/status: combine Ready/status and spaced labeled service links into one top row, add a divider, then place the version bottom-left and `Polymorph 2026, Knight Witch™` bottom-right.
+- Responsive behavior: remove dependency on a vertically scrolling settings rail. Below the 1260×820 design size, a resize controller proportionally reduces typography, padding/control dimensions, queue-row geometry, preview minimums, and rail width down to the supported 920×640 floor. Frozen-app smoke must reject a clipped primary action at the minimum size.
+- Fit background color remains in the engine model but the branded `Fill` button is hidden/removed from the v1 branded UI per user direction; Fit therefore uses the current/default background color without expanding the Framing card.
+- Visual texture is synthesized at runtime with deterministic low-opacity grain layered over the existing gradients; no external film-grain asset is required.
+- Conversion engine, adaptive GIF policy, framing geometry, output sizing, updater, subprocess behavior, and pinned FFmpeg/gifski toolchain remain unchanged.
+- Versioning: increment development tester from `0.1.0-dev.20` to `0.1.0-dev.21`.
+
 ## PFC-2026-09-12-031 — Match approved mockup density and interaction details
 
 - Target files: `src/polymorph/ui/branded_layout.py`, `src/polymorph/ui/styles.py`, packaged smoke test, development version metadata, `MASTER.md`, and required tracking files.

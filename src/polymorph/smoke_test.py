@@ -6,7 +6,7 @@ import traceback
 from pathlib import Path
 
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QApplication, QFrame, QLabel, QScrollArea, QSplitter
+from PySide6.QtWidgets import QApplication, QLabel, QSplitter, QWidget
 
 from .models import FramingMode, GifMotionMode
 from .resources import asset_path
@@ -21,6 +21,15 @@ _ASSETS = (
     "kofi.svg",
     "patreon.svg",
     "discord.svg",
+)
+_CONCEPT_ICON_ASSETS = (
+    "ui/aspect-ratio.png",
+    "ui/crop.png",
+    "ui/folder.png",
+    "ui/priority.png",
+    "ui/resize.png",
+    "ui/trash.png",
+    "ui/update.png",
 )
 _FONT_ASSETS = (
     "fonts/Cinzel-wght.ttf",
@@ -38,7 +47,6 @@ def _write_log(lines: list[str]) -> None:
 
 
 def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
-    """Exercise the frozen application without exposing a user-facing test mode."""
     lines: list[str] = []
     window: MainWindow | None = None
     try:
@@ -47,22 +55,20 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
             raise RuntimeError(f"Smoke-test WebP is missing: {sample}")
 
         tools = find_toolchain()
-        for name, path in (
-            ("ffmpeg", tools.ffmpeg),
-            ("ffprobe", tools.ffprobe),
-            ("gifski", tools.gifski),
-        ):
+        for name, path in (("ffmpeg", tools.ffmpeg), ("ffprobe", tools.ffprobe), ("gifski", tools.gifski)):
             if not path.is_file():
                 raise RuntimeError(f"Bundled {name} was not found: {path}")
         lines.append("PASS bundled conversion tools")
 
         for name in _ASSETS:
             path = asset_path(name)
+            if not path.is_file() or QIcon(str(path)).isNull():
+                raise RuntimeError(f"Packaged footer resource is missing or invalid: {path}")
+        for name in _CONCEPT_ICON_ASSETS:
+            path = asset_path(name)
             if not path.is_file():
-                raise RuntimeError(f"Packaged UI resource is missing: {path}")
-            if QIcon(str(path)).isNull():
-                raise RuntimeError(f"Packaged UI resource could not be loaded: {path}")
-        lines.append("PASS packaged footer SVG resources")
+                raise RuntimeError(f"Packaged concept icon is missing: {path}")
+        lines.append("PASS packaged footer and supplied concept icon resources")
 
         for name in _FONT_ASSETS:
             path = asset_path(name)
@@ -70,95 +76,69 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
                 raise RuntimeError(f"Packaged font resource is missing: {path}")
         loaded_fonts = str(app.property("polymorphFontsLoaded") or "")
         if "Cinzel" not in loaded_fonts or "Inter" not in loaded_fonts:
-            raise RuntimeError(f"Bundled brand fonts did not load: {loaded_fonts!r}")
-        lines.append("PASS bundled Cinzel and Inter fonts")
+            raise RuntimeError(f"Bundled fallback/body fonts did not load: {loaded_fonts!r}")
+        if not str(app.property("polymorphDisplayFont") or "").strip():
+            raise RuntimeError("Display font resolution did not run")
+        lines.append("PASS packaged font resolution with Trajan-capable fallback")
 
         window = MainWindow()
         rebuild_brand_layout(window)
         apply_brand_skin(window)
+        window.move(-4000, -4000)
         window.show()
         app.processEvents()
         if window.converter is None:
             raise RuntimeError("Main window could not resolve the bundled conversion toolchain")
 
-        if window.width() < 1200 or window.height() < 800:
+        if (window.width(), window.height()) != (1260, 820):
+            raise RuntimeError(f"Default concept geometry regressed: {window.width()}x{window.height()}")
+        if window.minimumWidth() != 920 or window.minimumHeight() != 640:
             raise RuntimeError(
-                f"Default window geometry regressed: got {window.width()}x{window.height()}, "
-                "expected at least 1200x800"
+                f"Responsive floor regressed: {window.minimumWidth()}x{window.minimumHeight()}"
             )
-        if window.minimumWidth() < 1080 or window.minimumHeight() < 700:
-            raise RuntimeError(
-                f"Minimum window geometry regressed: got {window.minimumWidth()}x"
-                f"{window.minimumHeight()}, expected >=1080x700"
-            )
-        lines.append("PASS compact concept-matched default geometry")
+        lines.append("PASS responsive concept default/minimum geometry")
 
         subtitle = window.findChild(QLabel, "BrandSubtitle")
-        if window.property("polymorphSkin") != "occult-gold-v3":
+        if window.property("polymorphSkin") != "occult-gold-v4":
             raise RuntimeError("Branded presentation skin was not applied")
-        if window.property("polymorphLayout") != "concept-match-v1":
-            raise RuntimeError("Concept-matched branded layout was not applied")
-        if subtitle is None or subtitle.text() != "MEDIA CONVERSION MAGIC — BY KNIGHT WITCH™":
-            raise RuntimeError("Branded subtitle/byline copy is missing")
-        if window.convert_btn.accessibleName() != "Cast Polymorph":
-            raise RuntimeError("Primary action accessible copy regressed")
-        cast_title = window.findChild(QLabel, "CastTitle")
-        if cast_title is None or cast_title.text() != "CAST POLYMORPH":
-            raise RuntimeError("Concept-style Cast Polymorph face is missing")
+        if window.property("polymorphLayout") != "concept-match-v2":
+            raise RuntimeError("Concept v2 layout was not applied")
+        if subtitle is None or subtitle.text() != "Media conversion magic — by Knight Witch™":
+            raise RuntimeError("Mixed-case branded subtitle/byline copy is missing")
+        if window.convert_btn.text() != "POLYMORPH" or window.convert_btn.accessibleName() != "Polymorph":
+            raise RuntimeError("Primary action did not return to POLYMORPH")
         splitter = window.findChild(QSplitter, "BrandMainSplitter")
         if splitter is None or splitter.count() != 2:
             raise RuntimeError("Main workspace is not the two-column composition")
-        rail = window.findChild(QScrollArea, "ControlRail")
+        rail = window.findChild(QWidget, "ControlRailContent")
         if rail is None:
-            raise RuntimeError("Right settings rail is missing")
+            raise RuntimeError("Responsive right settings rail is missing")
+        lines.append("PASS title/byline, two-column shell, and POLYMORPH action")
+
+        # Minimum-size regression: shrink rather than scroll/hide the primary action.
+        window.resize(920, 640)
         app.processEvents()
-        if rail.horizontalScrollBar().maximum() != 0:
-            raise RuntimeError("Right settings rail requires horizontal scrolling/clips content")
-        if len(window.findChildren(QFrame, "ControlCard")) < 6:
-            raise RuntimeError("Right control rail is missing branded section cards")
-        lines.append("PASS concept shell, byline, paired controls, and unclipped rail")
-
-        tooltip_widgets = {
-            "file queue": window.file_list,
-            "preview": window.preview,
-            "GIF format": window.gif_radio,
-            "MP4 format": window.mp4_radio,
-            "file-size mode": window.size_radio,
-            "file-size limit": window.max_mb,
-            "resolution mode": window.res_radio,
-            "width": window.width_spin,
-            "height": window.height_spin,
-            "preserve motion": window.motion_preserve_radio,
-            "favor resolution": window.motion_favor_radio,
-            "framing mode": window.frame_mode,
-            "aspect ratio": window.ratio_combo,
-            "crop zoom": window.crop_zoom_slider,
-            "center framing": window.center_btn,
-            "fit background": window.color_btn,
-            "output folder": window.output_path,
-            "convert": window.convert_btn,
-        }
-        missing_tooltips = [
-            name for name, widget in tooltip_widgets.items() if not widget.toolTip().strip()
-        ]
-        if missing_tooltips:
+        scale = float(window.property("brandScale") or 1.0)
+        if scale >= 0.99:
+            raise RuntimeError(f"Responsive shrink mode did not engage: scale={scale}")
+        bottom = window.convert_btn.mapTo(rail, window.convert_btn.rect().bottomRight()).y()
+        if bottom > rail.height() + 2:
             raise RuntimeError(
-                "Missing hover tooltip(s): " + ", ".join(missing_tooltips)
+                f"POLYMORPH action is clipped at minimum size: button bottom {bottom}, rail {rail.height()}"
             )
-        stylesheet = window.styleSheet()
-        if "QRadioButton::indicator:checked" not in stylesheet:
-            raise RuntimeError("Selected radio controls do not have an explicit visible style")
-        if "qradialgradient" not in stylesheet:
-            raise RuntimeError("Selected radio controls do not use the centered filled-dot style")
-        if '"Cinzel"' not in stylesheet or '"Inter"' not in stylesheet:
-            raise RuntimeError("Branded type families are missing from the packaged stylesheet")
-        if "QAbstractSpinBox::up-button" not in stylesheet:
-            raise RuntimeError("Resolution controls did not suppress ticker-arrow styling")
-        lines.append("PASS compact branded typography, tooltips, and field styling")
+        lines.append("PASS responsive shrink keeps primary action visible")
 
+        stylesheet = window.styleSheet()
+        if "QAbstractSpinBox::up-button" not in stylesheet:
+            raise RuntimeError("Resolution controls restored ticker-arrow styling")
+        if "QSlider#CropZoomSlider" not in stylesheet or "QSlider#PlaybackTimeline" not in stylesheet:
+            raise RuntimeError("Concept slider styling is missing")
+        lines.append("PASS concept field and slider styling")
+
+        window.resize(1260, 820)
+        app.processEvents()
         window._add_files([sample])
         app.processEvents()
-
         if window.file_list.count() != 1:
             raise RuntimeError("Main window did not accept the smoke-test WebP")
         item_widget = window.file_list.itemWidget(window.file_list.item(0))
@@ -174,14 +154,23 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
             raise RuntimeError("Qt could not initialize animated WebP playback")
         if not movie.jumpToFrame(0):
             raise RuntimeError("Qt could not decode the first animated WebP frame")
-
         deadline = time.monotonic() + 2.0
         while window.preview._pixmap.isNull() and time.monotonic() < deadline:
             app.processEvents()
             time.sleep(0.02)
         if window.preview._pixmap.isNull():
             raise RuntimeError("Live preview did not produce a renderable WebP frame")
-        lines.append("PASS animated WebP live preview")
+        total = window.preview.total_frames()
+        if total > 2:
+            target = total // 2
+            if not window.preview.seek_frame(target):
+                raise RuntimeError("Preview seek control could not jump to a source frame")
+            app.processEvents()
+            if window.preview._current_frame != target:
+                raise RuntimeError(
+                    f"Preview seek landed on frame {window.preview._current_frame}, expected {target}"
+                )
+        lines.append("PASS animated WebP preview playback/seek controls")
 
         if not window.motion_preserve_radio.isChecked():
             raise RuntimeError("GIF motion priority did not default to Preserve motion")
@@ -190,6 +179,10 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
             raise RuntimeError("Favor resolution UI did not map to conversion settings")
         lines.append("PASS adaptive GIF priority controls")
 
+        window._brand_fit_radio.setChecked(True)
+        app.processEvents()
+        if window.color_btn.isVisible():
+            raise RuntimeError("Fit background Fill control reappeared in the branded UI")
         window._brand_crop_radio.setChecked(True)
         window.ratio_combo.setCurrentText("16:9")
         window.crop_zoom_slider.setValue(150)
@@ -199,7 +192,7 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
             raise RuntimeError("Branded Crop radio did not map to conversion settings")
         if abs(settings.framing.zoom - 1.5) > 1e-6:
             raise RuntimeError("Crop zoom UI did not map to conversion settings")
-        lines.append("PASS branded framing radios and crop zoom controls")
+        lines.append("PASS framing radios, hidden Fit Fill, and crop zoom mapping")
 
         window.res_radio.setChecked(True)
         window.width_spin.setValue(64)
@@ -212,6 +205,13 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
         if window.motion_favor_radio.isEnabled():
             raise RuntimeError("Favor resolution should disable in fixed-resolution mode")
         lines.append("PASS linked 16:9 resolution controls")
+
+        footer_meta = [label.text() for label in window.findChildren(QLabel, "FooterMeta")]
+        if not any(text.startswith("Polymorph v0.1.0-dev.21") for text in footer_meta):
+            raise RuntimeError(f"Footer version metadata is missing: {footer_meta}")
+        if "Polymorph 2026, Knight Witch™" not in footer_meta:
+            raise RuntimeError(f"Footer creator metadata is missing: {footer_meta}")
+        lines.append("PASS footer version/creator metadata")
 
         lines.append("PACKAGED POLYMORPH SMOKE TEST PASSED")
         _write_log(lines)

@@ -2,6 +2,53 @@
 
 Historical entries through dev.19 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV19.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV19.md). Earlier pre-dev.16 history also remains in the existing dev.15 archive.
 
+## POLY-2026-09-12-032 — 2026-09-12 15:15 PDT — Fidelity pass against the approved Polymorph mockup
+
+### Summary
+
+- Reworked dev.20 using the user's annotated side-by-side screenshot as the direct visual specification rather than continuing approximate styling.
+- Switched display typography to prefer system-installed `Trajan Pro`; `POLYMORPH` uses wide tracking, the subtitle is now mixed case exactly as requested (`Media conversion magic — by Knight Witch™`), and card headings prefer Trajan Bold with restrained tracking. Bundled Cinzel remains only as the packaged fallback because the supplied Trajan files are Adobe-proprietary and are not committed to the public repository.
+- Removed the version from the title line. The footer now owns version/creator metadata.
+- Re-aligned card content to the heading text column, retained divider lines only on busier cards, and specifically removed those dividers from Crop Zoom and Output Folder.
+- Added the user's supplied resize, priority, crop, aspect-ratio, folder, trash, and update artwork as normalized high-DPI PNG assets. The UI tints the monochrome artwork at runtime to match the gold visual system.
+- Enlarged the file-row overflow ellipsis and tightened the Files header so Add Files, trash, separator, and `Clear All` stay aligned on the right.
+- Removed the branded Fit-only `Fill` button. Fit no longer changes card height when selected; the engine's background-color setting remains intact internally at its current/default value.
+- Simplified the preview card: removed the `PREVIEW` heading/divider, removed the inner gray-looking surface, reduced the media border to a tight square line, and added a divider only at the bottom before source/frame/framed-max metadata.
+- Added functional preview playback UI: play/pause, seekable frame timeline, elapsed/total seconds, and an in-view `FRAME n / total` plus timing readout. These controls operate only on the preview `QMovie` and do not alter export timing or frame selection.
+- Rebuilt the main conversion action back to `POLYMORPH`, centered with Trajan-style tracking over symmetric static sigil/line decoration. The decoration remains separate from the later working/loading animation.
+- Combined Ready/status and service links into one concept-matched footer panel with more breathing room between icon/text controls; added a divider and a second metadata row with `Polymorph v0.1.0-dev.21` at left and `Polymorph 2026, Knight Witch™` at right.
+- Added deterministic runtime film grain over the gradient cards instead of requiring a supplied texture asset.
+- Replaced scroll-dependent small-window behavior with responsive shrink mode. Below the 1260×820 design size, the UI scales typography, padding, control widths, queue rows, preview minimums and rail width down to a 920×640 supported minimum. The right control rail is no longer a vertical scroll area.
+- Strengthened frozen-app smoke coverage for responsive minimum sizing, primary-action visibility, user-supplied icon packaging, hidden Fit Fill control, playback/seek behavior, footer metadata, and the existing framing/adaptive/linked-resolution mappings.
+- No conversion, adaptive GIF, framing geometry, optimizer, updater, subprocess, or pinned toolchain behavior changed.
+- Incremented the tester to `0.1.0-dev.21`.
+
+### Touched files
+
+- `src/polymorph/ui/brand_widgets.py` (new)
+- `src/polymorph/ui/branded_layout.py`
+- `src/polymorph/ui/styles.py`
+- `src/polymorph/ui/preview.py`
+- `src/polymorph/smoke_test.py`
+- `src/polymorph/assets/ui/*.png` (new user-supplied icon artwork, normalized for UI use)
+- `src/polymorph/__init__.py`
+- `src/polymorph/constants.py`
+- `pyproject.toml`
+- `installer/Polymorph.iss`
+- `MASTER.md`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Rollback
+
+- Revert this commit to return to dev.20's first close mockup match. Conversion/framing/adaptive behavior is independent of the dev.21 UI/playback presentation changes.
+
+### Test notes
+
+- Full Windows CI must pass unit tests, pinned font acquisition/verification, pinned FFmpeg/gifski toolchain checks, adaptive integration, GIF reference comparison, PyInstaller build, frozen-app smoke, installer compilation, checksum generation, and artifact uploads.
+- Frozen-app smoke now resizes to the supported minimum and rejects a clipped Polymorph button or failure to enter responsive shrink mode. It also seeks the animated preview by source frame and requires the playback timeline/readout to follow.
+- Human dev.21 review should compare directly against the approved mockup at default size and then resize the window downward to confirm the interface shrinks rather than requiring the user to scroll for the primary action.
+
 ## POLY-2026-09-12-031 — 2026-09-12 05:05 PDT — Tighten the branded UI to the approved concept
 
 ### Summary
