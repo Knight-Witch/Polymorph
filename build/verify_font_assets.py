@@ -5,6 +5,8 @@ import sys
 from pathlib import Path
 
 EXPECTED = {
+    "Trajan-Regular.ttf": "b53d6c0b90c0ebc0273ae52a7a2d6959ee904d6e",
+    "Trajan-Bold.otf": "c27f189594483430f8d617fef1b749f85e6ee05a",
     "Cinzel-wght.ttf": "d218a0b9c8879fd5a708872cc0ef357e507b35ca",
     "Inter-opsz-wght.ttf": "047c92f6e2212473dc436020afed689527076d44",
 }
