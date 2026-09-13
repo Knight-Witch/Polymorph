@@ -57,7 +57,7 @@ Historical entries through dev.19 are preserved verbatim in [`HISTORY/PROJECT_LO
 - Fix: switch the preview `QMovie` from `CacheAll` to `CacheNone`, pause running playback before deterministic frame seeks, and force the dedicated `--smoke-test` process to terminate after it has written its result instead of relying on native media/plugin teardown.
 - CI safeguard: the packaged smoke process now has its own 120-second timeout and is force-killed with its smoke log printed if it exceeds that bound, preventing another full-job timeout from hiding the failure point.
 - No conversion, adaptive GIF, framing/export geometry, output sizing, updater, or user-facing dev.21 styling behavior changes in this hardening pass.
-- Version remains `0.1.0-dev.21` because no dev.21 installer was produced by the failed run.
+- Version remains `0.1.0-dev.21` because no dev.21 tester installer was produced by the failed run.
 
 ## PFC-2026-09-12-032 — Match dev.21 directly to the approved concept markup
 
