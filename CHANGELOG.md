@@ -2,6 +2,39 @@
 
 Historical entries through dev.19 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV19.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV19.md). Earlier pre-dev.16 history also remains in the existing dev.15 archive.
 
+## POLY-2026-09-13-038 — 2026-09-13 01:12 PDT — Prefer vector branded UI icons
+
+### Summary
+
+- Continued the dev.22 visual-fidelity pass without changing the accepted two-column layout or conversion behavior.
+- Diagnosed the soft branded control icons: the layout still requested the original PNG files and the tint helper loaded the requested raster asset literally, so the newly added Crop SVG was not yet used and the remaining control icons had no vector sibling.
+- Added consistent SVG siblings for Aspect Ratio, Crop, Files/Output Folder, GIF Priority, Sizing, trash, and Check for Updates.
+- Updated the shared icon renderer to prefer a same-name SVG automatically and fall back to the existing PNG if SVG loading is unavailable. All established call sites, tint colors, scaling hooks, tooltips, click handlers, and responsive behavior remain unchanged.
+- Added `assets/ui/*.svg` to setuptools package data. PyInstaller already includes the complete assets tree, while the PNG files remain as deliberate compatibility fallback.
+- Preserved the public-font licensing boundary: Cinzel + Inter remain the bundled redistributable fonts; installed/private-local Trajan detection remains intact, but Adobe Trajan binaries are not committed to the public repository.
+- No GIF/MP4 encoding, adaptive GIF selection, framing/export geometry, preview playback, queue behavior, updater, subprocess, or pinned FFmpeg/gifski behavior changed.
+- Version remains `0.1.0-dev.22`.
+
+### Touched files
+
+- `src/polymorph/assets/ui/aspect-ratio.svg` (new)
+- `src/polymorph/assets/ui/crop.svg`
+- `src/polymorph/assets/ui/folder.svg` (new)
+- `src/polymorph/assets/ui/priority.svg` (new)
+- `src/polymorph/assets/ui/resize.svg` (new)
+- `src/polymorph/assets/ui/trash.svg` (new)
+- `src/polymorph/assets/ui/update.svg` (new)
+- `src/polymorph/ui/brand_widgets.py`
+- `pyproject.toml`
+- `PRE_FLIGHT_Check.md`
+- `CHANGELOG.md`
+
+### Test notes
+
+- Full Windows CI must still pass the unchanged unit/conversion/toolchain gates, PyInstaller frozen-app smoke, installer compilation, checksum generation, and artifact uploads.
+- Human review should compare the small gold card/header icons, queue trash icon, and update icon at normal Windows scaling; the intended change is sharper edges with no interaction/layout change.
+- Trajan display rendering remains available when a legal local/system installation is visible to Qt; the public tester continues to use Cinzel fallback on machines without Trajan.
+
 ## POLY-2026-09-12-037 — 2026-09-12 22:35 PDT — Push the branded UI closer to the approved mockup
 
 ### Summary
@@ -99,7 +132,7 @@ Historical entries through dev.19 are preserved verbatim in [`HISTORY/PROJECT_LO
 
 ### Test notes
 
-- The next Windows run must finish the frozen smoke within the existing 120-second guard and continue through installer/checksum/artifact creation.
+- The next Windows run must finish the frozen smoke within the existing 120-second guard and continue through Inno Setup, installer compilation, checksum generation, and both artifact uploads.
 - Human dev.21 validation should explicitly drag the preview timeline backward and forward while paused/running because headless CI no longer attempts that unsupported operation.
 
 ## POLY-2026-09-12-033 — 2026-09-12 18:10 PDT — Harden packaged preview smoke teardown
@@ -191,7 +224,7 @@ Historical entries through dev.19 are preserved verbatim in [`HISTORY/PROJECT_LO
 - Reworked Sizing into two compact editable rows and removed spinbox ticker arrows; users type file-size and resolution values directly.
 - Paired Framing and Aspect Ratio as two cards on one row; kept Original/Crop/Fit as real radio controls synchronized to the established framing state.
 - Split Crop Zoom into its own compact card with percentage readout and a small reset/center action.
-- Retained Fit background-color functionality as a small Fit-only `Fill` utility rather than a dedicated background-color card.
+- Retained Fit background-color functionality as a small Fit-only `Fill` utility rather than a dedicated background-color card the user explicitly did not require.
 - Rebuilt the Files area to match the concept: title and file count share the action row; Add Files sits beside a selected-item trash button, separator, and `Clear All` text action that turns crimson on hover.
 - Added real queue-row media presentation: first-frame thumbnail, source file name, original decimal file size, source dimensions, runtime, and overflow actions for Open, Open file location, and Remove from queue.
 - Replaced the oversized idle/progress treatment with a compact Ready strip containing a ring glyph, `Ready`, and `<N> files imported. Choose your settings and begin.`; thin progress appears only while conversion is actually advancing.
