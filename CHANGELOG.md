@@ -2,6 +2,16 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md). dev.24-dev.25 investigation/build history remains available in Git history; root tracking is intentionally rolling/compact.
 
+## POLY-2026-09-14-057 — Record chat handoff and exact bundled-font boundary
+
+### Summary
+
+- Refreshed `ACTIVE_CONTEXT.md` because the current conversation reached its context limit; the file is the authoritative continuation baton for the next chat.
+- Carried forward Amanda's explicit provenance/deployment correction: the supplied Polymorph Regular/Bold display faces came from a free/open-license font provider, are a Trajan-derived/version-based design rather than Adobe's font distribution, and must remain bundled inside Polymorph so friends/users never need a separate system-font installation.
+- Confirmed the current repository already follows that model: `Polymorph-Regular.ttf.xz` and `Polymorph-Bold.ttf.xz` are packaged and `fonts.py` losslessly registers the decompressed bytes directly with Qt before the branded UI is built.
+- Marked the closing-chat suggestion to refuse the font and pre-outline display text into SVG/vector assets as rejected/not implemented. The next chat must preserve real bundled font rendering rather than reviving that workaround.
+- Run #84 dev.25 remains the active tested candidate and human visual gate. No runtime code, font asset, version, packaging behavior, installer identity, conversion/framing/adaptive behavior, updater/subprocess logic, or pinned toolchain changed.
+
 ## POLY-2026-09-14-056 — Run #84 passes the complete mockup-fidelity candidate pipeline
 
 ### Summary

@@ -2,6 +2,14 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md). dev.24-dev.25 technical/visual history remains available in Git history; root tracking is intentionally rolling/compact.
 
+## PFC-2026-09-14-057 — Chat-limit handoff / preserve self-contained Polymorph font boundary
+
+- Handoff requested because the conversation reached its maximum length. `ACTIVE_CONTEXT.md` is refreshed as the authoritative next-chat baton; no runtime implementation work is performed in this handoff.
+- Immediate user correction carried forward explicitly: Amanda's supplied Polymorph Regular/Bold display files came from a free/open-license font provider, are a Trajan-derived/version-based design, and are not Adobe's font distribution. Do not restart Adobe/system-font speculation unless Amanda explicitly asks for independent provenance verification.
+- The repository already implements the required deployment model: `Polymorph-Regular.ttf.xz` and `Polymorph-Bold.ttf.xz` are packaged assets, decompressed losslessly in memory, and registered with Qt by `src/polymorph/ui/fonts.py`. Friends/users do not install a font separately.
+- A closing-chat proposal to refuse bundling and convert display text to SVG/vector outlines was rejected by Amanda and was not implemented. The next chat must ignore that proposal and preserve the actual bundled font path.
+- Run #84 dev.25 remains the active tested candidate and human visual gate. No code, font asset, version, package, CI, installer, conversion, framing, adaptive, updater, subprocess, or toolchain behavior changes in this documentation-only handoff.
+
 ## PFC-2026-09-14-056 — Run #84 technical PASS / human visual gate next
 
 - Windows Dev Build run #84 / run ID `34890815616` from implementation commit `e76f88808f471c74ae100469ed4452a5095560b0` is FULL PASS.
