@@ -2,6 +2,15 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md). Root tracking is intentionally rolling/compact; older detail is not mandatory startup reading.
 
+## PFC-2026-09-13-050 — dev.25 technical PASS / human visual gate next
+
+- Run #62 / run ID `34809405250` from code commit `112f2e2efb128ef806cb6f44ed650b9753a5471e` passed the complete Windows technical pipeline.
+- Required packaged smoke passed both the real Polymorph title/subtitle/card-heading typography assertion and the 920×640 primary-action visibility assertion in the same frozen application.
+- Installer artifact `Polymorph-dev-installer`: ID `10334421612`, digest `sha256:c77908691be09782951a52d8537e7c629681a3f6638e5a48e09b7880966b9384`.
+- Keep dev.25 behind the human visual gate. Amanda must inspect the normal installed tester and confirm BrandTitle, BrandSubtitle/byline, FILES, all right-rail headings, primary action, overall card density/alignment, and compact-minimum appearance before promotion or typography retuning.
+- Do not reopen protected conversion/framing/adaptive/updater/subprocess/toolchain areas without new evidence.
+- This record is documentation-only: no runtime, version, package contents, UI behavior, conversion behavior, or public-release state changed.
+
 ## PFC-2026-09-13-049 — Measured second compact pass after run #61
 
 - Run #61 / run ID `34808985545` is failed evidence, not a tester to hand to Amanda.

@@ -2,6 +2,17 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md). Root tracking is intentionally rolling/compact; use archived detail only when a current task needs it.
 
+## POLY-2026-09-13-050 — Record successful dev.25 technical tester
+
+### Summary
+
+- Windows Dev Build run #62 / run ID `34809405250` passed the complete technical pipeline from code commit `112f2e2efb128ef806cb6f44ed650b9753a5471e`.
+- PASS includes bundled custom Polymorph font verification, all 56 unit tests, protected FFmpeg/gifski conversion gates, adaptive integration, GIF reference comparison, frozen application build, packaged smoke, Inno Setup compilation, checksum generation, and both artifact uploads.
+- Crucially, the same frozen packaged smoke passed both `applied Polymorph title/subtitle/card-heading typography` and the existing 920×640 primary-action visibility gate. This is the first dev.25 build to clear both requirements together.
+- Installer artifact: `Polymorph-dev-installer`, artifact ID `10334421612`, digest `sha256:c77908691be09782951a52d8537e7c629681a3f6638e5a48e09b7880966b9384`.
+- dev.25 remains behind the human visual gate. Amanda must confirm the installed title, subtitle/byline, FILES heading, right-rail headings, and primary action before any promotion or optical typography retuning.
+- This entry is documentation-only: no runtime, version, package contents, conversion behavior, UI behavior, or public-release state changed.
+
 ## POLY-2026-09-13-049 — Finish measured compact-rail budget after run #61
 
 ### Summary
