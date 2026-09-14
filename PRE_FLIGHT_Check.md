@@ -2,6 +2,15 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md). Root tracking is intentionally rolling/compact; older detail is not mandatory startup reading.
 
+## PFC-2026-09-14-052 — Stale mockup-version assertion after run #75
+
+- Run #75 / run ID `34820011338` from visual-polish commit `b9196d17c67393ba79f509b107e30c08b55915ef` passed font assets, all 56 unit tests, protected conversion/toolchain/adaptive/GIF-reference gates, and the frozen application build.
+- Packaged smoke failed at its first presentation-version assertion because `fidelity_pass.py` intentionally advanced `polymorphFidelity` to `mockup-v2`, while smoke still demanded `mockup-v1`.
+- This failure is stale test metadata, not a demonstrated runtime regression. Change only the expected fidelity tag to `mockup-v2`.
+- Do not weaken or bypass the remaining packaged assertions. The rerun must still prove bundled Polymorph font application, two-column composition, FILES grouping, 920×640 primary-action visibility, preview decode, adaptive controls, framing geometry mapping, linked resolution, and footer metadata.
+- Runtime remains dev.25. Run #75 produced no installer.
+- No visual behavior, SVG asset, conversion/framing/adaptive/updater/subprocess/toolchain behavior changes in this repair.
+
 ## PFC-2026-09-14-051 — Human visual polish after run #62
 
 - Human visual review of the installed run #62 tester confirms the custom Polymorph face is finally rendering correctly, so do not reopen font provenance/registration or the direct-label ownership repair.

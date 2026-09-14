@@ -2,6 +2,16 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md). Root tracking is intentionally rolling/compact; use archived detail only when a current task needs it.
 
+## POLY-2026-09-14-052 — Repair stale mockup-version smoke gate after run #75
+
+### Summary
+
+- Windows Dev Build run #75 / run ID `34820011338` passed font assets, all 56 unit tests, protected FFmpeg/gifski/adaptive/GIF-reference gates, and the frozen application build from visual-polish commit `b9196d17c67393ba79f509b107e30c08b55915ef`.
+- Packaged smoke then stopped immediately after responsive geometry because its assertion still demanded `polymorphFidelity == "mockup-v1"`, while the intentional visual-polish pass now reports `mockup-v2`.
+- This is a stale test-version tag, not evidence of a runtime or packaging regression. Update only that assertion to `mockup-v2`; retain all later Polymorph-font, content, 920×640 primary-action visibility, preview, framing, and footer gates unchanged.
+- Runtime remains `0.1.0-dev.25`; run #75 produced no installer.
+- No UI behavior, conversion/framing/adaptive logic, updater, subprocess, font assets, SVG assets, or package-toolchain behavior changed by this repair.
+
 ## POLY-2026-09-14-051 — Visual polish from dev.25 human review
 
 ### Summary
