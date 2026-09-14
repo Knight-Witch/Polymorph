@@ -2,6 +2,17 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md). Root tracking is intentionally rolling/compact; older detail is not mandatory startup reading.
 
+## PFC-2026-09-13-043 — Align dev.24 package/version anchors after run #56
+
+- Windows Dev Build run #56 / run ID `34804686496` validated the repaired custom-font assets, all 54 unit tests, FFmpeg/gifski toolchain, adaptive integration, GIF reference timing, and the frozen application build.
+- Packaged smoke explicitly passed bundled conversion tools, concept resources, `Polymorph Regular` / `Polymorph Bold` / Inter font registration, main-window initialization, responsive geometry, branded title/byline/action shell, file queue, animated preview, adaptive GIF controls, framing controls and linked resolution controls.
+- The only failure was the footer assertion: runtime displayed `Polymorph v0.1.0-dev.23` while smoke expected dev.24. Diagnose before editing: `src/polymorph/constants.py` was still dev.23, and inspection found the same stale version in `pyproject.toml` and `installer/Polymorph.iss`.
+- Align `APP_VERSION`, Python project package version and installer version to dev.24 in one commit; keep `src/polymorph/__init__.py` at the already-correct dev.24 value.
+- Add `assets/fonts/*.xz` to setuptools package data so the custom font subsets are retained in ordinary Python package builds, not only by the PyInstaller assets-directory bundle.
+- Do not alter custom font bytes or UI presentation. `styles.py`, font sizes, absolute tracking, responsive geometry and the font-registration implementation remain unchanged.
+- Protected conversion/framing/adaptive/updater/subprocess behavior remains untouched.
+- Re-run the full canonical Windows workflow. A successful CI run is a technical gate only; Amanda still performs the visual typography/layout acceptance on the installed tester.
+
 ## PFC-2026-09-13-042 — Repair custom-font binary transport after run #55
 
 - Windows Dev Build run #55 / run ID `34797309292` failed at `Prepare pinned Polymorph UI fonts` before unit tests, conversion tools, frozen app build or packaged smoke. The verifier proved the repository blobs matched the initially recorded Git identities, then `lzma.decompress` rejected the Regular asset as not-XZ. This isolates the defect to the connector-created binary transport rather than the supplied font files or UI implementation.

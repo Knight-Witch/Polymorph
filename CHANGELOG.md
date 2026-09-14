@@ -2,6 +2,22 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md). Root tracking is intentionally rolling/compact; use archived detail only when a current task needs it.
 
+## POLY-2026-09-13-043 — 2026-09-13 21:09 PDT — Align dev.24 package/version anchors after packaged smoke
+
+### Summary
+
+- Diagnosed Windows Dev Build run #56 / run ID `34804686496`: the corrected Polymorph font assets verified successfully, all 54 unit tests passed, conversion/adaptive/GIF reference gates passed, PyInstaller froze the app successfully, and packaged smoke confirmed both bundled Polymorph display faces registered correctly.
+- The only packaged-smoke failure was stale version metadata: the frozen UI footer still reported `0.1.0-dev.23` because `src/polymorph/constants.py` had not been advanced with `src/polymorph/__init__.py`.
+- Found the same stale dev.23 anchor in `pyproject.toml` and `installer/Polymorph.iss`; align all three to dev.24 in one packaging-only fix.
+- Add `assets/fonts/*.xz` to setuptools package-data so the custom display assets are included in normal Python package builds as well as the existing PyInstaller whole-assets bundle.
+- No font bytes, font registration behavior, typography measurements, layout geometry, conversion logic, framing logic, adaptive GIF behavior, updater behavior or subprocess handling changed.
+- Runtime remains `0.1.0-dev.24`; this commit makes package metadata, visible footer version and installer version agree with that runtime candidate.
+
+### Validation notes
+
+- Run #56 provides direct evidence that the repaired custom font transport and Qt registration are good: packaged smoke printed `PASS packaged Polymorph display fonts and Inter body font` before stopping at the footer-version assertion.
+- Next gate is a fresh full Windows Dev Build from the version-alignment commit. Human visual review remains required after a successful installer exists.
+
 ## POLY-2026-09-13-042 — 2026-09-13 20:58 PDT — Repair dev.24 custom-font asset transport
 
 ### Summary
@@ -19,7 +35,7 @@ Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LO
 ### Validation notes
 
 - The corrected binary blobs were created through GitHub's base64 blob path and GitHub returned the exact locally predicted Git blob SHA-1 values for both assets.
-- Run #55 is intentionally retained as failed evidence for the rejected transport method. The next canonical gate is a fresh Windows Dev Build from this repair commit.
+- Run #55 is intentionally retained as failed evidence for the rejected transport method. Windows run #56 later verified both corrected assets successfully and reached packaged smoke.
 
 ## POLY-2026-09-13-041 — 2026-09-13 18:40 PDT — Replace Trajan with custom Polymorph display family
 

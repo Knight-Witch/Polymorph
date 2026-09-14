@@ -24,8 +24,10 @@ Read `docs/ARCHITECTURE.md` and the relevant engine files only if the task actua
 - Branch: `dev`
 - Runtime version: `0.1.0-dev.24`
 - dev.24 initial implementation commit: `706f20d79185071daef2de2c4fa9c5c147830e7e` (`Use custom Polymorph display font in dev.24`).
-- Windows Dev Build run #55 / run ID `34797309292`: **FAILED before tests/runtime** in `Prepare pinned Polymorph UI fonts` because the first connector-created repository XZ blobs were not valid XZ byte streams. This failure is transport-only evidence; it does not implicate the supplied fonts, Qt registration or UI measurements.
-- A repair commit replacing those invalid blobs with verified display-subset XZ assets is the immediate candidate; exact repair commit/run/artifact identity must be recorded here after the full Windows workflow completes.
+- Font-transport repair commit: `fdb521c2373cdefdbcff077f56f4844a89f420e0` (`Fix dev.24 custom font asset transport`).
+- Windows Dev Build run #55 / run ID `34797309292`: **FAILED before tests/runtime** because the first connector-created repository XZ blobs were not valid XZ byte streams.
+- Windows Dev Build run #56 / run ID `34804686496`: custom-font verification PASS, 54 unit tests PASS, conversion toolchain PASS, adaptive integration PASS, GIF reference PASS, frozen application build PASS, and packaged smoke confirmed the Polymorph display fonts registered successfully. The run then failed only because three version anchors still reported dev.23: `src/polymorph/constants.py`, `pyproject.toml`, and `installer/Polymorph.iss`. No font/UI/runtime regression was implicated.
+- Immediate candidate is a version-alignment packaging fix setting all three stale anchors to dev.24 and adding `assets/fonts/*.xz` to setuptools package data. Exact fix commit/run/artifact identity must be recorded here after the full Windows workflow completes.
 - Previous validated fallback remains dev.23 code commit `81150b0e7007969d260317c9383ed7bacb3362b9`, Windows Dev Build run #54 / run ID `34779195156`, installer artifact ID `10324259742`.
 - No public Polymorph release exists yet. `main` is not the experimental branch.
 
@@ -61,12 +63,13 @@ The working/loading animation remains deliberately deferred. Arcane-circle and D
 
 ## Next gate
 
-1. Commit the corrected verified subset font assets + verifier/tracking repair on `dev` and run the normal Windows dev workflow for dev.24, preserving all existing unit, toolchain, adaptive integration, GIF reference, frozen-app smoke, installer and checksum gates.
-2. On PASS, record the exact repair commit, run and artifact identity here, retrieve the `Polymorph-dev-installer` artifact, and give Amanda the installer directly rather than sending her to Actions.
-3. Amanda should run the installed tester without separately installing the custom font and visually confirm the `POLYMORPH` title, subtitle/byline, card headings and primary action use the intended face.
-4. Compare the whole window against the approved mockup, especially typography scale/tracking, card density/alignment, icon sharpness, preview prominence, primary-action balance and footer rhythm.
-5. If she reports visual issues, change only the branded UI/presentation layer unless evidence points elsewhere. Preserve the protected conversion/framing/adaptive state above.
-6. After typography/layout fidelity is accepted, move to the working/loading animation phase.
+1. Commit the dev.24 version-alignment packaging fix on `dev`: `constants.py`, `pyproject.toml`, and `installer/Polymorph.iss` all dev.24; include `assets/fonts/*.xz` in setuptools package data.
+2. Run the full normal Windows dev workflow again, preserving all unit, toolchain, adaptive integration, GIF reference, frozen-app smoke, installer and checksum gates.
+3. On PASS, record the exact implementation commit, run and artifact identity here, retrieve the `Polymorph-dev-installer` artifact, and give Amanda the installer directly rather than sending her to Actions.
+4. Amanda should run the installed tester without separately installing the custom font and visually confirm the `POLYMORPH` title, subtitle/byline, card headings and primary action use the intended face.
+5. Compare the whole window against the approved mockup, especially typography scale/tracking, card density/alignment, icon sharpness, preview prominence, primary-action balance and footer rhythm.
+6. If she reports visual issues, change only the branded UI/presentation layer unless evidence points elsewhere. Preserve the protected conversion/framing/adaptive state above.
+7. After typography/layout fidelity is accepted, move to the working/loading animation phase.
 
 ## Historical routing
 
