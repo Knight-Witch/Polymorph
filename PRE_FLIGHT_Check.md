@@ -1,96 +1,17 @@
 # Polymorph Pre-Flight Log
 
-Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md). Root tracking is intentionally rolling/compact; older detail is not mandatory startup reading.
+Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md). dev.24-dev.25 technical/visual history remains available in Git history; root tracking is intentionally rolling/compact.
 
-## PFC-2026-09-14-054 — dev.25 visual-polish tester is technically ready for human review
+## PFC-2026-09-14-055 — Mockup fidelity continuation after run #79 human visual review
 
-- Run #79 / run ID `34821077711` from tested implementation commit `06ad854d3cab7c1f249b253673e99ce18196cee5` passed the full canonical Windows pipeline.
-- Required gates all PASS: bundled Polymorph/Inter fonts, all 56 unit tests, pinned FFmpeg/gifski toolchain, protected conversion/adaptive/GIF-reference checks, frozen build, complete packaged smoke, Inno Setup, SHA-256, and both artifact uploads.
-- Packaged smoke passed `mockup-v2`, real applied Polymorph title/subtitle/card-heading typography, two-column shell, FILES grouping, 920×640 primary-action visibility, concept alignment/slider styling, preview decode, adaptive GIF controls, framing/crop zoom mapping, linked resolution, and footer metadata.
-- Installer artifact `Polymorph-dev-installer`: ID `10338840830`, digest `sha256:5f15f4246c1a6fa254b86b7977a0716ad2e385c6abb4135b7f66a8a0bb79cb7e`; retrieved as `Polymorph-dev.25-visual-polish-installer.zip`.
-- The active changes are presentation-only: smaller section headings, coherent/distinct SVG section icons, corrected radio/helper alignment, smaller Browse/Add Files text, real play/pause SVGs, and true primary-action title centering.
-- Preserve all protected conversion/framing/adaptive/updater/subprocess/toolchain behavior and the accepted 1260×820 / 920×640 responsive geometry.
-- Next gate is human visual review. Do not make further UI changes until Amanda judges the installed run-#79 tester, unless she reports a concrete regression.
-- Runtime remains dev.25; no public release or `main` promotion is authorized.
-- This tracking update is documentation-only. The tested package remains the run-#79 artifact from `06ad854d3cab7c1f249b253673e99ce18196cee5`.
-
-## PFC-2026-09-14-053 — Restore proven smoke harness after run #77
-
-- Run #77 / run ID `34820591656` passed font assets, all 56 unit tests, protected conversion/toolchain/adaptive/GIF-reference gates, and the frozen app build.
-- The updated `mockup-v2` tag was accepted, but smoke then failed font-state validation because the previous repair had unintentionally replaced additional proven harness code instead of changing only one string.
-- Diff against visual-polish commit `b9196d17c67393ba79f509b107e30c08b55915ef` confirms the accidental drift: wrong font property names/checks, dropped offscreen window placement, dropped bundled-converter readiness assertion, and dropped final `app.processEvents()`.
-- Restore the run-#75 `smoke_test.py` exactly, changing only the fidelity tag from `mockup-v1` to `mockup-v2`. Do not weaken any later assertions.
-- Runtime remains dev.25. Run #77 produced no installer.
-- No application runtime behavior, visual-polish implementation, font assets, SVG assets, conversion/framing/adaptive/updater/subprocess/toolchain behavior changes in this repair.
-
-## PFC-2026-09-14-052 — Stale mockup-version assertion after run #75
-
-- Run #75 / run ID `34820011338` from visual-polish commit `b9196d17c67393ba79f509b107e30c08b55915ef` passed font assets, all 56 unit tests, protected conversion/toolchain/adaptive/GIF-reference gates, and the frozen application build.
-- Packaged smoke failed at its first presentation-version assertion because `fidelity_pass.py` intentionally advanced `polymorphFidelity` to `mockup-v2`, while smoke still demanded `mockup-v1`.
-- This failure is stale test metadata, not a demonstrated runtime regression. Change only the expected fidelity tag to `mockup-v2`.
-- Do not weaken or bypass the remaining packaged assertions. The rerun must still prove bundled Polymorph font application, two-column composition, FILES grouping, 920×640 primary-action visibility, preview decode, adaptive controls, framing geometry mapping, linked resolution, and footer metadata.
-- Runtime remains dev.25. Run #75 produced no installer.
-- No visual behavior, SVG asset, conversion/framing/adaptive/updater/subprocess/toolchain behavior changes in this repair.
-
-## PFC-2026-09-14-051 — Human visual polish after run #62
-
-- Human visual review of the installed run #62 tester confirms the custom Polymorph face is finally rendering correctly, so do not reopen font provenance/registration or the direct-label ownership repair.
-- Remaining issues are presentation-only: right-rail section headings are optically too large; section icons are inconsistent/low quality; Framing and Crop Zoom incorrectly share a symbol; Output Format/Sizing radio bubbles sit left of GIF Priority; helper text under Preserve/Favor is over-indented; Browse/Add Files text is too large; playback's text glyph is effectively invisible; and the primary POLYMORPH label is right-shifted inside its button.
-- Preserve the run #62 technical PASS, accepted 1260×820 / 920×640 geometry, minimum-size compact-rail fix, and all protected conversion/framing/adaptive/updater/subprocess/toolchain behavior.
-- Presentation repair uses a post-responsive optical controller so heading size, radio/helper alignment, vector icons, playback icons, and small-button text remain correct after window resizes without changing the underlying layout engine.
-- Use one coherent thin-line SVG family for FILES, Output Format, Sizing, GIF Priority, Framing, Aspect Ratio, Crop Zoom, and Output Folder. Framing and Crop Zoom must remain visually distinct.
-- Playback uses real play/pause SVG icons tied to `playbackChanged`; do not rely on narrow text glyphs in the 28 px tool button.
-- Primary action keeps its existing surface/sigil but centers `POLYMORPH` against the full button rectangle.
-- Runtime remains dev.25 for this visual revision. No conversion, package-toolchain, updater, or public-release behavior changes.
-- Next gate is the complete Windows pipeline, followed by another installed human visual check. CI can prove packaging/geometry/functionality, not appearance.
-
-## PFC-2026-09-13-050 — dev.25 technical PASS / human visual gate next
-
-- Run #62 / run ID `34809405250` from code commit `112f2e2efb128ef806cb6f44ed650b9753a5471e` passed the complete Windows technical pipeline.
-- Required packaged smoke passed both the real Polymorph title/subtitle/card-heading typography assertion and the 920×640 primary-action visibility assertion in the same frozen application.
-- Installer artifact `Polymorph-dev-installer`: ID `10334421612`, digest `sha256:c77908691be09782951a52d8537e7c629681a3f6638e5a48e09b7880966b9384`.
-- Keep dev.25 behind the human visual gate. Amanda must inspect the normal installed tester and confirm BrandTitle, BrandSubtitle/byline, FILES, all right-rail headings, primary action, overall card density/alignment, and compact-minimum appearance before promotion or typography retuning.
-- Do not reopen protected conversion/framing/adaptive/updater/subprocess/toolchain areas without new evidence.
-- This record is documentation-only: no runtime, version, package contents, UI behavior, conversion behavior, or public-release state changed.
-
-## PFC-2026-09-13-049 — Measured second compact pass after run #61
-
-- Run #61 / run ID `34808985545` is failed evidence, not a tester to hand to Amanda.
-- PASS before failure: custom Polymorph assets, all 56 unit tests including the real QLabel font-resolution test, protected conversion/adaptive/GIF gates, frozen app build, applied Polymorph typography, title/byline fidelity, and FILES grouping.
-- Exact remaining failure: `POLYMORPH action is clipped at minimum size: button bottom 494, rail 482`.
-- The first minimum-only compaction recovered 14 px relative to run #60. Preserve it and preserve the now-confirmed typography implementation.
-- Recover the remaining 12 px without shrinking the primary action or changing normal-size geometry: at compact scale only, reduce top-level `ControlRailContent` spacing from 2 px to 1 px and reduce each top-level `ControlCard` bottom padding by one additional pixel.
-- Keep 1260×820 full-size metrics, 920×640 supported minimum, FILES/preview/footer geometry, font sizes/tracking/assets, and all protected runtime/toolchain behavior unchanged.
-- Runtime remains dev.25 because run #61 produced no installer.
-- Re-run the full Windows pipeline; only hand over a tester if applied typography and minimum-size primary-action visibility pass in the same frozen build.
-
-## PFC-2026-09-13-048 — Minimum-size rail compaction after run #60
-
-- Run #60 / run ID `34807810638` is useful failed evidence, not a tester to hand to Amanda.
-- PASS before failure: packaged Polymorph fonts, 56 unit tests including the real QLabel font-resolution test, protected conversion/adaptive/GIF gates, frozen app build, `PASS applied Polymorph title/subtitle/card-heading typography`, title/byline fidelity, and FILES grouping.
-- Exact failure: `POLYMORPH action is clipped at minimum size: button bottom 508, rail 482` at the existing 920×640 supported minimum.
-- This is no longer a typography-assignment failure. Preserve the direct widget-owned Polymorph fonts and do not weaken the smoke assertion.
-- Keep 1260×820 full-size geometry unchanged. At responsive scale `<= 0.76`, compact only the top-level `ControlRailContent` spacing and top/bottom padding on top-level `ControlCard` layouts. Do not shrink the primary action or change FILES/preview/footer geometry.
-- Runtime remains dev.25 because run #60 produced no installer.
-- Preserve all protected conversion/framing/adaptive/updater/subprocess/toolchain behavior unchanged.
-- Re-run the complete Windows pipeline. Only hand over a tester if both the applied-typography and 920×640 primary-action visibility gates pass in the same frozen build.
-
-## PFC-2026-09-13-047 — Direct widget-owned Polymorph typography after run #59
-
-- Run #59 / run ID `34807445345` failed packaged smoke with `Brand title is not using Polymorph Regular: 'Inter' != 'Polymorph'`; installer steps were correctly skipped.
-- Do not weaken the smoke. App-level specific QSS still leaves the resolved QLabel font as Inter under the body stylesheet.
-- Keep the restored QSS body/control sizing model from the responsive repair.
-- Apply the branded face directly on each BrandTitle, BrandSubtitle and CardHeading widget with a local stylesheet, then set its tracked QFont for absolute letter spacing/bold state.
-- Add an offscreen Qt unit test using the packaged font loader and real QLabel objects under the Inter body QSS; require resolved Polymorph family before the slow build proceeds.
-- Runtime remains dev.25; no installer from run #59.
-- Preserve font bytes, existing point sizes/tracking, 1260×820 / 920×640 geometry, and all protected conversion/framing/adaptive/updater/subprocess behavior.
-
-## PFC-2026-09-13-046 — Restore responsive QSS metrics after run #58
-
-- Run #58 proved applied Polymorph typography but failed the minimum-size primary-action visibility gate after body sizing moved into inherited QFont.
-- Restore the accepted body/control QSS sizing mechanism without reverting the font-assignment repair.
-
-## PFC-2026-09-13-045 — dev.24 visual rejection / root-cause repair
-
-- dev.24 was technical PASS but human visual FAIL: only the custom-painted primary action visibly used Polymorph.
-- Root cause was global Inter QWidget QSS overriding QLabel display fonts. dev.25 adds real applied-font gates.
+- Required bootstrap completed before material editing: `PROJECT_CONTRACT.md`, `ACTIVE_CONTEXT.md`, canonical `docs/UX_SPEC.md`, current font/style/layout/widget/fidelity files, packaged smoke because presentation/package assertions are relevant, and `THIRD_PARTY.md` for the new icon source.
+- New human evidence supersedes the prior wait state: the run-#79 tester is technically PASS but visually still too far from the approved mockup in container rhythm, text scale, right-rail alignment, palette nuance, footer icon/text spacing, and icon quality/semantics.
+- Preserve the confirmed bundled Polymorph Regular/Bold display family and bundled Inter body/UI family. No system-font dependency is introduced.
+- Presentation correction is intentionally isolated in the branded fidelity layer: smaller/denser normal-size body/control/helper type, mockup-like dark/gold/ivory/red palette tuning, more compact normal-size card geometry, and a single optical content axis beneath section headings.
+- Output Format, Sizing, GIF Priority, Framing, Aspect Ratio, Crop Zoom, and Output Folder are aligned to the section-title text column. Helper copy no longer receives the oversized legacy indent.
+- Use coherent Lucide SVG section glyphs at a larger design size. Required semantic corrections: `FRAMING` = crop icon; `CROP ZOOM` = hourglass. Existing social links remain Simple Icons SVGs, enlarged and spaced farther from their labels.
+- The minimum-size rail compaction is protected: fidelity container-geometry overrides do not run at scale `<= 0.76`, preserving the accepted 920×640 primary-action budget.
+- Add `LUCIDE_LICENSE.txt`, package text notices, and document Lucide in `THIRD_PARTY.md`.
+- Five accidental temporary staging files created during this edit are explicitly removed in the same final candidate tree; they must not survive on `dev`.
+- Runtime remains `0.1.0-dev.25`. No conversion, adaptive GIF, framing/export geometry, output sizing, updater, subprocess, or pinned toolchain behavior changes.
+- Next gate: full Windows CI. Only a full PASS artifact becomes the new visual tester; then Amanda checks alignment, density, colors, body/helper typography, larger crisp icons, Framing/Crop Zoom semantics, footer rhythm, and minimum-size balance.

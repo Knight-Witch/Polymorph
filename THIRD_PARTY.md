@@ -50,6 +50,14 @@ Polymorph invokes third-party executables and uses third-party Python libraries.
 - License: SIL Open Font License 1.1.
 - The packaged font directory includes `OFL-Inter.txt`.
 
+## Lucide Icons
+
+- Project: https://github.com/lucide-icons/lucide
+- Purpose: coherent thin-line section/navigation glyphs in the branded Polymorph interface.
+- License: ISC for Lucide artwork; some upstream Feather-derived glyphs are MIT as documented by Lucide's LICENSE.
+- Polymorph stores the selected SVG geometry locally so the app remains offline/self-contained.
+- Packaged notice: `src/polymorph/assets/LUCIDE_LICENSE.txt`.
+
 ## Simple Icons
 
 - Project: https://github.com/simple-icons/simple-icons
