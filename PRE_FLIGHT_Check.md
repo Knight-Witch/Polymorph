@@ -2,25 +2,22 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md). Root tracking is intentionally rolling/compact; older detail is not mandatory startup reading.
 
-## PFC-2026-09-13-046 — Keep Polymorph display typography while restoring responsive QSS metrics
+## PFC-2026-09-13-047 — Direct widget-owned Polymorph typography after run #59
 
-- Run #58 / run ID `34806964426` is useful failed evidence, not a candidate to hand to Amanda.
-- PASS before failure: custom font assets, 55 unit tests including the new stylesheet regression test, conversion toolchain, adaptive integration, GIF reference, frozen app build, and the strengthened packaged assertion `PASS applied Polymorph title/subtitle/card-heading typography`.
-- Exact failure: minimum-size responsive assertion only — `POLYMORPH action is clipped at minimum size: button bottom 515, rail 489`.
-- Diagnosis: moving body sizing from QSS into the inherited window QFont changed Qt size-hint/layout behavior. This is separate from the font-assignment bug; do not revert the applied Polymorph typography or weaken its regression check.
-- Restore the prior responsive body/control QSS sizing under the branded app-root descendant selector, while adding explicit more-specific Polymorph family/size rules for BrandTitle, BrandSubtitle and CardHeading. Keep tracked QFont assignments for absolute letter spacing.
-- Preserve 1260×820 default and 920×640 minimum geometry. Preserve all conversion/framing/adaptive/updater/subprocess behavior.
-- Runtime remains dev.25 because run #58 produced no installer.
-- Re-run the complete Windows pipeline. Only hand over an installer if both the applied typography gate and minimum-size action-visibility gate pass.
+- Run #59 / run ID `34807445345` failed packaged smoke with `Brand title is not using Polymorph Regular: 'Inter' != 'Polymorph'`; installer steps were correctly skipped.
+- Do not weaken the smoke. App-level specific QSS still leaves the resolved QLabel font as Inter under the body stylesheet.
+- Keep the restored QSS body/control sizing model from the responsive repair.
+- Apply the branded face directly on each BrandTitle, BrandSubtitle and CardHeading widget with a local stylesheet, then set the tracked QFont for absolute letter spacing/bold state.
+- Add an offscreen Qt unit test using the packaged font loader and real QLabel objects under the Inter body QSS; require resolved Polymorph family before the slow build proceeds.
+- Runtime remains dev.25; no installer from run #59.
+- Preserve font bytes, existing point sizes/tracking, 1260×820 / 920×640 geometry, and all protected conversion/framing/adaptive/updater/subprocess behavior.
 
-## PFC-2026-09-13-045 — Repair stylesheet precedence after dev.24 visual rejection
+## PFC-2026-09-13-046 — Restore responsive QSS metrics after run #58
 
-- Human visual gate rejected dev.24: custom Polymorph appeared only on the custom-painted primary action; title/subtitle/FILES/right-rail headings remained Inter/fallback.
-- Confirmed root cause was generic QWidget QSS overriding explicit QLabel QFonts.
-- dev.25 adds a real applied-font packaged assertion and fast regression test; do not treat font registration alone as proof of visual application again.
+- Run #58 proved applied Polymorph typography but failed the minimum-size primary-action visibility gate after body sizing moved into inherited QFont.
+- Restore the accepted body/control QSS sizing mechanism without reverting the font-assignment repair.
 
-## PFC-2026-09-13-044 — dev.24 technical PASS, later human visual FAIL
+## PFC-2026-09-13-045 — dev.24 visual rejection / root-cause repair
 
-- Windows run #57 / run ID `34805017987` passed the canonical technical/package pipeline.
-- Installer artifact ID `10332274291`, digest `sha256:6e18bc546f065b29bf7b193e8bd84a6972c434f6a3c672bdf7a8572dd1bcbf26`.
-- dev.24 is not visually accepted and must not be promoted.
+- dev.24 was technical PASS but human visual FAIL: only the custom-painted primary action visibly used Polymorph.
+- Root cause was global Inter QWidget QSS overriding QLabel display fonts. dev.25 adds real applied-font gates.

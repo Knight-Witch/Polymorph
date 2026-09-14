@@ -20,7 +20,7 @@ def _display_families() -> tuple[str, str]:
     bold = regular
     if app is not None:
         bold = str(app.property("polymorphDisplayBoldFont") or regular).strip() or regular
-    return _qss_family(regular), _qss_family(bold)
+    return regular, bold
 
 
 def build_brand_stylesheet(scale: float = 1.0) -> str:
@@ -30,7 +30,7 @@ def build_brand_stylesheet(scale: float = 1.0) -> str:
     title_size = max(16.5, 23.5 * scale)
     subtitle_size = max(7.2, 9.8 * scale)
     heading_size = max(8.0, 11.3 * scale)
-    display_regular, display_bold = _display_families()
+    display_regular, display_bold = (_qss_family(family) for family in _display_families())
     control_pad_v = _px(3.5, scale, 2)
     control_pad_h = _px(7, scale, 4)
     radius = _px(4, scale, 2)
@@ -60,7 +60,7 @@ QWidget#ControlRailContent {{
     background: #040506;
 }}
 
-/* Brand header: explicitly outrank the inherited body QSS. */
+/* Brand header: explicit rules plus direct per-label overrides in _apply_typography. */
 QLabel#BrandTitle {{
     color: #f5efe6;
     background: transparent;
@@ -386,24 +386,59 @@ QToolTip {{ color: #f1e9dd; background: #0b0c0d; border: 1px solid #665137; padd
 BASE_STYLESHEET = build_brand_stylesheet(1.0)
 
 
+def _set_direct_display_font(
+    label: QLabel,
+    family: str,
+    point_size: float,
+    letter_spacing: float,
+    *,
+    bold: bool = False,
+) -> None:
+    """Make the branded face a widget-owned override, not an ancestor-QSS side effect."""
+    weight = 700 if bold else 400
+    label.setStyleSheet(
+        f'font-family: "{_qss_family(family)}"; '
+        f"font-size: {point_size:.2f}pt; font-weight: {weight};"
+    )
+    label.setFont(
+        tracked_font(
+            point_size,
+            letter_spacing,
+            bold=bold,
+            family=family,
+        )
+    )
+
+
 def _apply_typography(window, scale: float) -> None:
+    regular, bold = _display_families()
+    title_size = max(16.5, 23.5 * scale)
+    subtitle_size = max(7.2, 9.8 * scale)
+    heading_size = max(8.0, 11.3 * scale)
+
     title = window.findChild(QLabel, "BrandTitle")
     if title is not None:
-        # Photoshop reference: 120 pt with +350 tracking. Absolute Qt spacing
-        # cannot map 1:1, but ~0.30 em at the design size reproduces the wide lockup.
-        title.setFont(tracked_font(max(16.5, 23.5 * scale), max(4.2, 7.8 * scale)))
+        _set_direct_display_font(
+            title,
+            regular,
+            title_size,
+            max(4.2, 7.8 * scale),
+        )
     subtitle = window.findChild(QLabel, "BrandSubtitle")
     if subtitle is not None:
-        # Reference ratio: 50/120 title size, +300 tracking.
-        subtitle.setFont(tracked_font(max(7.2, 9.8 * scale), max(1.8, 3.2 * scale)))
+        _set_direct_display_font(
+            subtitle,
+            regular,
+            subtitle_size,
+            max(1.8, 3.2 * scale),
+        )
     for heading in window.findChildren(QLabel, "CardHeading"):
-        # Reference card title is materially larger than ordinary body text and bold.
-        heading.setFont(
-            tracked_font(
-                max(8.0, 11.3 * scale),
-                max(0.7, 1.25 * scale),
-                bold=True,
-            )
+        _set_direct_display_font(
+            heading,
+            bold,
+            heading_size,
+            max(0.7, 1.25 * scale),
+            bold=True,
         )
 
 
