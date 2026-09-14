@@ -1,7 +1,7 @@
 # Active Context — Polymorph `dev`
 
 **Updated:** 2026-09-14  
-**Current task:** dev.25 presentation-only polish from Amanda's installed screenshot/feedback. Visual-polish code built successfully in run #75; the only observed failure is a stale packaged-smoke expectation for `mockup-v1` after the fidelity pass intentionally advanced to `mockup-v2`.  
+**Current task:** dev.25 presentation-only polish from Amanda's installed screenshot/feedback. The visual-polish code itself continues to build cleanly; current CI repair work is only restoring the proven packaged-smoke harness after an accidental over-broad test-file replacement.  
 **Runtime posture:** conversion/framing/adaptive behavior remains closed/validated for current v1 scope; UI fidelity is the active development phase.
 
 ## Minimum continuation set
@@ -27,8 +27,9 @@ Do not preload engine/history files unless the current task actually needs them.
 - Last technical-PASS baseline: code commit `112f2e2efb128ef806cb6f44ed650b9753a5471e`; Windows Dev Build run #62 / run ID `34809405250`; installer artifact ID `10334421612`; digest `sha256:c77908691be09782951a52d8537e7c629681a3f6638e5a48e09b7880966b9384`.
 - Human review of that installed tester confirms the custom Polymorph face is finally applied correctly. Do not reopen font provenance, asset transport, registration, or direct-label ownership.
 - Consolidated visual-polish implementation: `b9196d17c67393ba79f509b107e30c08b55915ef`.
-- Windows Dev Build run #75 / run ID `34820011338`: font assets PASS, all 56 unit tests PASS, protected toolchain/adaptive/GIF-reference gates PASS, frozen application build PASS. Packaged smoke stopped before later UI assertions only because `smoke_test.py` still demanded `polymorphFidelity == "mockup-v1"`; the new fidelity pass intentionally reports `mockup-v2`. Installer stages were skipped.
-- Immediate repair changes only that stale expected tag to `mockup-v2`; all later font, composition, 920×640 primary-action visibility, preview, framing, linked-resolution and footer assertions remain intact.
+- Run #75 / ID `34820011338`: visual-polish code, unit suite, protected runtime/toolchain gates and frozen app build PASS; packaged smoke stopped on stale `mockup-v1` expectation.
+- Run #77 / ID `34820591656`: updated `mockup-v2` expectation was accepted and all pre-package gates again PASS, but packaged smoke failed font-state validation because the first smoke repair accidentally replaced additional proven harness code. Comparison against `b9196d17` identified the accidental differences: wrong font-state property names/checks, lost offscreen window placement, lost bundled-converter readiness assertion, and lost final Qt event processing. This is test-harness drift, not evidence that the visual-polish runtime broke font registration.
+- Immediate repair restores `src/polymorph/smoke_test.py` exactly from `b9196d17`, with one and only one intended delta: `polymorphFidelity` expects `mockup-v2` instead of `mockup-v1`.
 - Human-requested visual changes in the candidate:
   - smaller FILES/right-rail section headings while preserving Polymorph Bold;
   - coherent thin-line SVG icons with distinct Framing and Crop Zoom symbols;
@@ -63,8 +64,8 @@ Amanda's supplied custom files register as one Polymorph family with Regular and
 
 ## Next gate
 
-1. Re-run the full canonical Windows workflow with only the stale `mockup-v2` assertion repair on top of the consolidated visual-polish candidate.
-2. Packaged smoke must still pass bundled font application, mockup-v2 presentation, and 920×640 primary-action visibility in the same frozen app.
+1. Re-run the full canonical Windows workflow with the proven run-#75 smoke harness restored and only the `mockup-v2` expectation changed.
+2. Packaged smoke must pass bundled font application, mockup-v2 presentation, Polymorph heading typography, two-column shell, FILES grouping, 920×640 primary-action visibility, preview decode, framing/adaptive/resolution mapping and footer metadata in the same frozen app.
 3. On full PASS, retrieve the new `Polymorph-dev-installer` artifact directly and record commit/run/artifact identity here.
 4. Amanda visually checks heading scale, section icons, radio/helper alignment, playback control, button text sizing, centered primary action, and overall full/minimum-window balance.
 5. Only after that visual PASS proceed to the deferred working/loading animation phase.

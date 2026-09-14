@@ -2,6 +2,15 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md). Root tracking is intentionally rolling/compact; older detail is not mandatory startup reading.
 
+## PFC-2026-09-14-053 — Restore proven smoke harness after run #77
+
+- Run #77 / run ID `34820591656` passed font assets, all 56 unit tests, protected conversion/toolchain/adaptive/GIF-reference gates, and the frozen app build.
+- The updated `mockup-v2` tag was accepted, but smoke then failed font-state validation because the previous repair had unintentionally replaced additional proven harness code instead of changing only one string.
+- Diff against visual-polish commit `b9196d17c67393ba79f509b107e30c08b55915ef` confirms the accidental drift: wrong font property names/checks, dropped offscreen window placement, dropped bundled-converter readiness assertion, and dropped final `app.processEvents()`.
+- Restore the run-#75 `smoke_test.py` exactly, changing only the fidelity tag from `mockup-v1` to `mockup-v2`. Do not weaken any later assertions.
+- Runtime remains dev.25. Run #77 produced no installer.
+- No application runtime behavior, visual-polish implementation, font assets, SVG assets, conversion/framing/adaptive/updater/subprocess/toolchain behavior changes in this repair.
+
 ## PFC-2026-09-14-052 — Stale mockup-version assertion after run #75
 
 - Run #75 / run ID `34820011338` from visual-polish commit `b9196d17c67393ba79f509b107e30c08b55915ef` passed font assets, all 56 unit tests, protected conversion/toolchain/adaptive/GIF-reference gates, and the frozen application build.

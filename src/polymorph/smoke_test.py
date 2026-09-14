@@ -84,28 +84,31 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
             path = asset_path(name)
             if not path.is_file():
                 raise RuntimeError(f"Packaged font resource is missing: {path}")
-        if str(app.property("polymorphDisplayFontSource") or "") != "bundled-polymorph":
+        loaded_fonts = str(app.property("polymorphFontsLoaded") or "")
+        for logical_name in ("Polymorph Regular", "Polymorph Bold", "Cinzel", "Inter"):
+            if logical_name not in loaded_fonts:
+                raise RuntimeError(
+                    f"Required packaged font did not register ({logical_name}): {loaded_fonts!r}"
+                )
+        if app.property("polymorphDisplaySource") != "bundled-polymorph":
             raise RuntimeError(
-                "Frozen build did not register bundled Polymorph display fonts: "
-                f"{app.property('polymorphDisplayFontSource')!r}"
+                "Packaged build is not using its bundled Polymorph display assets: "
+                f"{app.property('polymorphDisplaySource')!r}"
             )
-        regular = str(app.property("polymorphDisplayFont") or "").strip()
-        bold = str(app.property("polymorphDisplayBoldFont") or "").strip()
-        if not regular or not bold:
-            raise RuntimeError(
-                f"Bundled Polymorph font families did not register: regular={regular!r}, bold={bold!r}"
-            )
-        if str(app.property("polymorphBodyFont") or "").strip() != "Inter":
-            raise RuntimeError(
-                f"Bundled Inter body font did not register: {app.property('polymorphBodyFont')!r}"
-            )
+        if not str(app.property("polymorphDisplayFont") or "").strip():
+            raise RuntimeError("Bundled Polymorph regular family was not resolved")
+        if not str(app.property("polymorphDisplayBoldFont") or "").strip():
+            raise RuntimeError("Bundled Polymorph bold family was not resolved")
         lines.append("PASS packaged Polymorph display fonts and Inter body font")
 
         window = MainWindow()
         rebuild_brand_layout(window)
         apply_brand_skin(window)
+        window.move(-4000, -4000)
         window.show()
         app.processEvents()
+        if window.converter is None:
+            raise RuntimeError("Main window could not resolve the bundled conversion toolchain")
         lines.append("PASS packaged main window initialization")
 
         if (window.width(), window.height()) != (1260, 820):
@@ -291,4 +294,4 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
     finally:
         if window is not None:
             window.close()
-        _write_log(lines)
+        app.processEvents()

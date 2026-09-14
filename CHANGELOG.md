@@ -2,6 +2,16 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md). Root tracking is intentionally rolling/compact; use archived detail only when a current task needs it.
 
+## POLY-2026-09-14-053 — Restore the proven packaged-smoke harness after run #77
+
+### Summary
+
+- Windows Dev Build run #77 / run ID `34820591656` again passed font assets, all 56 unit tests, protected FFmpeg/gifski/adaptive/GIF-reference gates, and the frozen application build.
+- The `mockup-v2` assertion repair worked, but packaged smoke then failed earlier at font-state validation because the prior repair accidentally replaced more of `smoke_test.py` than intended. Proven run-#75 property names/checks (`polymorphFontsLoaded`, `polymorphDisplaySource`), offscreen window placement, converter readiness, and final Qt event processing had been altered or dropped.
+- Restore `smoke_test.py` byte-for-byte from visual-polish commit `b9196d17c67393ba79f509b107e30c08b55915ef`, with exactly one intentional difference: the fidelity assertion expects `mockup-v2` instead of `mockup-v1`.
+- Do not change the actual visual-polish implementation, font loader, font assets, responsive geometry, or protected runtime behavior in this repair.
+- Runtime remains `0.1.0-dev.25`; run #77 produced no installer.
+
 ## POLY-2026-09-14-052 — Repair stale mockup-version smoke gate after run #75
 
 ### Summary
