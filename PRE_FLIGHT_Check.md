@@ -2,6 +2,18 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md). Root tracking is intentionally rolling/compact; older detail is not mandatory startup reading.
 
+## PFC-2026-09-14-051 — Human visual polish after run #62
+
+- Human visual review of the installed run #62 tester confirms the custom Polymorph face is finally rendering correctly, so do not reopen font provenance/registration or the direct-label ownership repair.
+- Remaining issues are presentation-only: right-rail section headings are optically too large; section icons are inconsistent/low quality; Framing and Crop Zoom incorrectly share a symbol; Output Format/Sizing radio bubbles sit left of GIF Priority; helper text under Preserve/Favor is over-indented; Browse/Add Files text is too large; playback's text glyph is effectively invisible; and the primary POLYMORPH label is right-shifted inside its button.
+- Preserve the run #62 technical PASS, accepted 1260×820 / 920×640 geometry, minimum-size compact-rail fix, and all protected conversion/framing/adaptive/updater/subprocess/toolchain behavior.
+- Presentation repair uses a post-responsive optical controller so heading size, radio/helper alignment, vector icons, playback icons, and small-button text remain correct after window resizes without changing the underlying layout engine.
+- Use one coherent thin-line SVG family for FILES, Output Format, Sizing, GIF Priority, Framing, Aspect Ratio, Crop Zoom, and Output Folder. Framing and Crop Zoom must remain visually distinct.
+- Playback uses real play/pause SVG icons tied to `playbackChanged`; do not rely on narrow text glyphs in the 28 px tool button.
+- Primary action keeps its existing surface/sigil but centers `POLYMORPH` against the full button rectangle.
+- Runtime remains dev.25 for this visual revision. No conversion, package-toolchain, updater, or public-release behavior changes.
+- Next gate is the complete Windows pipeline, followed by another installed human visual check. CI can prove packaging/geometry/functionality, not appearance.
+
 ## PFC-2026-09-13-050 — dev.25 technical PASS / human visual gate next
 
 - Run #62 / run ID `34809405250` from code commit `112f2e2efb128ef806cb6f44ed650b9753a5471e` passed the complete Windows technical pipeline.

@@ -125,15 +125,12 @@ class TexturedFrame(QFrame):
         base.setColorAt(1.0, c1)
         painter.fillPath(path, base)
 
-        # Slight warm center illumination keeps the panels from reading as flat
-        # gray boxes while staying substantially darker than the content.
         glow = QRadialGradient(rect.center(), max(rect.width(), rect.height()) * 0.82)
         glow.setColorAt(0.0, QColor(198, 153, 86, 8 if not selected else 5))
         glow.setColorAt(0.52, QColor(111, 74, 37, 3))
         glow.setColorAt(1.0, QColor(0, 0, 0, 0))
         painter.fillPath(path, glow)
 
-        # Stable low-density grain. It adds surface depth without visible speckling.
         width = max(1, self.width())
         height = max(1, self.height())
         samples = min(320, max(48, (width * height) // 7200))
@@ -158,7 +155,6 @@ class TexturedFrame(QFrame):
         painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.drawRoundedRect(rect, radius, radius)
 
-        # Hairline inner highlight gives the mockup's etched/shadowed card edge.
         inner = rect.adjusted(1.0, 1.0, -1.0, -1.0)
         painter.setPen(QPen(QColor(224, 186, 113, 13 if not selected else 18), 1.0))
         painter.drawRoundedRect(inner, max(1.5, radius - 1.0), max(1.5, radius - 1.0))
@@ -214,14 +210,12 @@ class PolymorphButton(QPushButton):
         gradient.setColorAt(1.0, right)
         painter.fillPath(path, gradient)
 
-        # Subtle top/bottom light shaping makes the action look inset rather than flat.
         sheen = QLinearGradient(rect.left(), rect.top(), rect.left(), rect.bottom())
         sheen.setColorAt(0.0, QColor(255, 220, 158, 18 if enabled else 6))
         sheen.setColorAt(0.32, QColor(255, 255, 255, 0))
         sheen.setColorAt(1.0, QColor(0, 0, 0, 70))
         painter.fillPath(path, sheen)
 
-        # Mockup-inspired left sigil. It stays static until the dedicated loader pass.
         sigil_cx = rect.left() + 58 * self._scale
         cy = rect.center().y()
         ring_color = QColor(222, 184, 113, 95 if enabled else 35)
@@ -234,7 +228,6 @@ class PolymorphButton(QPushButton):
         painter.drawLine(int(sigil_cx - tri), int(cy + tri * 0.82), int(sigil_cx + tri), int(cy + tri * 0.82))
         painter.drawLine(int(sigil_cx + tri), int(cy + tri * 0.82), int(sigil_cx), int(cy - tri))
 
-        # Thin architectural separators, like the concept art, without crowding the title.
         painter.setPen(QPen(QColor(201, 160, 91, 120 if enabled else 45), 1.0))
         line_y = cy
         painter.drawLine(
@@ -267,13 +260,7 @@ class PolymorphButton(QPushButton):
                 bold=False,
             )
         )
-        text_rect = QRectF(
-            rect.left() + 92 * self._scale,
-            rect.top(),
-            max(1.0, rect.width() - 116 * self._scale),
-            rect.height(),
-        )
-        painter.drawText(text_rect, Qt.AlignmentFlag.AlignCenter, "POLYMORPH")
+        painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, "POLYMORPH")
 
 
 @dataclass

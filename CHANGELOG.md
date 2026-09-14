@@ -2,6 +2,19 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md). Root tracking is intentionally rolling/compact; use archived detail only when a current task needs it.
 
+## POLY-2026-09-14-051 — Visual polish from dev.25 human review
+
+### Summary
+
+- Amanda's installed run #62 tester confirmed the custom Polymorph face is finally applied correctly, but the human visual gate identified presentation issues that CI cannot judge: card headings are optically too large, the mixed section-icon set reads poorly, Output Format/Sizing radio bubbles do not align with GIF Priority, GIF-priority helper copy is over-indented, the playback glyph is effectively missing, Browse/Add Files typography is too large, and the primary POLYMORPH label is visibly right-shifted inside its button.
+- Keep the proven bundled Polymorph font assignment, accepted 1260×820 / 920×640 responsive geometry, compact-rail fix, and all protected conversion/framing/adaptive/updater/subprocess behavior.
+- Add an optical presentation controller that reapplies human-requested polish after responsive scaling: smaller Polymorph Bold card headings, unified radio-column indentation, helper-copy alignment with radio label text, and smaller Browse/Add Files text.
+- Replace the current section-icon presentation with a coherent thin-line SVG set. Framing and Crop Zoom now use distinct symbols; Output Format, Sizing, GIF Priority, Aspect Ratio, Files and Output Folder each receive purpose-specific vectors.
+- Replace the tiny text-based playback affordance with real play/pause SVG icons that follow preview playback state.
+- Center the primary `POLYMORPH` title against the full action-button bounds rather than an offset text rectangle; the left decorative sigil remains separate decoration.
+- Runtime remains `0.1.0-dev.25`; this is a visual-fidelity revision of the same development line and requires a new installed human check before acceptance.
+- No GIF/MP4 encoding, adaptive selection, Crop/Fit geometry, file-size logic, updater, subprocess, or toolchain behavior changed.
+
 ## POLY-2026-09-13-050 — Record successful dev.25 technical tester
 
 ### Summary
