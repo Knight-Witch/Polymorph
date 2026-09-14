@@ -2,6 +2,19 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md). Root tracking is intentionally rolling/compact; use archived detail only when a current task needs it.
 
+## POLY-2026-09-13-044 — 2026-09-13 21:15 PDT — Record successful dev.24 custom-font tester
+
+### Summary
+
+- Windows Dev Build run #57 / run ID `34805017987` completed successfully from implementation commit `c4f9e1962716a56650366964acff806f61ae38b0`.
+- All canonical gates passed: custom Polymorph font verification, 54 unit tests, pinned FFmpeg 9.0.1 + gifski 1.32.0 toolchain verification, adaptive integration, standalone GIF reference comparison, PyInstaller frozen application build, packaged application smoke, Inno Setup installer compilation, installer SHA-256 generation, and both artifact uploads.
+- Packaged smoke confirmed the bundled Polymorph Regular/Bold display faces register inside the frozen app, the branded UI initializes successfully, responsive geometry/control wiring remains intact, and the footer reports dev.24 correctly.
+- Successful installer artifact is `Polymorph-dev-installer`, artifact ID `10332274291`, artifact ZIP digest `sha256:6e18bc546f065b29bf7b193e8bd84a6972c434f6a3c672bdf7a8572dd1bcbf26`.
+- The downloaded tester ZIP independently hashes to the same SHA-256 digest.
+- The technical gate is complete. The next gate is Amanda's human visual comparison of the custom font against the approved mockup using the intentionally unchanged dev.23 sizes/tracking/spacing.
+- Documentation-only handoff update. No runtime code, UI behavior, font bytes, typography measurements, conversion/framing/adaptive logic, package inputs, installer behavior, updater behavior, toolchain pins, `main`, or public release changed.
+- Runtime remains `0.1.0-dev.24`.
+
 ## POLY-2026-09-13-043 — 2026-09-13 21:09 PDT — Align dev.24 package/version anchors after packaged smoke
 
 ### Summary

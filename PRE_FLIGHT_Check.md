@@ -2,6 +2,17 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md). Root tracking is intentionally rolling/compact; older detail is not mandatory startup reading.
 
+## PFC-2026-09-13-044 — Record successful dev.24 tester and hand off to human visual gate
+
+- Windows Dev Build run #57 / run ID `34805017987` completed successfully from implementation commit `c4f9e1962716a56650366964acff806f61ae38b0`.
+- PASS: custom Polymorph font verification, 54 unit tests, FFmpeg 9.0.1 + gifski 1.32.0 toolchain verification, adaptive integration, standalone GIF reference comparison, frozen application build, packaged application smoke, Inno Setup installer compilation, SHA-256 generation, unpacked-app artifact upload, and installer artifact upload.
+- Packaged smoke confirms the bundled Polymorph Regular/Bold faces register in the frozen Windows application, the branded UI shell initializes, responsive geometry remains correct, and dev.24 version metadata is aligned.
+- Successful installer artifact: `Polymorph-dev-installer`, artifact ID `10332274291`, artifact ZIP digest `sha256:6e18bc546f065b29bf7b193e8bd84a6972c434f6a3c672bdf7a8572dd1bcbf26`.
+- Downloaded tester ZIP independently matches that SHA-256 digest exactly.
+- This closes the technical dev.24 font/package gate. Do not change the established sizes/tracking/spacing before Amanda evaluates the actual installed UI; `styles.py` remains the requested baseline.
+- Next gate is human visual judgment only: compare title, subtitle/byline, card headings, primary action and overall balance to the approved mockup, then make presentation-only adjustments if requested.
+- Documentation-only handoff update. No runtime/version/package/public behavior changed by this record.
+
 ## PFC-2026-09-13-043 — Align dev.24 package/version anchors after run #56
 
 - Windows Dev Build run #56 / run ID `34804686496` validated the repaired custom-font assets, all 54 unit tests, FFmpeg/gifski toolchain, adaptive integration, GIF reference timing, and the frozen application build.
