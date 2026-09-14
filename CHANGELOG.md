@@ -2,6 +2,17 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md). Root tracking is intentionally rolling/compact; use archived detail only when a current task needs it.
 
+## POLY-2026-09-13-049 — Finish measured compact-rail budget after run #61
+
+### Summary
+
+- Windows Dev Build run #61 / run ID `34808985545` again passed the custom-font assets, all 56 unit tests, protected conversion/adaptive/GIF gates, frozen app build, and the packaged Polymorph typography assertions.
+- The first compact-only rail pass worked as intended but was not quite sufficient: minimum-size action bottom improved from 508 to 494 while the rail remained 482, leaving 12 px of overflow.
+- Preserve the confirmed font fix, primary-action height, full-size 1260×820 geometry, FILES/preview/footer geometry, and all protected runtime behavior.
+- At compact scale only, reduce the top-level settings-rail gap from 2 px to 1 px and trim one additional pixel from the bottom padding of each top-level `ControlCard`. This is a measured continuation of the same minimum-only repair and does not alter normal-size metrics.
+- Runtime remains `0.1.0-dev.25`; run #61 produced no installer.
+- No GIF/MP4 conversion, adaptive GIF selection, framing/export geometry, updater, subprocess, or toolchain behavior changed.
+
 ## POLY-2026-09-13-048 — Compact only the minimum-size settings rail after run #60
 
 ### Summary

@@ -2,6 +2,17 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md). Root tracking is intentionally rolling/compact; older detail is not mandatory startup reading.
 
+## PFC-2026-09-13-049 — Measured second compact pass after run #61
+
+- Run #61 / run ID `34808985545` is failed evidence, not a tester to hand to Amanda.
+- PASS before failure: custom Polymorph assets, all 56 unit tests including the real QLabel font-resolution test, protected conversion/adaptive/GIF gates, frozen app build, applied Polymorph typography, title/byline fidelity, and FILES grouping.
+- Exact remaining failure: `POLYMORPH action is clipped at minimum size: button bottom 494, rail 482`.
+- The first minimum-only compaction recovered 14 px relative to run #60. Preserve it and preserve the now-confirmed typography implementation.
+- Recover the remaining 12 px without shrinking the primary action or changing normal-size geometry: at compact scale only, reduce top-level `ControlRailContent` spacing from 2 px to 1 px and reduce each top-level `ControlCard` bottom padding by one additional pixel.
+- Keep 1260×820 full-size metrics, 920×640 supported minimum, FILES/preview/footer geometry, font sizes/tracking/assets, and all protected runtime/toolchain behavior unchanged.
+- Runtime remains dev.25 because run #61 produced no installer.
+- Re-run the full Windows pipeline; only hand over a tester if applied typography and minimum-size primary-action visibility pass in the same frozen build.
+
 ## PFC-2026-09-13-048 — Minimum-size rail compaction after run #60
 
 - Run #60 / run ID `34807810638` is useful failed evidence, not a tester to hand to Amanda.

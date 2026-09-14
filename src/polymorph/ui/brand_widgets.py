@@ -317,10 +317,10 @@ class ScaleRegistry:
                 parent = layout.parentWidget()
                 if parent is not None and parent.layout() is layout:
                     if parent.objectName() == "ControlRailContent":
-                        scaled_spacing = min(scaled_spacing, 2)
+                        scaled_spacing = min(scaled_spacing, 1)
                     elif parent.objectName() == "ControlCard":
                         scaled_t = max(0, scaled_t - 1)
-                        scaled_b = max(0, scaled_b - 2)
+                        scaled_b = max(0, scaled_b - 3)
 
             layout.setContentsMargins(scaled_l, scaled_t, scaled_r, scaled_b)
             layout.setSpacing(scaled_spacing)

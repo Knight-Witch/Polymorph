@@ -1,7 +1,7 @@
 # Active Context — Polymorph `dev`
 
 **Updated:** 2026-09-13  
-**Current task:** dev.25 branded-display typography is now confirmed inside the frozen EXE; run #60 leaves only a 920×640 right-rail vertical-budget failure to repair without disturbing full-size geometry.  
+**Current task:** dev.25 typography is confirmed in the frozen EXE; run #61 reduced the minimum-size rail overflow to 12 px, so the active repair is a second measured compact-only spacing pass.  
 **Runtime posture:** conversion/framing/adaptive behavior remains closed/validated for current v1 scope; UI fidelity is the active development phase.
 
 ## Minimum continuation set
@@ -26,11 +26,13 @@ Do not preload engine/history files unless the current task actually needs them.
 - First dev.25 implementation: `0fee8bc7a3dc3b7fd3a264b02206ab8b050aff09`.
 - Responsive-QSS repair: `a59cd33670a124d4701a46686c6ae34f736a1538`.
 - Direct-label typography repair: `b9aef66a703be4daf328614f015a54ce61013979`.
+- First compact-only rail repair: `c0f0ad67d88494db899ab0eb45321f21c2a43088`.
 - Run #58 / ID `34806964426`: packaged typography assertion PASS, then minimum-size rail overflow FAIL.
 - Run #59 / ID `34807445345`: app-level QSS repair still resolved normal QLabel fonts to Inter; no installer.
-- Run #60 / ID `34807810638`: 56 unit tests, protected runtime/toolchain gates and frozen app build PASS. Packaged smoke then passed `applied Polymorph title/subtitle/card-heading typography`, title/byline fidelity and FILES grouping, proving the intended display face is now applied in the frozen EXE. Remaining failure is only `POLYMORPH action is clipped at minimum size: button bottom 508, rail 482`; no installer produced.
-- Immediate repair keeps the confirmed font ownership and full-size geometry, but at responsive scale `<= 0.76` tightens only the top-level `ControlRailContent` gap and top/bottom padding of top-level `ControlCard` layouts. FILES, preview, footer and primary-action height remain unchanged.
-- Exact repair commit/run/artifact identity must be recorded here after the next full Windows workflow completes.
+- Run #60 / ID `34807810638`: frozen packaged typography PASS; minimum-size failure `button bottom 508, rail 482`.
+- Run #61 / ID `34808985545`: custom-font assets, 56 unit tests, protected runtime/toolchain gates, frozen app build and all packaged typography/fidelity checks PASS. First compact pass improved the minimum-size failure to `button bottom 494, rail 482`, recovering 14 px and leaving 12 px of overflow; no installer produced.
+- Immediate repair preserves the confirmed font ownership, primary-action height and full-size geometry. At responsive scale `<= 0.76`, top-level `ControlRailContent` gap tightens from 2 px to 1 px and top-level `ControlCard` bottom padding loses one additional pixel. FILES, preview, footer and normal-size metrics remain unchanged.
+- Exact second repair commit/run/artifact identity must be recorded here after the next full Windows workflow completes.
 - dev.24 run #57/artifact `10332274291` is technical PASS but **human visual FAIL** and must not be promoted.
 - No public release exists; `main` remains non-experimental.
 
@@ -54,7 +56,7 @@ Original font-source hashes and shipped subset hashes are unchanged from dev.24.
 
 ## Next gate
 
-1. Commit the compact-only rail repair on dev without changing dev.25 version.
+1. Commit the measured second compact-only rail adjustment on dev without changing dev.25 version.
 2. Full Windows workflow must pass the real QLabel font test, protected runtime/toolchain gates, frozen app build, applied-typography packaged assertion, and 920×640 primary-action visibility in the same run.
 3. On full Windows PASS, record commit/run/artifact identity here, retrieve `Polymorph-dev-installer`, and hand it to Amanda directly.
 4. Amanda visually confirms title, subtitle, FILES, all right-rail headings and primary action.
