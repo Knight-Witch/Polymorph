@@ -1,7 +1,7 @@
 # Active Context — Polymorph `dev`
 
 **Updated:** 2026-09-14  
-**Current task:** dev.25 presentation-only polish from Amanda's installed screenshot/feedback. The visual-polish code itself continues to build cleanly; current CI repair work is only restoring the proven packaged-smoke harness after an accidental over-broad test-file replacement.  
+**Current task:** human visual validation of the dev.25 presentation-polish tester from Windows Dev Build run #79. The requested heading/icon/alignment/playback/button-centering pass is technically complete; do not continue changing presentation until Amanda evaluates the installed tester.  
 **Runtime posture:** conversion/framing/adaptive behavior remains closed/validated for current v1 scope; UI fidelity is the active development phase.
 
 ## Minimum continuation set
@@ -24,23 +24,23 @@ Do not preload engine/history files unless the current task actually needs them.
 
 - Branch: `dev`
 - Runtime version: `0.1.0-dev.25`
-- Last technical-PASS baseline: code commit `112f2e2efb128ef806cb6f44ed650b9753a5471e`; Windows Dev Build run #62 / run ID `34809405250`; installer artifact ID `10334421612`; digest `sha256:c77908691be09782951a52d8537e7c629681a3f6638e5a48e09b7880966b9384`.
-- Human review of that installed tester confirms the custom Polymorph face is finally applied correctly. Do not reopen font provenance, asset transport, registration, or direct-label ownership.
-- Consolidated visual-polish implementation: `b9196d17c67393ba79f509b107e30c08b55915ef`.
-- Run #75 / ID `34820011338`: visual-polish code, unit suite, protected runtime/toolchain gates and frozen app build PASS; packaged smoke stopped on stale `mockup-v1` expectation.
-- Run #77 / ID `34820591656`: updated `mockup-v2` expectation was accepted and all pre-package gates again PASS, but packaged smoke failed font-state validation because the first smoke repair accidentally replaced additional proven harness code. Comparison against `b9196d17` identified the accidental differences: wrong font-state property names/checks, lost offscreen window placement, lost bundled-converter readiness assertion, and lost final Qt event processing. This is test-harness drift, not evidence that the visual-polish runtime broke font registration.
-- Immediate repair restores `src/polymorph/smoke_test.py` exactly from `b9196d17`, with one and only one intended delta: `polymorphFidelity` expects `mockup-v2` instead of `mockup-v1`.
-- Human-requested visual changes in the candidate:
+- Current tested implementation commit: `06ad854d3cab7c1f249b253673e99ce18196cee5` (`Restore proven packaged smoke harness for mockup v2`).
+- Windows Dev Build run #79 / run ID `34821077711`: **FULL PASS**.
+- Run #79 passed bundled custom-font verification, all 56 unit tests, pinned FFmpeg/gifski toolchain checks, adaptive integration, GIF reference comparison, frozen application build, complete packaged UI smoke, Inno Setup compilation, SHA-256 generation, unpacked-app upload, and installer upload.
+- Packaged smoke passed the restored bundled Polymorph font checks, `mockup-v2` presentation tag, applied Polymorph title/subtitle/card-heading typography, two-column shell, FILES grouping, 920×640 primary-action visibility, concept field/alignment/slider styling, animated WebP preview, adaptive GIF controls, framing/crop zoom mapping, linked resolution controls, and footer metadata in the same frozen application.
+- Installer artifact: `Polymorph-dev-installer`, artifact ID `10338840830`, digest `sha256:5f15f4246c1a6fa254b86b7977a0716ad2e385c6abb4135b7f66a8a0bb79cb7e`.
+- The tester was retrieved directly as `Polymorph-dev.25-visual-polish-installer.zip`.
+- Human-requested visual changes included in this candidate:
   - smaller FILES/right-rail section headings while preserving Polymorph Bold;
-  - coherent thin-line SVG icons with distinct Framing and Crop Zoom symbols;
+  - coherent thin-line SVG section icons with distinct Framing and Crop Zoom symbols;
   - one aligned radio-bubble column for Output Format, Sizing and GIF Priority;
-  - helper copy aligned with Preserve/Favor label text;
+  - Preserve/Favor helper copy aligned with radio-label text;
   - smaller Browse/Add Files text;
-  - real play/pause SVG playback control;
-  - primary `POLYMORPH` label centered against the full button bounds.
-- Implementation remains presentation-only: `fidelity_pass.py` reapplies optical adjustments after responsive scaling; `brand_widgets.py` centers the primary-action title; new SVG assets provide section/playback icons.
+  - real SVG play/pause playback control;
+  - primary `POLYMORPH` label centered against the full action-button bounds.
+- Implementation is presentation-only: `fidelity_pass.py` reapplies optical adjustments after responsive scaling; `brand_widgets.py` centers the primary-action title; SVG assets provide the section/playback icons.
+- Run #75 / ID `34820011338` and run #77 / ID `34820591656` are failed CI evidence only. Their failures were smoke-harness/version-assertion issues and produced no installer. Do not treat them as current candidates.
 - The accepted compact-rail logic from run #62 remains unchanged.
-- The next exact successful implementation commit/run/artifact identity must replace this paragraph after CI completes.
 - dev.24 remains technical PASS / human visual FAIL and must not be promoted.
 - No public release exists; `main` remains non-experimental.
 
@@ -51,21 +51,20 @@ Amanda's supplied custom files register as one Polymorph family with Regular and
 - Brand title, subtitle/byline, primary action: Polymorph Regular.
 - FILES and every right-rail CardHeading: Polymorph Bold.
 - Body/control/footer text: Inter.
-- Human review specifically requests smaller card-heading optical size while preserving the correct Polymorph Bold face.
+- Run #79 retains the smaller card-heading optical size requested in the latest human review.
 
 ## Protected PASS state — do not reopen without new evidence
 
 - Preserve-motion GIF quality/smoothness, decimal-MB sizing, MP4, updater hardening and Windows no-console subprocess behavior.
 - Favor-resolution exact source-frame decimation, measured-gain gating, loop closure repair, 8 FPS floor, 2048/native soft target and no-upscale behavior.
 - Crop/Fit preview/export geometry is human-validated.
-- Preserve 1260×820 design geometry and 920×640 supported minimum; run #62 cleared the minimum-size packaged gate.
+- Preserve 1260×820 design geometry and 920×640 supported minimum; run #79 again cleared the minimum-size packaged gate.
 - Preserve the current responsive minimum-only rail compaction unless new evidence shows a regression.
-- Bundled Polymorph font application is confirmed both technically and visually.
+- Bundled Polymorph font application is confirmed both technically and visually from the earlier run #62 review and technically again in run #79.
 
 ## Next gate
 
-1. Re-run the full canonical Windows workflow with the proven run-#75 smoke harness restored and only the `mockup-v2` expectation changed.
-2. Packaged smoke must pass bundled font application, mockup-v2 presentation, Polymorph heading typography, two-column shell, FILES grouping, 920×640 primary-action visibility, preview decode, framing/adaptive/resolution mapping and footer metadata in the same frozen app.
-3. On full PASS, retrieve the new `Polymorph-dev-installer` artifact directly and record commit/run/artifact identity here.
-4. Amanda visually checks heading scale, section icons, radio/helper alignment, playback control, button text sizing, centered primary action, and overall full/minimum-window balance.
-5. Only after that visual PASS proceed to the deferred working/loading animation phase.
+1. Amanda installs/runs the run-#79 tester and visually checks heading scale, section icons, radio/helper alignment, playback control, Browse/Add Files sizing, centered primary action, and overall full/minimum-window balance.
+2. If she finds visual issues, change only the branded presentation/UI layer implicated by that evidence; do not reopen protected conversion/runtime areas.
+3. If she accepts the visual pass, mark dev.25 UI polish human-PASS and proceed to the deferred working/loading animation phase.
+4. Do not promote to `main` or create a public release without Amanda's explicit approval.

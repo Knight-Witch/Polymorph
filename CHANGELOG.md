@@ -2,6 +2,19 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md). Root tracking is intentionally rolling/compact; use archived detail only when a current task needs it.
 
+## POLY-2026-09-14-054 — dev.25 visual-polish tester passes the complete Windows pipeline
+
+### Summary
+
+- Windows Dev Build run #79 / run ID `34821077711` from tested implementation commit `06ad854d3cab7c1f249b253673e99ce18196cee5` passed the complete canonical Windows pipeline.
+- PASS includes bundled custom Polymorph font verification, all 56 unit tests, pinned FFmpeg 9.0.1/gifski 1.32.0 checks, protected conversion/adaptive/GIF-reference gates, frozen application build, complete packaged UI smoke, Inno Setup compilation, checksum generation, and both artifact uploads.
+- Packaged smoke passed `mockup-v2`, applied Polymorph title/subtitle/card-heading typography, two-column composition, FILES grouping, 920×640 primary-action visibility, concept alignment/slider styling, preview decode, adaptive GIF controls, framing/crop zoom mapping, linked resolution, and footer metadata in the same frozen application.
+- Installer artifact `Polymorph-dev-installer`: ID `10338840830`, digest `sha256:5f15f4246c1a6fa254b86b7977a0716ad2e385c6abb4135b7f66a8a0bb79cb7e`.
+- Retrieved tester filename: `Polymorph-dev.25-visual-polish-installer.zip`.
+- This candidate contains the human-requested smaller section headings, coherent/distinct thin-line SVG section icons, aligned radio/helper columns, smaller Browse/Add Files text, real SVG play/pause control, and primary POLYMORPH label centered against the full button bounds.
+- Runtime remains `0.1.0-dev.25`. The next gate is human visual validation; CI proves technical/package correctness, not appearance.
+- This tracking update is documentation-only. It does not change runtime, package contents, conversion behavior, UI behavior, version, or public-release state; the tested installer corresponds to commit `06ad854d3cab7c1f249b253673e99ce18196cee5`.
+
 ## POLY-2026-09-14-053 — Restore the proven packaged-smoke harness after run #77
 
 ### Summary
@@ -75,7 +88,7 @@ Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LO
 - Windows Dev Build run #59 / run ID `34807445345` again cleared font assets, 55 unit tests, protected conversion/adaptive/GIF gates and the frozen application build, then failed packaged smoke before installer creation.
 - Exact run #59 smoke failure: `Brand title is not using Polymorph Regular: 'Inter' != 'Polymorph'`.
 - Diagnosis: app-level selector specificity is still not a sufficient guarantee for Qt's resolved `QLabel.font()` state under the inherited Inter body stylesheet. Do not weaken the applied-font smoke assertion.
-- Keep the restored body/control QSS sizing model, but make each BrandTitle, BrandSubtitle and CardHeading own a direct widget stylesheet containing its registered Polymorph family/point size, then reapply its tracked QFont for absolute letter spacing and bold state.
+- Keep the restored body/control QSS sizing model, but make each BrandTitle, BrandSubtitle and CardHeading own a direct widget stylesheet containing its registered Polymorph family/point size, then reapply its tracked QFont for absolute letter spacing/bold state.
 - Add a real offscreen Qt unit test that registers the packaged fonts, creates branded labels under the Inter app-root body QSS, applies typography, and asserts their resolved font families/tracking/bold state.
 - Runtime remains `0.1.0-dev.25`; run #59 produced no installer.
 - No font bytes, optical typography values, conversion/framing/adaptive logic, updater/subprocess behavior or window geometry changed.

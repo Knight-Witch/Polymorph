@@ -2,6 +2,18 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md). Root tracking is intentionally rolling/compact; older detail is not mandatory startup reading.
 
+## PFC-2026-09-14-054 — dev.25 visual-polish tester is technically ready for human review
+
+- Run #79 / run ID `34821077711` from tested implementation commit `06ad854d3cab7c1f249b253673e99ce18196cee5` passed the full canonical Windows pipeline.
+- Required gates all PASS: bundled Polymorph/Inter fonts, all 56 unit tests, pinned FFmpeg/gifski toolchain, protected conversion/adaptive/GIF-reference checks, frozen build, complete packaged smoke, Inno Setup, SHA-256, and both artifact uploads.
+- Packaged smoke passed `mockup-v2`, real applied Polymorph title/subtitle/card-heading typography, two-column shell, FILES grouping, 920×640 primary-action visibility, concept alignment/slider styling, preview decode, adaptive GIF controls, framing/crop zoom mapping, linked resolution, and footer metadata.
+- Installer artifact `Polymorph-dev-installer`: ID `10338840830`, digest `sha256:5f15f4246c1a6fa254b86b7977a0716ad2e385c6abb4135b7f66a8a0bb79cb7e`; retrieved as `Polymorph-dev.25-visual-polish-installer.zip`.
+- The active changes are presentation-only: smaller section headings, coherent/distinct SVG section icons, corrected radio/helper alignment, smaller Browse/Add Files text, real play/pause SVGs, and true primary-action title centering.
+- Preserve all protected conversion/framing/adaptive/updater/subprocess/toolchain behavior and the accepted 1260×820 / 920×640 responsive geometry.
+- Next gate is human visual review. Do not make further UI changes until Amanda judges the installed run-#79 tester, unless she reports a concrete regression.
+- Runtime remains dev.25; no public release or `main` promotion is authorized.
+- This tracking update is documentation-only. The tested package remains the run-#79 artifact from `06ad854d3cab7c1f249b253673e99ce18196cee5`.
+
 ## PFC-2026-09-14-053 — Restore proven smoke harness after run #77
 
 - Run #77 / run ID `34820591656` passed font assets, all 56 unit tests, protected conversion/toolchain/adaptive/GIF-reference gates, and the frozen app build.
@@ -60,7 +72,7 @@ Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LO
 - This is no longer a typography-assignment failure. Preserve the direct widget-owned Polymorph fonts and do not weaken the smoke assertion.
 - Keep 1260×820 full-size geometry unchanged. At responsive scale `<= 0.76`, compact only the top-level `ControlRailContent` spacing and top/bottom padding on top-level `ControlCard` layouts. Do not shrink the primary action or change FILES/preview/footer geometry.
 - Runtime remains dev.25 because run #60 produced no installer.
-- Preserve all protected conversion/framing/adaptive/updater/subprocess/toolchain behavior.
+- Preserve all protected conversion/framing/adaptive/updater/subprocess/toolchain behavior unchanged.
 - Re-run the complete Windows pipeline. Only hand over a tester if both the applied-typography and 920×640 primary-action visibility gates pass in the same frozen build.
 
 ## PFC-2026-09-13-047 — Direct widget-owned Polymorph typography after run #59
@@ -68,7 +80,7 @@ Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LO
 - Run #59 / run ID `34807445345` failed packaged smoke with `Brand title is not using Polymorph Regular: 'Inter' != 'Polymorph'`; installer steps were correctly skipped.
 - Do not weaken the smoke. App-level specific QSS still leaves the resolved QLabel font as Inter under the body stylesheet.
 - Keep the restored QSS body/control sizing model from the responsive repair.
-- Apply the branded face directly on each BrandTitle, BrandSubtitle and CardHeading widget with a local stylesheet, then set the tracked QFont for absolute letter spacing/bold state.
+- Apply the branded face directly on each BrandTitle, BrandSubtitle and CardHeading widget with a local stylesheet, then set its tracked QFont for absolute letter spacing/bold state.
 - Add an offscreen Qt unit test using the packaged font loader and real QLabel objects under the Inter body QSS; require resolved Polymorph family before the slow build proceeds.
 - Runtime remains dev.25; no installer from run #59.
 - Preserve font bytes, existing point sizes/tracking, 1260×820 / 920×640 geometry, and all protected conversion/framing/adaptive/updater/subprocess behavior.
