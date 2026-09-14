@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from PySide6.QtWidgets import QLabel
+from PySide6.QtGui import QFont
+from PySide6.QtWidgets import QApplication, QLabel
 
 from .brand_widgets import ResponsiveBrandController, tracked_font
 from .fidelity_pass import apply_mockup_fidelity
@@ -10,8 +11,11 @@ def _px(value: float, scale: float, minimum: int = 1) -> int:
     return max(minimum, round(value * scale))
 
 
+def _body_point_size(scale: float) -> float:
+    return max(7.7, 9.5 * scale)
+
+
 def build_brand_stylesheet(scale: float = 1.0) -> str:
-    body = max(7.7, 9.5 * scale)
     small = max(6.9, 7.9 * scale)
     tiny = max(6.4, 7.2 * scale)
     control_pad_v = _px(3.5, scale, 2)
@@ -31,8 +35,6 @@ QMainWindow {{
 }}
 QWidget {{
     color: #f2ece2;
-    font-family: "Inter", "Segoe UI", sans-serif;
-    font-size: {body:.2f}pt;
 }}
 QWidget#AppRoot,
 QWidget#Workspace,
@@ -348,6 +350,15 @@ QToolTip {{ color: #f1e9dd; background: #0b0c0d; border: 1px solid #665137; padd
 BASE_STYLESHEET = build_brand_stylesheet(1.0)
 
 
+def _apply_body_font(window, scale: float) -> None:
+    """Keep Inter/body sizing responsive without overriding branded display QFonts in QSS."""
+    app = QApplication.instance()
+    base = app.font() if app is not None else window.font()
+    font = QFont(base)
+    font.setPointSizeF(_body_point_size(scale))
+    window.setFont(font)
+
+
 def _apply_typography(window, scale: float) -> None:
     title = window.findChild(QLabel, "BrandTitle")
     if title is not None:
@@ -376,6 +387,7 @@ def apply_brand_skin(window) -> None:
     apply_mockup_fidelity(window)
 
     def apply_scale(scale: float) -> None:
+        _apply_body_font(window, scale)
         window.setStyleSheet(build_brand_stylesheet(scale))
         registry = getattr(window, "_brand_scale_registry", None)
         if registry is not None:
@@ -389,6 +401,7 @@ def apply_brand_skin(window) -> None:
             button.apply_scale(scale)
 
     window.setProperty("polymorphSkin", "occult-gold-v5")
+    _apply_body_font(window, 1.0)
     window.setStyleSheet(build_brand_stylesheet(1.0))
     _apply_typography(window, 1.0)
     controller = ResponsiveBrandController(window, apply_scale)

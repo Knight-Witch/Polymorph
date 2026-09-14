@@ -119,7 +119,9 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
             )
         lines.append("PASS responsive concept default/minimum geometry")
 
+        title = window.findChild(QLabel, "BrandTitle")
         subtitle = window.findChild(QLabel, "BrandSubtitle")
+        headings = window.findChildren(QLabel, "CardHeading")
         if window.property("polymorphSkin") != "occult-gold-v5":
             raise RuntimeError("Branded presentation skin was not applied")
         if window.property("polymorphFidelity") != "mockup-v1":
@@ -130,6 +132,41 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
             raise RuntimeError("Mixed-case branded subtitle/byline copy is missing")
         if window.convert_btn.text() != "POLYMORPH" or window.convert_btn.accessibleName() != "Polymorph":
             raise RuntimeError("Primary action did not return to POLYMORPH")
+
+        stylesheet = window.styleSheet()
+        try:
+            widget_rule = stylesheet.split("QWidget {", 1)[1].split("}", 1)[0]
+        except IndexError as exc:
+            raise RuntimeError("Global QWidget style rule is missing") from exc
+        if "font-family:" in widget_rule or "font-size:" in widget_rule:
+            raise RuntimeError(
+                "Global QWidget stylesheet is overriding explicit Polymorph display typography"
+            )
+        expected_regular = str(app.property("polymorphDisplayFont") or "").strip()
+        expected_bold = str(app.property("polymorphDisplayBoldFont") or "").strip()
+        if title is None or title.font().family() != expected_regular:
+            raise RuntimeError(
+                f"Brand title is not using Polymorph Regular: "
+                f"{title.font().family() if title else None!r} != {expected_regular!r}"
+            )
+        if subtitle.font().family() != expected_regular:
+            raise RuntimeError(
+                f"Brand subtitle is not using Polymorph Regular: "
+                f"{subtitle.font().family()!r} != {expected_regular!r}"
+            )
+        if title.font().letterSpacing() <= 0 or subtitle.font().letterSpacing() <= 0:
+            raise RuntimeError("Brand title/subtitle tracking was not applied")
+        if not headings:
+            raise RuntimeError("No branded card headings were found")
+        bad_headings = [
+            (heading.text(), heading.font().family(), heading.font().bold())
+            for heading in headings
+            if heading.font().family() != expected_bold or not heading.font().bold()
+        ]
+        if bad_headings:
+            raise RuntimeError(f"Card headings are not using Polymorph Bold: {bad_headings!r}")
+        lines.append("PASS applied Polymorph title/subtitle/card-heading typography")
+
         splitter = window.findChild(QSplitter, "BrandMainSplitter")
         if splitter is None or splitter.count() != 2:
             raise RuntimeError("Main workspace is not the two-column composition")
@@ -242,7 +279,7 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
         lines.append("PASS linked 16:9 resolution controls")
 
         footer_meta = [label.text() for label in window.findChildren(QLabel, "FooterMeta")]
-        if not any(text.startswith("Polymorph v0.1.0-dev.24") for text in footer_meta):
+        if not any(text.startswith("Polymorph v0.1.0-dev.25") for text in footer_meta):
             raise RuntimeError(f"Footer version metadata is missing: {footer_meta}")
         if "Polymorph 2026, Knight Witch™" not in footer_meta:
             raise RuntimeError(f"Footer creator metadata is missing: {footer_meta}")

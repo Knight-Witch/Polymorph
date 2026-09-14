@@ -2,6 +2,24 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md). Root tracking is intentionally rolling/compact; use archived detail only when a current task needs it.
 
+## POLY-2026-09-13-045 — 2026-09-13 21:xx PDT — Fix display-font stylesheet override in dev.25
+
+### Summary
+
+- Amanda's installed dev.24 visual check rejected the typography pass: the custom Polymorph face appeared on the custom-painted primary action, but the app title, subtitle/byline, `FILES`, and right-rail card headings still rendered in Inter/fallback styling.
+- Confirmed root cause in `src/polymorph/ui/styles.py`: the generic `QWidget` stylesheet rule forced both `font-family: "Inter"` and the responsive body `font-size`, overriding the explicit `tracked_font(...)` QFonts on normal QLabel-based branded display text. The custom-painted primary button bypassed that QSS path, which explains the exact screenshot behavior.
+- Remove font family/size from the generic `QWidget` QSS rule. Preserve Inter as the responsive body/UI face by applying the inherited window QFont at the same existing body point-size formula before branded display QFonts are applied.
+- Preserve the established title/subtitle/card-heading point sizes, absolute tracking, responsive geometry, card spacing and all conversion/framing/adaptive behavior. This pass fixes which face actually renders; it does not optically retune the typography yet.
+- Strengthen packaged smoke so it rejects a generic QWidget font override and verifies the title/subtitle use the bundled Polymorph regular family with tracking while every card heading uses the bundled Polymorph bold family.
+- Add a fast unit regression test for the generic QWidget stylesheet rule.
+- Advance runtime/package/installer metadata to `0.1.0-dev.25` so the visually rejected dev.24 tester is never confused with the repaired candidate.
+- The bundled font bytes and verified font hashes are unchanged.
+
+### Validation notes
+
+- dev.24 run #57 remains a valid technical/package PASS but is explicitly **not** a human visual PASS.
+- Next gate is the normal full Windows Dev Build for dev.25, followed by a new installed human visual check. CI success alone must not close the typography gate.
+
 ## POLY-2026-09-13-044 — 2026-09-13 21:15 PDT — Record successful dev.24 custom-font tester
 
 ### Summary
