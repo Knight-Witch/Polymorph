@@ -47,7 +47,7 @@ Preserve known-working timing, frame selection, encoding flags, sizing threshold
 ## UI and visual acceptance
 
 - `docs/UX_SPEC.md` is the canonical branded UI specification. The approved mockup is the active visual target, not loose inspiration.
-- Packaged testers are self-contained for typography: the approved Trajan Regular/Bold faces are bundled and loaded by Polymorph; friends must not need a system font installation. Inter remains the body/UI face.
+- Packaged testers are self-contained for typography: Amanda's supplied Polymorph Regular/Bold faces are bundled and loaded by Polymorph; friends must not need a system font installation. Inter remains the body/UI face.
 - Preserve human-accepted responsive behavior unless a concrete regression requires a change.
 - Runtime correctness is not proof of visual correctness. Amanda's visual confirmation is required when typography, spacing, icon rendering, preview balance, gradients, animation or other appearance is part of acceptance.
 - Do not add mockup-only controls that do not map to real application state or a real action.

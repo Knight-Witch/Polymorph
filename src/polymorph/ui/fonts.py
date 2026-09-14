@@ -1,66 +1,63 @@
 from __future__ import annotations
 
+import lzma
+
+from PySide6.QtCore import QByteArray
 from PySide6.QtGui import QFont, QFontDatabase
 from PySide6.QtWidgets import QApplication
 
 from ..resources import asset_path
 
 _FONT_FILES = {
-    "Trajan Regular": "fonts/Trajan-Regular.ttf",
-    "Trajan Bold": "fonts/Trajan-Bold.otf",
-    "Cinzel": "fonts/Cinzel-wght.ttf",
-    "Inter": "fonts/Inter-opsz-wght.ttf",
+    "Polymorph Regular": ("fonts/Polymorph-Regular.ttf.xz", True),
+    "Polymorph Bold": ("fonts/Polymorph-Bold.ttf.xz", True),
+    "Cinzel": ("fonts/Cinzel-wght.ttf", False),
+    "Inter": ("fonts/Inter-opsz-wght.ttf", False),
 }
 
 
-def _installed_trajan_family() -> str | None:
-    """Return a Trajan-family face only as a source-checkout fallback."""
-    families = list(QFontDatabase.families())
-    preferred = (
-        "Trajan Pro 3",
-        "Trajan Pro",
-        "Trajan",
-    )
-    folded = {family.casefold(): family for family in families}
-    for candidate in preferred:
-        match = folded.get(candidate.casefold())
-        if match:
-            return match
-    for family in families:
-        if family.casefold().startswith("trajan"):
-            return family
-    return None
+def _register_font(relative_path: str, compressed: bool) -> list[str]:
+    path = asset_path(relative_path)
+    if not path.is_file():
+        return []
+
+    try:
+        if compressed:
+            font_data = lzma.decompress(path.read_bytes())
+            font_id = QFontDatabase.addApplicationFontFromData(QByteArray(font_data))
+        else:
+            font_id = QFontDatabase.addApplicationFont(str(path))
+    except (OSError, lzma.LZMAError):
+        return []
+
+    if font_id < 0:
+        return []
+    return list(QFontDatabase.applicationFontFamilies(font_id))
 
 
 def load_brand_fonts(app: QApplication | None = None) -> dict[str, str]:
     """Register Polymorph's packaged display/body fonts before the UI is built.
 
-    Packaged Windows builds carry the approved Trajan Regular/Bold files inside
-    the application. Cinzel remains an emergency source-checkout fallback only;
-    normal installed testers do not depend on any system font being present.
+    Packaged builds carry Amanda's Polymorph Regular/Bold faces as losslessly
+    compressed assets and register the exact decompressed font bytes directly
+    with Qt. Inter remains the body/UI face; Cinzel is an emergency fallback if
+    the branded display assets cannot be loaded.
     """
     loaded: dict[str, str] = {}
-    for logical_name, relative_path in _FONT_FILES.items():
-        path = asset_path(relative_path)
-        if not path.is_file():
-            continue
-        font_id = QFontDatabase.addApplicationFont(str(path))
-        if font_id < 0:
-            continue
-        families = QFontDatabase.applicationFontFamilies(font_id)
+    for logical_name, (relative_path, compressed) in _FONT_FILES.items():
+        families = _register_font(relative_path, compressed)
         if families:
             loaded[logical_name] = families[0]
 
-    bundled_regular = loaded.get("Trajan Regular")
-    bundled_bold = loaded.get("Trajan Bold")
-    installed_fallback = _installed_trajan_family()
-    display_regular = bundled_regular or installed_fallback or loaded.get("Cinzel", "Cinzel")
-    display_bold = bundled_bold or bundled_regular or installed_fallback or loaded.get("Cinzel", "Cinzel")
+    bundled_regular = loaded.get("Polymorph Regular")
+    bundled_bold = loaded.get("Polymorph Bold")
+    display_regular = bundled_regular or loaded.get("Cinzel", "Cinzel")
+    display_bold = bundled_bold or bundled_regular or loaded.get("Cinzel", "Cinzel")
     display_source = (
-        "bundled-trajan"
+        "bundled-polymorph"
         if bundled_regular and bundled_bold
-        else "system-trajan"
-        if installed_fallback
+        else "partial-polymorph"
+        if bundled_regular or bundled_bold
         else "cinzel-fallback"
     )
 

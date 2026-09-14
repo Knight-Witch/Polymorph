@@ -1,7 +1,7 @@
 # Active Context — Polymorph `dev`
 
 **Updated:** 2026-09-13  
-**Current task:** dev.23 human visual validation of the self-contained Trajan typography and current approved-mockup fidelity.  
+**Current task:** dev.24 build + human visual validation of Amanda's supplied Polymorph Regular/Bold display typography using the already-approved dev.23 sizes, tracking and layout geometry.  
 **Runtime posture:** conversion/framing/adaptive behavior is closed/validated for current v1 scope; UI fidelity is the active development phase.
 
 ## Minimum continuation set
@@ -22,15 +22,20 @@ Read `docs/ARCHITECTURE.md` and the relevant engine files only if the task actua
 ## Current Dev candidate
 
 - Branch: `dev`
-- Runtime version: `0.1.0-dev.23`
-- Code head before this documentation-only handoff commit: `81150b0e7007969d260317c9383ed7bacb3362b9` (`Bundle approved Trajan typography in dev.23`)
-- Windows Dev Build run #54 / run ID `34779195156`: **PASS**.
-- Installer artifact: `Polymorph-dev-installer`, artifact ID `10324259742`, artifact ZIP digest `sha256:5ca0721234585cd1a364aa221965f0f6e2d0743bbdad9bb34b2744cea4b3bbb4`.
+- Runtime version: `0.1.0-dev.24`
+- dev.24 implementation: the commit containing this baton update; exact commit/run/artifact identity must be recorded here after Windows CI completes.
+- Windows Dev Build: **pending** immediately after the dev.24 implementation commit.
+- Previous validated fallback remains dev.23 code commit `81150b0e7007969d260317c9383ed7bacb3362b9`, Windows Dev Build run #54 / run ID `34779195156`, installer artifact ID `10324259742`.
 - No public Polymorph release exists yet. `main` is not the experimental branch.
 
-The dev.23 change is complete technically: the approved Trajan Regular/Bold files are pinned by exact Git blob identity, downloaded in Windows CI, bundled into the frozen application/installer, registered with Qt before the UI is created, and required by packaged smoke. Friends running the installer do **not** need Trajan installed separately. Inter remains the body/UI face; Cinzel is only an emergency source-checkout fallback.
+Amanda explicitly replaced the dev.23 Trajan direction with her supplied custom font files. The files identify as one `Polymorph` family with `Regular` and `Bold` faces. dev.24 bundles those exact source bytes losslessly as XZ assets and registers the decompressed bytes directly with Qt before the UI is created. Friends running the installer do **not** need the font installed separately. Inter remains the body/UI face; Cinzel is emergency fallback only.
 
-Do not restart the font-provenance/system-font investigation, substitute a system-font dependency, or replace the bundled face with vector-outline text unless Amanda explicitly changes direction. The requirement is a self-contained installed application using the approved display face.
+Source identities:
+
+- Polymorph Regular SHA-256: `e3d1bf414bdd0b517989e89ea3350acafdd90b61322c6c6ec8c7390a9f6ea188`
+- Polymorph Bold SHA-256: `aea401e914959cd4638cec82c0a7328a5d84b8d79d942c850052b10a18cca511`
+
+The first dev.24 tester deliberately keeps the exact dev.23 title/subtitle/card/button point sizes and absolute letter spacing. Do not pre-emptively retune typography; Amanda wants to see the new face at the previously requested measurements first and adjust only if needed after visual review.
 
 ## Protected PASS state — do not reopen without new evidence
 
@@ -44,17 +49,18 @@ Do not restart the font-provenance/system-font investigation, substitute a syste
 
 The approved mockup is the visual specification, not loose inspiration. Current composition is two columns: compact queue + dominant preview on the left, settings/action rail on the right. Header copy is `POLYMORPH` with `Media conversion magic — by Knight Witch™`; version stays in the footer. Primary action copy is `POLYMORPH`.
 
-Current palette is near-black/charcoal, ivory, champagne gold and restrained crimson. Busy card headings use bundled Trajan Bold; title/subtitle/primary action use bundled Trajan Regular with the established wide tracking; body/control copy uses Inter. Existing queue actions, preview controls, framing radios, sizing modes, GIF priority, footer links and responsive behavior are real functionality and must not be replaced with decorative mockup-only controls.
+Current palette is near-black/charcoal, ivory, champagne gold and restrained crimson. Busy card headings use bundled Polymorph Bold; title/subtitle/primary action use bundled Polymorph Regular with the established tracking; body/control copy uses Inter. Existing queue actions, preview controls, framing radios, sizing modes, GIF priority, footer links and responsive behavior are real functionality and must not be replaced with decorative mockup-only controls.
 
 The working/loading animation remains deliberately deferred. Arcane-circle and D20 concepts are still open; do not implement either until the structural/typography visual pass is accepted or Amanda explicitly changes priority.
 
 ## Next gate
 
-1. If Amanda has not yet been handed the dev.23 installer, retrieve the run #54 `Polymorph-dev-installer` artifact and give her the installer directly rather than sending her to Actions.
-2. She should run the normal installed tester **without separately installing Trajan** and visually confirm the `POLYMORPH` title, subtitle/byline, card headings and primary action use the intended face.
-3. Compare the whole window against the approved mockup, especially typography scale/tracking, card density/alignment, icon sharpness, preview prominence, primary-action balance and footer rhythm.
-4. If she reports visual issues, change only the branded UI/presentation layer unless evidence points elsewhere. Preserve the protected conversion/framing/adaptive state above.
-5. After typography/layout fidelity is accepted, move to the working/loading animation phase.
+1. Run the normal Windows dev workflow for dev.24 and preserve all existing unit, toolchain, adaptive integration, GIF reference, frozen-app smoke, installer and checksum gates.
+2. On PASS, record the exact implementation commit, run and artifact identity here, retrieve the `Polymorph-dev-installer` artifact, and give Amanda the installer directly rather than sending her to Actions.
+3. Amanda should run the installed tester without separately installing the custom font and visually confirm the `POLYMORPH` title, subtitle/byline, card headings and primary action use the intended face.
+4. Compare the whole window against the approved mockup, especially typography scale/tracking, card density/alignment, icon sharpness, preview prominence, primary-action balance and footer rhythm.
+5. If she reports visual issues, change only the branded UI/presentation layer unless evidence points elsewhere. Preserve the protected conversion/framing/adaptive state above.
+6. After typography/layout fidelity is accepted, move to the working/loading animation phase.
 
 ## Historical routing
 

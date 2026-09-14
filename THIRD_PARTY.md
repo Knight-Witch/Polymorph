@@ -35,7 +35,7 @@ Polymorph invokes third-party executables and uses third-party Python libraries.
 ## Cinzel
 
 - Project source: Google Fonts / Cinzel.
-- Purpose: Polymorph display typography.
+- Purpose: emergency display fallback only if Polymorph's bundled custom Regular/Bold assets cannot be loaded.
 - Bundled file: `Cinzel[wght].ttf`, pinned from google/fonts commit `45071f07c63e863a539442ef3562b71ab1f147a6`.
 - Verified Git blob SHA-1: `d218a0b9c8879fd5a708872cc0ef357e507b35ca`.
 - License: SIL Open Font License 1.1.
