@@ -2,6 +2,17 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md). Root tracking is intentionally rolling/compact; use archived detail only when a current task needs it.
 
+## POLY-2026-09-13-048 — Compact only the minimum-size settings rail after run #60
+
+### Summary
+
+- Windows Dev Build run #60 / run ID `34807810638` proved the direct-label repair in the frozen EXE: packaged smoke passed `applied Polymorph title/subtitle/card-heading typography`, title/byline fidelity, and FILES grouping.
+- Exact remaining failure is now isolated to responsive vertical budget only: at 920×640, `POLYMORPH action is clipped at minimum size: button bottom 508, rail 482`.
+- Preserve the now-confirmed Polymorph font application. Do not change title/subtitle/card/button point sizes, tracking, font assets, primary-action height, or the accepted 1260×820 design geometry.
+- At compact responsive scale only (`<= 0.76`), the scale registry now tightens only the top-level `ControlRailContent` gap and the top/bottom padding of top-level `ControlCard` layouts. The FILES card, left workspace, preview, footer, and full-size rail metrics are untouched.
+- Runtime remains `0.1.0-dev.25`; run #60 produced no installer.
+- No GIF/MP4 conversion, adaptive GIF selection, framing/export geometry, updater, subprocess, or toolchain behavior changed.
+
 ## POLY-2026-09-13-047 — Make branded font ownership local to the labels
 
 ### Summary

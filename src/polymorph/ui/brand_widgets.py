@@ -304,12 +304,26 @@ class ScaleRegistry:
         self.callbacks.append(fn)
 
     def apply(self, scale: float) -> None:
+        compact_rail = scale <= 0.76
         for layout, margins, spacing in self.layout_specs:
             l, t, r, b = margins
-            layout.setContentsMargins(
-                round(l * scale), round(t * scale), round(r * scale), round(b * scale)
-            )
-            layout.setSpacing(max(0, round(spacing * scale)))
+            scaled_l = round(l * scale)
+            scaled_t = round(t * scale)
+            scaled_r = round(r * scale)
+            scaled_b = round(b * scale)
+            scaled_spacing = max(0, round(spacing * scale))
+
+            if compact_rail:
+                parent = layout.parentWidget()
+                if parent is not None and parent.layout() is layout:
+                    if parent.objectName() == "ControlRailContent":
+                        scaled_spacing = min(scaled_spacing, 2)
+                    elif parent.objectName() == "ControlCard":
+                        scaled_t = max(0, scaled_t - 1)
+                        scaled_b = max(0, scaled_b - 2)
+
+            layout.setContentsMargins(scaled_l, scaled_t, scaled_r, scaled_b)
+            layout.setSpacing(scaled_spacing)
         for widget, value in self.fixed_widths:
             widget.setFixedWidth(max(1, round(value * scale)))
         for widget, value in self.fixed_heights:

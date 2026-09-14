@@ -1,7 +1,7 @@
 # Active Context — Polymorph `dev`
 
 **Updated:** 2026-09-13  
-**Current task:** dev.25 branded-display typography repair after dev.24 human visual rejection; run #59 shows app-level QSS specificity still does not resolve normal QLabel fonts to Polymorph.  
+**Current task:** dev.25 branded-display typography is now confirmed inside the frozen EXE; run #60 leaves only a 920×640 right-rail vertical-budget failure to repair without disturbing full-size geometry.  
 **Runtime posture:** conversion/framing/adaptive behavior remains closed/validated for current v1 scope; UI fidelity is the active development phase.
 
 ## Minimum continuation set
@@ -25,9 +25,11 @@ Do not preload engine/history files unless the current task actually needs them.
 - Runtime version: `0.1.0-dev.25`
 - First dev.25 implementation: `0fee8bc7a3dc3b7fd3a264b02206ab8b050aff09`.
 - Responsive-QSS repair: `a59cd33670a124d4701a46686c6ae34f736a1538`.
+- Direct-label typography repair: `b9aef66a703be4daf328614f015a54ce61013979`.
 - Run #58 / ID `34806964426`: packaged typography assertion PASS, then minimum-size rail overflow FAIL.
-- Run #59 / ID `34807445345`: font assets/unit/protected runtime/frozen app PASS, packaged smoke FAIL with `Brand title is not using Polymorph Regular: 'Inter' != 'Polymorph'`; no installer produced.
-- Immediate repair candidate keeps body/control sizing in QSS but gives BrandTitle, BrandSubtitle and every CardHeading a direct widget-owned Polymorph stylesheet plus tracked QFont. A new offscreen Qt unit test constructs the actual labels under the Inter app-root stylesheet and requires their resolved fonts to be Polymorph before the expensive packaging stages.
+- Run #59 / ID `34807445345`: app-level QSS repair still resolved normal QLabel fonts to Inter; no installer.
+- Run #60 / ID `34807810638`: 56 unit tests, protected runtime/toolchain gates and frozen app build PASS. Packaged smoke then passed `applied Polymorph title/subtitle/card-heading typography`, title/byline fidelity and FILES grouping, proving the intended display face is now applied in the frozen EXE. Remaining failure is only `POLYMORPH action is clipped at minimum size: button bottom 508, rail 482`; no installer produced.
+- Immediate repair keeps the confirmed font ownership and full-size geometry, but at responsive scale `<= 0.76` tightens only the top-level `ControlRailContent` gap and top/bottom padding of top-level `ControlCard` layouts. FILES, preview, footer and primary-action height remain unchanged.
 - Exact repair commit/run/artifact identity must be recorded here after the next full Windows workflow completes.
 - dev.24 run #57/artifact `10332274291` is technical PASS but **human visual FAIL** and must not be promoted.
 - No public release exists; `main` remains non-experimental.
@@ -52,9 +54,8 @@ Original font-source hashes and shipped subset hashes are unchanged from dev.24.
 
 ## Next gate
 
-1. Commit the direct-label typography repair + real Qt unit test on dev without changing dev.25 version.
-2. Unit suite must prove the labels resolve to Polymorph under the Inter body QSS.
-3. Full packaged smoke must then pass both applied typography and 920×640 primary-action visibility.
-4. On full Windows PASS, record commit/run/artifact identity here, retrieve `Polymorph-dev-installer`, and hand it to Amanda directly.
-5. Amanda visually confirms title, subtitle, FILES, all right-rail headings and primary action.
-6. Only after that visual PASS adjust optical size/tracking if requested; then move to loading-animation work.
+1. Commit the compact-only rail repair on dev without changing dev.25 version.
+2. Full Windows workflow must pass the real QLabel font test, protected runtime/toolchain gates, frozen app build, applied-typography packaged assertion, and 920×640 primary-action visibility in the same run.
+3. On full Windows PASS, record commit/run/artifact identity here, retrieve `Polymorph-dev-installer`, and hand it to Amanda directly.
+4. Amanda visually confirms title, subtitle, FILES, all right-rail headings and primary action.
+5. Only after that visual PASS adjust optical size/tracking if requested; then move to loading-animation work.
