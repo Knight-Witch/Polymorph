@@ -2,67 +2,50 @@
 
 Standalone PySide6 design sandbox for Polymorph's deferred loading/working animation and animated primary action.
 
-This is intentionally isolated from the production Polymorph window. It does not touch conversion, framing, updater, queue, or encoder behavior.
+This remains isolated from the production Polymorph window and does not touch conversion, framing, updater, queue, or encoder behavior.
 
-## Run from source
+## Current review baseline
 
-```powershell
-python run_motion_lab.py
-```
+`B — Dense Runes` is the current visual baseline after Amanda's v2 review.
 
-or, with the package installed/editable:
+The loader uses real Elder Futhark through bundled Noto Sans Runic. The active geometry order is:
 
-```powershell
-python -m polymorph.motion_lab
-```
+1. two white outer progress rings;
+2. one clockwise gold outer rune ring with six larger white designated runes replacing six small-rune slots;
+3. a red third ring;
+4. two red counter-clockwise six-point polygons;
+5. a red fourth ring tangent to the polygon flats;
+6. three fixed opaque partial-rune windows ending at the fourth ring, with complete Elder Futhark circles rotating behind the windows;
+7. one red clockwise triangle with the same circumradius as the polygons;
+8. three opaque large-rune spheres anchored to triangle-edge midpoints, carrying independently cycling white Elder Futhark glyphs;
+9. one stationary/glimmering gold rune ring intersecting the inner third of the large rune spheres;
+10. an inner opaque annulus bounded by red fifth/seventh rings, containing the smallest counter-clockwise gold rune ring;
+11. six red comet tracers that alone pass through the innermost open center and converge at the epicenter.
 
-## Current transmutation study
+All ordinary rune glyphs are warmer yellow-orange gold. Large runes are white. All geometry is red except the two outer progress rings, which are white.
 
-The current loader direction is based on Amanda's annotated transmutation-circle study and uses real Elder Futhark glyphs through bundled Noto Sans Runic in the standalone Windows build.
+The tracer tails are approximately three times the v2 length. Partial frames and large rune spheres are opaque foreground masks, so underlying geometry/tracers do not bleed through them.
 
-- Two outer progress rings travel in opposite directions and are the actual 0-100% loading indicators.
-- The outer Elder Futhark ring rotates clockwise and carries six larger designated Elder Futhark glyphs with it.
-- The inner Elder Futhark ring rotates counter-clockwise.
-- Three partial Elder Futhark rings rotate counter-clockwise behind fixed visibility windows, so glyphs disappear outside each exposed arc.
-- A stationary middle rune band glimmers: individual glyphs fade in/out and change only while dim, avoiding hard random pops.
-- Three large rune spheres rotate with the crimson triangle and independently cycle Elder Futhark glyphs without matching each other on the same frame.
-- The crimson triangle rotates clockwise while two offset hexagonal structures rotate counter-clockwise.
-- Four structural circles perform a timed outside-in cascade pulse; other structural groups flicker asynchronously rather than in lockstep.
-- Six radial comet tracers move from the outer points to the center and back, rotating with the hexagon system. The tracers are clipped behind the marked rune spheres, central circle, and partial-ring no-go zones.
-- Glow rendering uses a tight bright core plus multiple wider low-opacity passes for a softer falloff. Tracers use a bright head and fading comet tail.
-- At 100%, the progress rings pulse, the inner ritual fades, a brief radial flash fires, and the Knight Witch emblem materializes with a radial reveal.
+## Motion families
+
+- Outer rune ring: clockwise.
+- Innermost rune ring: counter-clockwise.
+- Partial-window rune content: counter-clockwise; window frames stay fixed.
+- Triangle + rune spheres: clockwise.
+- Twin hexagons: counter-clockwise.
+- Middle rune ring: stationary; glyphs asynchronously glimmer/change.
+- Large rune spheres: independently cycle glyphs.
+- Structural rings: outside-in cascade/flicker.
+- Six radial tracers: outer ↔ epicenter, rotating with the hexagon family.
+- At 100%: progress rings pulse, inner ritual fades, a radial flash fires, and the Knight Witch emblem materializes.
 
 ## Study variants
 
-The same transmutation architecture can be compared with four emphasis treatments:
-
-- `A — Transmutation`: balanced reference treatment.
-- `B — Dense Runes`: increases outer/inner rune density.
-- `C — Tracer Ritual`: strengthens radial tracers and adds opposed circular tracer accents.
-- `D — Fractal Echo`: layers low-intensity nested polygon echoes behind the main geometry as an experimental trippy direction.
-
-## Controls
-
-The ambiguous prototype controls were replaced with explicit motion-family controls:
-
-- Master glow and glow spread.
-- Outer rune ring clockwise speed.
-- Inner rune ring counter-clockwise speed.
-- Partial rune-arc counter-clockwise speed.
-- Triangle + rune-sphere clockwise speed.
-- Twin-hexagon counter-clockwise speed.
-- Comet tracer speed.
-- Cascade/flicker pace.
-- Button glow and button rune-ring speed.
-
-Preview backgrounds remain switchable between black, Polymorph blue-black, procedural dark textures, a deliberately busy stress-test surface, or a custom image.
-
-## Emblem handling
-
-`src/polymorph/assets/kw_emblem.svg` is the bundled center asset for this study, derived from Amanda's supplied SVG with path-coordinate simplification only; raster comparison was visually equivalent at review scale.
-
-The emblem is rendered as normal SVG artwork rather than relying on CSS `stroke-dasharray` traversal, so source subpath direction is not required for the reveal. `Load alternate emblem SVG…` remains as an optional development override, but the lab no longer depends on that chooser to show the correct Knight Witch mark.
+- `A — Transmutation`: balanced treatment.
+- `B — Dense Runes`: current review baseline, with denser ring/window glyph spacing.
+- `C — Tracer Ritual`: emphasizes tracer motion.
+- `D — Fractal Echo`: experimental nested red polygon echoes.
 
 ## Acceptance boundary
 
-This lab is exploratory visual tooling. None of its motion is part of the shipping Polymorph UI until Amanda selects/approves a treatment and it is deliberately integrated behind a separate human visual gate.
+This lab is exploratory visual tooling. None of its motion is part of the shipping Polymorph UI until Amanda explicitly approves a treatment and it is deliberately integrated behind a separate human visual gate.

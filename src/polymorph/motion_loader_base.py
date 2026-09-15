@@ -5,15 +5,33 @@ import math
 import zlib
 
 from PySide6.QtCore import QByteArray, QPointF, QRectF, Qt
-from PySide6.QtGui import QColor, QImage, QLinearGradient, QPainter, QPainterPath, QPainterPathStroker, QPen, QRadialGradient
+from PySide6.QtGui import QImage, QLinearGradient, QPainter, QPainterPath, QRadialGradient
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import QWidget
 
 from .motion_effects import (
-    CRIMSON, ELDER_FUTHARK, GOLD, IVORY, MID_GOLD, DESIGNATED_RUNES, Clock, RunePainter,
-    alpha, arc_path, clamp, comet, glow_ellipse, glow_path, lerp_point, polar, polygon_path, smoothstep,
+    CRIMSON,
+    ELDER_FUTHARK,
+    GOLD,
+    GOLD_CORE,
+    IVORY,
+    MASK_BG,
+    RED_CORE,
+    WHITE,
+    Clock,
+    RunePainter,
+    alpha,
+    clamp,
+    comet,
+    glow_ellipse,
+    glow_path,
+    lerp_point,
+    polar,
+    polygon_path,
+    smoothstep,
 )
 from .resources import asset_path
+
 
 class ArcaneLoaderBase(QWidget):
     VARIANTS = (
@@ -28,7 +46,7 @@ class ArcaneLoaderBase(QWidget):
         self.setFixedSize(500, 500)
         self.clock = Clock(self)
         self.runes = RunePainter(rune_family)
-        self.variant = 0
+        self.variant = 1
         self.progress = 0.62
         self.glow = 1.0
         self.glow_spread = 1.0
@@ -102,23 +120,87 @@ class ArcaneLoaderBase(QWidget):
         fall = 1.0 - smoothstep(fade_start, fade_start + 0.34, phase)
         return 0.18 + 0.82 * rise * fall
 
-    def draw_arc_glow(self, painter: QPainter, center: QPointF, radius: float, start: float, span: float, color: QColor, intensity: float, width: float = 1.0) -> None:
-        glow_path(painter, arc_path(center, radius, start, span), color, intensity=intensity, core_width=width, spread=self.glow_spread)
+    def circle_path(self, center: QPointF, radius: float) -> QPainterPath:
+        path = QPainterPath()
+        path.addEllipse(center, radius, radius)
+        return path
 
-    def draw_partial_rune_band(self, painter: QPainter, satellite: QPointF, radius: float, rotation: float, window_center: float, *, span: float, offset: int, intensity: float) -> None:
-        count = 24
-        half = span / 2.0
+    def annulus_path(self, center: QPointF, outer_radius: float, inner_radius: float) -> QPainterPath:
+        outer = self.circle_path(center, outer_radius)
+        inner = self.circle_path(center, inner_radius)
+        return outer.subtracted(inner)
+
+    def fill_mask(self, painter: QPainter, path: QPainterPath) -> None:
+        painter.save()
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(MASK_BG)
+        painter.drawPath(path)
+        painter.restore()
+
+    def partial_window_path(
+        self,
+        center: QPointF,
+        boundary_radius: float,
+        satellite: QPointF,
+        track_radius: float,
+        band_width: float,
+    ) -> QPainterPath:
+        band = self.annulus_path(
+            satellite,
+            track_radius + band_width / 2.0,
+            max(1.0, track_radius - band_width / 2.0),
+        )
+        boundary = self.circle_path(center, boundary_radius)
+        return band.intersected(boundary)
+
+    def draw_partial_rune_window(
+        self,
+        painter: QPainter,
+        center: QPointF,
+        boundary_radius: float,
+        satellite: QPointF,
+        track_radius: float,
+        band_width: float,
+        rotation: float,
+        *,
+        offset: int,
+        intensity: float,
+        count: int = 24,
+    ) -> QPainterPath:
+        window = self.partial_window_path(center, boundary_radius, satellite, track_radius, band_width)
+        self.fill_mask(painter, window)
+
+        painter.save()
+        painter.setClipPath(window)
         for i in range(count):
             degrees = rotation + i * 360.0 / count
-            delta = (degrees - window_center + 180.0) % 360.0 - 180.0
-            if abs(delta) > half:
-                continue
-            edge = 1.0 - smoothstep(half - 16.0, half, abs(delta))
             rune = ELDER_FUTHARK[(i + offset) % len(ELDER_FUTHARK)]
-            self.runes.draw(painter, rune, polar(satellite, radius, degrees), 15.5, degrees + 90, color=GOLD, intensity=intensity * edge, spread=0.62 * self.glow_spread)
+            self.runes.draw(
+                painter,
+                rune,
+                polar(satellite, track_radius, degrees),
+                13.5,
+                degrees + 90.0,
+                color=GOLD,
+                core=GOLD_CORE,
+                intensity=intensity,
+                spread=0.60 * self.glow_spread,
+            )
+        painter.restore()
+
+        glow_path(
+            painter,
+            window,
+            CRIMSON,
+            core=RED_CORE,
+            intensity=intensity * 0.88,
+            core_width=0.9,
+            spread=0.76 * self.glow_spread,
+        )
+        return window
 
     def draw_glimmer_ring(self, painter: QPainter, center: QPointF, radius: float, t: float, intensity: float) -> None:
-        count = 18
+        count = 18 if self.variant != 1 else 21
         for slot in range(count):
             duration = 1.55 + 0.17 * (slot % 5)
             clock = t + slot * 0.61
@@ -129,7 +211,17 @@ class ArcaneLoaderBase(QWidget):
                 continue
             rune_index = (slot * 7 + cycle * 5) % len(ELDER_FUTHARK)
             degrees = -90.0 + slot * 360.0 / count
-            self.runes.draw(painter, ELDER_FUTHARK[rune_index], polar(center, radius, degrees), 12.0, degrees + 90, color=GOLD, intensity=intensity * opacity, spread=0.56 * self.glow_spread)
+            self.runes.draw(
+                painter,
+                ELDER_FUTHARK[rune_index],
+                polar(center, radius, degrees),
+                10.5,
+                degrees + 90.0,
+                color=GOLD,
+                core=GOLD_CORE,
+                intensity=intensity * opacity,
+                spread=0.54 * self.glow_spread,
+            )
 
     def satellite_rune_indices(self, t: float) -> list[tuple[int, float]]:
         result: list[tuple[int, float]] = []
@@ -147,74 +239,130 @@ class ArcaneLoaderBase(QWidget):
             result.append((rune_index, opacity))
         return result
 
-    def tracer_clip(self, center: QPointF, radius: float, satellites: list[QPointF], partial_specs: list[tuple[QPointF, float, float, float]]) -> QPainterPath:
-        clip = QPainterPath()
-        clip.addEllipse(center, radius * 0.79, radius * 0.79)
-        central = QPainterPath()
-        central.addEllipse(center, radius * 0.31, radius * 0.31)
-        clip = clip.subtracted(central)
-        for satellite in satellites:
-            block = QPainterPath()
-            block.addEllipse(satellite, radius * 0.155, radius * 0.155)
-            clip = clip.subtracted(block)
-        stroker = QPainterPathStroker()
-        stroker.setWidth(radius * 0.075)
-        stroker.setCapStyle(Qt.PenCapStyle.RoundCap)
-        for sat, arc_radius, start, span in partial_specs:
-            clip = clip.subtracted(stroker.createStroke(arc_path(sat, arc_radius, start, span)))
-        return clip
-
-    def draw_spoke_tracers(self, painter: QPainter, center: QPointF, radius: float, angle: float, clip: QPainterPath, intensity: float) -> None:
-        painter.save()
-        painter.setClipPath(clip)
+    def draw_spoke_tracers(
+        self,
+        painter: QPainter,
+        center: QPointF,
+        outer_radius: float,
+        angle: float,
+        intensity: float,
+    ) -> None:
         phase = self.clock.t * 0.48 * self.trace_speed
         travel = 0.5 - 0.5 * math.cos(phase * math.tau)
         inward = math.sin(phase * math.tau) >= 0.0
         for i in range(6):
-            outer = polar(center, radius * 0.74, angle + i * 60.0)
+            outer = polar(center, outer_radius, angle + i * 60.0)
             head = lerp_point(outer, center, travel)
-            tail_amount = max(0.0, travel - 0.20) if inward else min(1.0, travel + 0.20)
+            tail_amount = max(0.0, travel - 0.60) if inward else min(1.0, travel + 0.60)
             tail = lerp_point(outer, center, tail_amount)
-            comet(painter, tail, head, GOLD if i % 2 == 0 else CRIMSON, intensity=intensity, spread=self.glow_spread)
-        painter.restore()
+            comet(
+                painter,
+                tail,
+                head,
+                CRIMSON,
+                intensity=intensity,
+                spread=1.08 * self.glow_spread,
+            )
 
     def draw_progress_rings(self, painter: QPainter, center: QPointF, radius: float, completion: float) -> None:
         pulse = 1.0 + completion * (0.16 + 0.10 * math.sin(self.clock.t * 19.0))
-        for ring_radius in (radius * 1.035, radius * 0.995):
-            path = QPainterPath(); path.addEllipse(center, ring_radius, ring_radius)
-            painter.setPen(QPen(alpha(MID_GOLD, 36 * self.glow), 1.0)); painter.setBrush(Qt.BrushStyle.NoBrush); painter.drawPath(path)
+        outer_radius = radius * 1.055
+        inner_radius = radius * 1.005
+        for ring_radius in (outer_radius, inner_radius):
+            glow_ellipse(
+                painter,
+                center,
+                ring_radius,
+                WHITE,
+                core=WHITE,
+                intensity=self.glow * 0.22,
+                core_width=0.8,
+                spread=0.75 * self.glow_spread,
+            )
         span = 360.0 * self.progress
-        outer_rect = QRectF(center.x() - radius * 1.035, center.y() - radius * 1.035, radius * 2.07, radius * 2.07)
-        inner_rect = QRectF(center.x() - radius * 0.995, center.y() - radius * 0.995, radius * 1.99, radius * 1.99)
-        for rect, span_sign, color in ((outer_rect, -span, GOLD), (inner_rect, span, CRIMSON)):
-            arc = QPainterPath(); arc.arcMoveTo(rect, 90.0); arc.arcTo(rect, 90.0, span_sign)
-            glow_path(painter, arc, color, intensity=self.glow * pulse, core_width=1.55, spread=1.15 * self.glow_spread)
+        outer_rect = QRectF(
+            center.x() - outer_radius,
+            center.y() - outer_radius,
+            outer_radius * 2.0,
+            outer_radius * 2.0,
+        )
+        inner_rect = QRectF(
+            center.x() - inner_radius,
+            center.y() - inner_radius,
+            inner_radius * 2.0,
+            inner_radius * 2.0,
+        )
+        for rect, span_sign in ((outer_rect, -span), (inner_rect, span)):
+            arc = QPainterPath()
+            arc.arcMoveTo(rect, 90.0)
+            arc.arcTo(rect, 90.0, span_sign)
+            glow_path(
+                painter,
+                arc,
+                WHITE,
+                core=WHITE,
+                intensity=self.glow * pulse,
+                core_width=1.55,
+                spread=1.05 * self.glow_spread,
+            )
 
     def draw_emblem(self, painter: QPainter, center: QPointF, radius: float, reveal: float) -> None:
         if reveal <= 0.001:
             return
         if self.emblem is None:
-            glow_ellipse(painter, center, radius * 0.18 * reveal, GOLD, intensity=reveal * self.glow, spread=self.glow_spread)
+            glow_ellipse(
+                painter,
+                center,
+                radius * 0.18 * reveal,
+                GOLD,
+                core=GOLD_CORE,
+                intensity=reveal * self.glow,
+                spread=self.glow_spread,
+            )
             return
-        width = max(24, round(radius * 0.34)); height = max(48, round(width * 2.0))
-        image = QImage(width, height, QImage.Format.Format_ARGB32_Premultiplied); image.fill(Qt.GlobalColor.transparent)
-        ip = QPainter(image); ip.setRenderHint(QPainter.RenderHint.Antialiasing, True); self.emblem.render(ip, QRectF(0, 0, width, height))
+        width = max(24, round(radius * 0.34))
+        height = max(48, round(width * 2.0))
+        image = QImage(width, height, QImage.Format.Format_ARGB32_Premultiplied)
+        image.fill(Qt.GlobalColor.transparent)
+        ip = QPainter(image)
+        ip.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        self.emblem.render(ip, QRectF(0, 0, width, height))
         ip.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceIn)
-        tint = QLinearGradient(0, 0, 0, height); tint.setColorAt(0.0, IVORY); tint.setColorAt(0.48, GOLD); tint.setColorAt(1.0, IVORY); ip.fillRect(image.rect(), tint); ip.end()
-        scale = 0.86 + 0.14 * smoothstep(0.0, 0.72, reveal); dw = width * scale; dh = height * scale
+        tint = QLinearGradient(0, 0, 0, height)
+        tint.setColorAt(0.0, WHITE)
+        tint.setColorAt(0.48, GOLD_CORE)
+        tint.setColorAt(1.0, WHITE)
+        ip.fillRect(image.rect(), tint)
+        ip.end()
+        scale = 0.86 + 0.14 * smoothstep(0.0, 0.72, reveal)
+        dw = width * scale
+        dh = height * scale
         dest = QRectF(center.x() - dw / 2, center.y() - dh / 2, dw, dh)
         clip_radius = math.hypot(dw, dh) * 0.58 * reveal
-        clip = QPainterPath(); clip.addEllipse(center, clip_radius, clip_radius)
-        painter.save(); painter.setClipPath(clip)
+        clip = QPainterPath()
+        clip.addEllipse(center, clip_radius, clip_radius)
+        painter.save()
+        painter.setClipPath(clip)
         for ox, oy in ((-3,0),(3,0),(0,-3),(0,3),(-2,-2),(2,2),(-2,2),(2,-2)):
-            painter.setOpacity(0.055 * reveal * self.glow); painter.drawImage(dest.translated(ox, oy), image)
-        painter.setOpacity(reveal); painter.drawImage(dest, image); painter.restore()
+            painter.setOpacity(0.055 * reveal * self.glow)
+            painter.drawImage(dest.translated(ox, oy), image)
+        painter.setOpacity(reveal)
+        painter.drawImage(dest, image)
+        painter.restore()
 
     def draw_fractal_echo(self, painter: QPainter, center: QPointF, radius: float, t: float, intensity: float) -> None:
         if self.variant != 3:
             return
         for level in range(5):
-            scale = 0.74 - level * 0.105
+            scale = 0.70 - level * 0.09
             angle = t * (3.8 + level * 0.7) * (-1 if level % 2 else 1)
             path = polygon_path(center, radius * scale, 6, angle + level * 17)
-            glow_path(painter, path, CRIMSON if level % 2 else GOLD, intensity=intensity * (0.24 - level * 0.025), core_width=0.7, spread=0.72 * self.glow_spread)
+            glow_path(
+                painter,
+                path,
+                CRIMSON,
+                core=RED_CORE,
+                intensity=intensity * (0.22 - level * 0.025),
+                core_width=0.7,
+                spread=0.72 * self.glow_spread,
+            )

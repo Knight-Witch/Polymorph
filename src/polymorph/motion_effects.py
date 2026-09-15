@@ -9,10 +9,14 @@ from PySide6.QtWidgets import QWidget
 from .resources import asset_path
 
 IVORY = QColor("#fffaf2")
-GOLD = QColor("#e7c985")
-MID_GOLD = QColor("#bda46d")
-CRIMSON = QColor("#d21f32")
+WHITE = QColor("#ffffff")
+GOLD = QColor("#f0a72e")
+GOLD_CORE = QColor("#ffd36a")
+MID_GOLD = QColor("#c47d18")
+CRIMSON = QColor("#cf1733")
+RED_CORE = QColor("#ff4057")
 DEEP_RED = QColor("#7e0d18")
+MASK_BG = QColor("#040506")
 
 ELDER_FUTHARK = tuple("ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛋᛏᛒᛖᛗᛚᛜᛞᛟ")
 DESIGNATED_RUNES = ("ᚠ", "ᚨ", "ᛉ", "ᛏ", "ᛞ", "ᛟ")
@@ -116,6 +120,7 @@ def glow_ellipse(
     radius: float,
     color: QColor,
     *,
+    core: QColor = IVORY,
     intensity: float = 1.0,
     core_width: float = 1.0,
     spread: float = 1.0,
@@ -126,6 +131,7 @@ def glow_ellipse(
         painter,
         path,
         color,
+        core=core,
         intensity=intensity,
         core_width=core_width,
         spread=spread,
@@ -147,7 +153,7 @@ def comet(
     gradient.setColorAt(0.0, QColor(color.red(), color.green(), color.blue(), 0))
     gradient.setColorAt(0.45, alpha(color, 38 * intensity))
     gradient.setColorAt(0.78, alpha(color, 135 * intensity))
-    gradient.setColorAt(1.0, alpha(IVORY, 255 * intensity))
+    gradient.setColorAt(1.0, alpha(WHITE, 255 * intensity))
     for width, opacity in (
         (14.0 * spread, 0.17),
         (9.0 * spread, 0.28),
@@ -169,7 +175,7 @@ def comet(
         painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(alpha(color, opacity * intensity))
         painter.drawEllipse(head, radius, radius)
-    painter.setBrush(alpha(IVORY, 245 * intensity))
+    painter.setBrush(alpha(WHITE, 245 * intensity))
     painter.drawEllipse(head, 1.35, 1.35)
 
 
@@ -230,6 +236,7 @@ class RunePainter:
         rotation: float,
         *,
         color: QColor = GOLD,
+        core: QColor | None = None,
         intensity: float = 1.0,
         spread: float = 0.72,
     ) -> None:
@@ -237,10 +244,12 @@ class RunePainter:
         painter.translate(position)
         painter.rotate(rotation)
         path = self.path(rune, size)
+        rune_core = core if core is not None else (GOLD_CORE if color == GOLD else WHITE)
         glow_path(
             painter,
             path,
             color,
+            core=rune_core,
             intensity=intensity,
             core_width=max(0.65, size * 0.055),
             spread=spread,
@@ -259,8 +268,12 @@ class RunePainter:
         intensity: float,
         color: QColor,
         offset: int = 0,
+        skip_indices: set[int] | None = None,
     ) -> None:
+        skipped = skip_indices or set()
         for i in range(count):
+            if i in skipped:
+                continue
             degrees = angle + i * 360.0 / count
             rune = ELDER_FUTHARK[(i + offset) % len(ELDER_FUTHARK)]
             self.draw(
