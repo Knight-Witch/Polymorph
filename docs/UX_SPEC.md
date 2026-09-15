@@ -14,7 +14,8 @@ Files -> Output Format -> Sizing Constraint -> GIF Priority -> Framing -> Polymo
 - The visible framing selector is Original / Crop / Fit radio controls synchronized to the existing framing state used by preview/export logic.
 - Header lockup is `POLYMORPH` then mixed-case `Media conversion magic — by Knight Witch™`. Version metadata belongs in the footer, not the header.
 - Display typography is self-contained: the supplied Polymorph Regular and Bold assets are bundled inside the application and registered with Qt before the UI is constructed. The user does not need the font installed on Windows. Inter is the bundled body/UI family; Cinzel remains only an emergency fallback if the branded display assets cannot be loaded.
-- Current palette is near-black/charcoal, ivory, champagne gold and restrained crimson. Cards use dark layered gradients, subtle warm illumination, deterministic grain, small-radius etched borders and restrained red selection states.
+- Current palette is near-black/very-dark blue-charcoal, ivory, cool white-gold/champagne and restrained crimson. Cards use smooth dark gradients, subtle neutral etched borders and restrained red selection states; they should not read as yellow-gold, grainy, or as a warm gold-to-black fade.
+- Branded SVG icons must remain crisp at Windows high-DPI scale. Render vectors at final device-pixel size rather than rasterizing small and scaling them up.
 - Loader/progress art is not part of the current fidelity pass. Arcane-circle and D20 concepts remain later design work.
 
 ## Typography ratios
@@ -22,10 +23,9 @@ Files -> Output Format -> Sizing Constraint -> GIF Priority -> Framing -> Polymo
 - The user's Photoshop references are the visual basis rather than literal Qt point-size values.
 - `POLYMORPH`: all caps, bundled Polymorph Regular, roughly the 120 pt reference with +350 Photoshop tracking; implementation should read distinctly wide-spaced and premium.
 - Subtitle/byline: `Media conversion magic — by Knight Witch™`, bundled Polymorph Regular, mixed/proper case, roughly the 50/120 title-size ratio and +300 tracking reference.
-- Card headings: bundled Polymorph Bold, roughly the 75/120 reference ratio with restrained +100-style tracking, balanced against the denser desktop control rail.
+- Card headings: bundled Polymorph Bold with restrained tracking and a deliberately compact desktop scale; they should be smaller than the dev.25/run-#84 tester while remaining clearly stronger than Inter body text.
 - Primary `POLYMORPH` action uses the same bundled Polymorph display/tracking language as the application title.
 - Body/control copy remains Inter for clarity and accessibility.
-- dev.24 intentionally preserves the exact dev.23 point-size and absolute letter-spacing implementation while replacing the display family; any optical adjustment to the custom face is a later human visual decision.
 
 ## Window and responsive behavior
 
@@ -35,11 +35,12 @@ Files -> Output Format -> Sizing Constraint -> GIF Priority -> Framing -> Polymo
 - Human dev.21 review accepted this proportional scaling behavior; preserve it unless later testing identifies a concrete regression.
 - Enlarging the window may provide more preview/workspace room but should not create visually meaningless blank expanses inside controls.
 - Resolution/file-size fields intentionally have no spinner arrows; users type the values directly.
+- The max-MB field and the two resolution fields use the same responsive width and the same dark surface color. Disabled resolution fields may mute text/border contrast, but should not look like a differently colored panel.
 - Radio buttons use conventional hollow-circle / centered-dot semantics, including disabled state.
 
 ## Card layout and alignment
 
-- Busy cards use: supplied small gold icon + Polymorph Bold heading, then a thin divider, then the controls.
+- Busy cards use: supplied small cool-white-gold icon + Polymorph Bold heading, then a thin divider, then the controls.
 - Output Format, Sizing, GIF Priority and Aspect Ratio content should visually align beneath the heading text column rather than beginning underneath the icon.
 - Framing is the intentional exception because the three compact radio choices need even horizontal distribution.
 - Crop Zoom and Output Folder do not use the heading divider; they are intentionally simpler cards.
@@ -109,7 +110,8 @@ Visible only when meaningful for GIF + Fit under file size.
 
 ## Status and footer
 
-- Ready/status is a compact two-line block: `Ready` with smaller contextual text such as `2 files imported. Choose your settings and begin.`
+- Ready/status is a two-line block: `Ready` with clearly smaller contextual text such as `2 files imported. Choose your settings and begin.`
+- The Ready/loading ring is intentionally much larger than the dev.25/run-#84 tester, visually comparable to the approved mockup's status indicator.
 - Service controls are labeled, not icon-only, and are spaced with visible separators: Check for Updates, GitHub, Ko-fi, Patreon, Discord.
 - Footer links need breathing room; avoid a dense icon/text cluster.
 - A horizontal divider separates the service/status row from metadata.
@@ -118,8 +120,10 @@ Visible only when meaningful for GIF + Fit under file size.
 
 ## Primary action
 
-- Copy is `POLYMORPH`, not `Cast Polymorph`.
-- Primary action uses a deep crimson/black gradient, champagne-gold border/highlight, bundled Polymorph Regular tracked title and restrained static sigil/line decoration.
+- Main copy is `POLYMORPH`, not `Cast Polymorph`.
+- A much smaller secondary line directly beneath it reads `CONVERT MEDIA`.
+- The action fills the available right-rail action width and should be visually substantial/tall rather than a narrow strip stranded above blank space.
+- Primary action uses a deep crimson/black gradient, cool white-gold/champagne border/highlight, bundled Polymorph Regular tracked title and restrained static sigil/line decoration.
 - Idle state should feel premium rather than animated. Hover/press may wake the surface up immediately; the later loader/cast animation takes over only when conversion begins.
 
 ## Completion readout

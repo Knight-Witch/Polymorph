@@ -1,6 +1,20 @@
 # Changelog
 
-Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md). dev.24-dev.25 investigation/build history remains available in Git history; root tracking is intentionally rolling/compact.
+Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md). dev.24-dev.26 investigation/build history remains available in Git history; root tracking is intentionally rolling/compact.
+
+## POLY-2026-09-14-058 — Correct mockup palette, button weight, icon sharpness, and status scale
+
+### Summary
+
+- Human review of the technically passing run-#84/dev.25 tester accepted the improved alignment but identified concrete remaining presentation defects: section icons still looked blurry, the primary `POLYMORPH` action was too visually narrow/short for its rail slot, the MB field did not match the resolution fields, the palette remained too yellow/gold, card surfaces had a warm/grainy gold-to-black fade instead of the mockup's clean dark gradient, tool headings were still slightly too large, and the Ready indicator/helper hierarchy was too small/large respectively.
+- Bumped the development candidate to `0.1.0-dev.26`; this pass is presentation-only.
+- Added an explicit startup-installed visual-fidelity layer that renders SVG icons directly at final device-pixel resolution before tinting, avoiding the previous raster-upscale softness on high-DPI displays.
+- Replaced the warm illuminated/grainy card treatment with a smooth black-to-blue-black charcoal gradient and cooler neutral etched borders; shifted headings, icons, input borders, radio accents, slider hardware and action highlights from yellow-gold toward the approved mockup's white-gold/champagne range while retaining crimson selection/action accents.
+- Reduced branded right-rail section heading size slightly while preserving bundled Polymorph Bold.
+- Equalized the max-MB and width/height spin fields to the same responsive width and dark surface treatment; disabled resolution fields now keep the same dark panel color instead of reading as a different-colored box.
+- Enlarged the primary action to a substantial design-scale height, removed the trailing rail spacer that visually stranded it, preserved full available rail width, strengthened the deep-crimson surface, and added the small secondary line `CONVERT MEDIA` beneath `POLYMORPH`.
+- Replaced the tiny text-circle Ready marker with a larger crisp painted status ring and reduced the Ready helper/detail text size.
+- No conversion, framing, adaptive GIF, file-size fitting, MP4, updater, subprocess, toolchain, font asset, or public-release behavior changed. Windows packaged CI is the next gate.
 
 ## POLY-2026-09-14-057 — Record chat handoff and exact bundled-font boundary
 

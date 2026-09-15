@@ -6,6 +6,10 @@ from pathlib import Path
 
 from PySide6.QtWidgets import QApplication
 
+from .ui.visual_patch import install_visual_patch
+
+install_visual_patch()
+
 from .ui.adaptive_main_window import MainWindow
 from .ui.branded_layout import rebuild_brand_layout
 from .ui.fonts import load_brand_fonts
