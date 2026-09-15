@@ -2,20 +2,24 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md). dev.24-dev.26 investigation/build history remains available in Git history; root tracking is intentionally rolling/compact.
 
-## POLY-2026-09-14-060 — Clamp compact action to actual height after run #86
+## POLY-2026-09-14-061 — dev.26 packaged candidate reaches FULL PASS
 
 ### Summary
 
-- Windows Dev Build run #86 / run ID `34915212307` again passed fonts, all 56 unit tests, pinned conversion toolchain, adaptive integration, GIF reference comparison and frozen app build, then failed only the protected 920×640 packaged UI gate.
-- The first responsive correction reduced the overflow from 38 px to 9 px (`button bottom 476, rail 467`), confirming the action-height diagnosis but showing that Qt's fixed vertical size policy still honored a larger size hint when only the minimum height was lowered.
-- The action now receives its actual fixed responsive height: proven compact `max(49, round(68 * scale))` at `<= 0.76`, and the new substantial `max(62, round(82 * scale))` treatment above that threshold.
-- Deep-crimson styling, horizontal full-width behavior, and the `CONVERT MEDIA` secondary line remain unchanged. The packaged smoke assertion remains unchanged.
-- Runtime stays `0.1.0-dev.26`; no conversion, framing, adaptive, updater, subprocess, font, toolchain, `main`, or public-release behavior changed.
+- Windows Dev Build run #93 / run ID `34923465313` is FULL PASS on implementation head `1927f88264786ea2b568bb98a87653571ab7168d`.
+- All 56 unit tests, pinned FFmpeg 9.0.1/gifski 1.32.0 toolchain checks, adaptive integration, GIF reference comparison, frozen application build, packaged application smoke, Inno Setup compilation, SHA-256 generation, and both artifact uploads passed.
+- The protected 920×640 primary-action visibility gate now passes without weakening the assertion. The final correction applies compact action height synchronously through `RefinedPolymorphButton.apply_scale` at `<= 0.76`, while normal/design sizing remains visually substantial.
+- The enlarged Ready ring remains at normal sizes and returns to its proven compact footprint at the minimum responsive breakpoint.
+- Run #92 / `34923070361` first proved the responsive geometry fix with a full technical PASS. A packaging audit then caught that `installer/Polymorph.iss` still labeled the installer dev.25; run #93 corrects that identity mismatch and re-passes the complete pipeline.
+- Verified tester artifact: `Polymorph-dev-installer`, artifact ID `10378963848`, artifact ZIP SHA-256 `465caa8821f642a5e3139ffc4a0d803e8803cd70beb2a7809d1ce05257bef2b5`.
+- Installer inside artifact: `Polymorph_Setup_v0.1.0-dev.26.exe`, SHA-256 `203013ebc65c1dc99321c25b9c6143db98f8a6aaed1ce99b053a1bc751e8c6fe`.
+- Runtime remains `0.1.0-dev.26`; conversion, framing, adaptive, updater, subprocess, font, and toolchain behavior remain protected and unchanged.
+- No public release or `main` promotion has occurred. Next gate is Amanda's human visual review of dev.26.
 
-## POLY-2026-09-14-059 — Restore minimum-size rail budget after run #85 smoke failure
+## POLY-2026-09-14-060 — Clamp compact action to actual height after run #86
 
-- Run #85 / `34914748497` passed all non-UI runtime/build gates, then correctly failed packaged smoke because the first dev.26 action treatment clipped at 920×640 (`button bottom 505, rail 467`).
-- Spacer removal was eliminated and compact-vs-normal button heights were separated at the protected `<= 0.76` boundary.
+- Run #86 / `34915212307` passed all non-UI gates and narrowed the protected minimum-size overflow to 9 px (`button bottom 476, rail 467`).
+- This established that the remaining defect was responsive action geometry, not conversion/runtime behavior.
 
 ## POLY-2026-09-14-058 — Correct mockup palette, button weight, icon sharpness, and status scale
 

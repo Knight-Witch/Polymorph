@@ -1,8 +1,8 @@
 # Active Context — Polymorph `dev`
 
 **Updated:** 2026-09-14  
-**Current task:** dev.26 branded-presentation correction. Runs #85 and #86 isolated the only failing gate to compact primary-action geometry; run #86 reduced minimum-size overflow from 38 px to 9 px. Current source now clamps the action's actual fixed height at the protected compact scale instead of only lowering minimum height.  
-**Runtime posture:** conversion/framing/adaptive behavior remains closed/validated for current v1 scope; branded presentation fidelity is the only active development area.
+**Current task:** dev.26 branded-presentation HUMAN VISUAL REVIEW. Windows Dev Build run #93 is FULL PASS and the correctly labeled dev.26 installer artifact has been retrieved and checksum-verified.  
+**Runtime posture:** conversion/framing/adaptive behavior remains closed/validated for current v1 scope; do not reopen it without new evidence. Branded presentation fidelity is awaiting Amanda's visual acceptance.
 
 ## Minimum continuation set
 
@@ -18,7 +18,8 @@ Read only:
 8. `src/polymorph/ui/brand_widgets.py`
 9. `src/polymorph/ui/fidelity_pass.py`
 10. `src/polymorph/ui/visual_patch.py`
-11. `src/polymorph/smoke_test.py` only if a package assertion itself is implicated
+11. `src/polymorph/ui/compact_status_patch.py`
+12. `src/polymorph/smoke_test.py` only if a package assertion itself is implicated
 
 Do not preload engine/history files unless the current task actually needs them.
 
@@ -26,41 +27,46 @@ Do not preload engine/history files unless the current task actually needs them.
 
 - Branch: `dev`.
 - Runtime version: `0.1.0-dev.26`.
-- Protected technical baseline before dev.26: run #84 / `34890815616`, FULL PASS.
-- Initial dev.26 presentation commit: `09b746d396748e82682ce6a484b2d31fae0667cc`.
-- Run #85 / `34914748497`: all non-UI gates passed; packaged minimum-size smoke failed with action bottom 505 vs rail 467.
-- First compact correction commit: `4f6a27d4b3224a3dd346e8e76dca344b3f422860`.
-- Run #86 / `34915212307`: all non-UI gates passed; packaged minimum-size smoke improved to action bottom 476 vs rail 467, leaving 9 px overflow.
-- Current correction: both the button's responsive `apply_scale` and final visual-geometry pass now use `setFixedHeight`, not only `setMinimumHeight`, so Qt cannot retain the larger normal-size hint at the compact gate.
-- Responsive action height policy: at scale `<= 0.76`, `max(49, round(68 * scale))`; above it, `max(62, round(82 * scale))`.
-- Preserve these dev.26 presentation features:
-  - direct final-device-pixel SVG rendering for high-DPI sharpness;
-  - smooth black-to-blue-black card gradients without warm glow/grain;
-  - cooler white-gold/champagne headings/icons/borders/hardware;
-  - slightly smaller Polymorph Bold tool headings;
-  - equal max-MB / resolution-field widths and matching dark surfaces;
-  - horizontally full-width deep-crimson primary action with small `CONVERT MEDIA` below `POLYMORPH`;
-  - larger Ready ring and smaller Ready helper/detail text.
+- Final implementation/package-label commit: `1927f88264786ea2b568bb98a87653571ab7168d`.
+- Windows Dev Build run #93 / run ID `34923465313`: **FULL PASS**.
+- Run #92 / `34923070361` first proved the responsive geometry correction with a full technical PASS; its installer was intentionally not handed off because `installer/Polymorph.iss` still named the package dev.25.
+- Run #93 corrected the installer identity to dev.26 and re-passed every technical/build/package gate.
+- Tester artifact: `Polymorph-dev-installer`, artifact ID `10378963848`.
+- Artifact ZIP SHA-256: `465caa8821f642a5e3139ffc4a0d803e8803cd70beb2a7809d1ce05257bef2b5`.
+- Installer inside artifact: `Polymorph_Setup_v0.1.0-dev.26.exe`.
+- Installer SHA-256: `203013ebc65c1dc99321c25b9c6143db98f8a6aaed1ce99b053a1bc751e8c6fe`.
+- Companion `.sha256` file was checked and matches the installer.
 - No public release exists; `main` remains non-experimental.
 
-## Typography — non-negotiable boundary
+## dev.26 presentation state
 
-Amanda's supplied Polymorph Regular/Bold files remain the intended packaged display fonts. They are bundled/self-contained and registered directly with Qt; friends/users do not install them separately. Do not replace them with system fonts or outlined SVG text.
+Preserve these implemented features unless Amanda explicitly asks to change them:
+
+- supplied Polymorph Regular/Bold display fonts, self-contained and Qt-registered;
+- direct final-device-pixel SVG rendering for high-DPI sharpness;
+- smooth black-to-blue-black card gradients without warm glow/grain;
+- cooler white-gold/champagne headings, icons, borders, and hardware;
+- slightly smaller Polymorph Bold tool headings;
+- equal max-MB / resolution-field widths and matching dark surfaces;
+- horizontally full-width deep-crimson primary action with small `CONVERT MEDIA` beneath `POLYMORPH`;
+- larger Ready ring and smaller Ready helper/detail text at normal size;
+- compact scale `<= 0.76`: primary action height applied synchronously through `RefinedPolymorphButton.apply_scale` as `max(42, round(55 * scale))`, and Ready ring returns to 24 px.
 
 ## Protected PASS state — do not reopen without new evidence
 
-- Preserve-motion GIF quality/smoothness, decimal-MB sizing, MP4, updater hardening and Windows no-console subprocess behavior.
-- Favor-resolution exact source-frame decimation, measured-gain gating, loop closure repair, 8 FPS floor, 2048/native soft target and no-upscale behavior.
+- Preserve-motion GIF quality/smoothness, decimal-MB sizing, MP4, updater hardening, and Windows no-console subprocess behavior.
+- Favor-resolution exact source-frame decimation, measured-gain gating, loop closure repair, 8 FPS floor, 2048/native soft target, and no-upscale behavior.
 - Crop/Fit preview/export geometry is human-validated.
 - Preserve 1260×820 design geometry and the 920×640 supported minimum.
 - Preserve minimum-only rail compaction at responsive scale `<= 0.76`; presentation geometry must not override it.
 - Bundled Polymorph Regular/Bold and Inter application is confirmed.
+- Packaged application smoke now passes unchanged at minimum size.
 
 ## Next gate
 
-1. Commit the fixed-height compact correction and run the complete Windows Dev Build again.
-2. Require the unchanged packaged 920×640 primary-action visibility smoke to pass.
-3. If CI passes, retrieve `Polymorph-dev-installer` directly and give Amanda the artifact for human visual review.
-4. Human review should focus on icon sharpness, cooler white-gold color balance, smooth dark gradients, equal sizing fields, normal-size primary-action weight/full width and `CONVERT MEDIA`, smaller tool headings, larger Ready ring, smaller Ready helper copy, and normal/minimum-size balance.
-5. If dev.26 is accepted visually, mark visual-fidelity HUMAN PASS and proceed to the deferred working/loading animation phase.
+1. Give Amanda the run #93 `Polymorph-dev-installer` artifact for human visual review.
+2. Human review should focus on icon sharpness, cooler white-gold color balance, smooth dark gradients, equal sizing fields, normal-size primary-action weight/full width and `CONVERT MEDIA`, smaller tool headings, larger Ready ring, smaller Ready helper copy, and normal/minimum-size balance.
+3. If Amanda reports a visual issue, change only the implicated presentation layer; do not reopen engine/adaptive/framing work without concrete evidence.
+4. If dev.26 is visually accepted, record visual-fidelity **HUMAN PASS** and proceed to the deferred working/loading animation phase.
+5. Deferred animation direction already approved conceptually: multi-ring arcane/alchemic circle, rotating rune ring, counter-rotating outer geometry, restrained orbiting sparks, and progressive center-emblem reveal tied to progress; final behavior can be tuned during that phase.
 6. Do not promote to `main` or create a public release without explicit approval.
