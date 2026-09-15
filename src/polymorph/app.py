@@ -7,8 +7,10 @@ from pathlib import Path
 from PySide6.QtWidgets import QApplication
 
 from .ui.visual_patch import install_visual_patch
+from .ui.compact_status_patch import install_compact_status_patch
 
 install_visual_patch()
+install_compact_status_patch()
 
 from .ui.adaptive_main_window import MainWindow
 from .ui.branded_layout import rebuild_brand_layout
