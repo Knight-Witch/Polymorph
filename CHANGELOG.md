@@ -10,8 +10,13 @@ Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LO
 - Option labels now read larger than their helper subtitles; the helper copy beneath OUTPUT FORMAT and GIF PRIORITY is deliberately smaller and quieter.
 - The FRAMING card stack is pinned to the same top alignment as ASPECT RATIO so both titles/dividers share one horizontal level and the framing radio row follows directly beneath.
 - CROP ZOOM now uses a telescope/spyglass icon instead of the accidental hourglass.
-- Runtime is bumped to `0.1.0-dev.27` only to identify this visual tester cleanly. Conversion, framing semantics, adaptive logic, updater, subprocess behavior, fonts, and toolchain are unchanged.
-- Next gate: complete Windows Dev Build and human visual confirmation.
+- Runtime is `0.1.0-dev.27` only to identify this visual tester cleanly. Conversion, framing semantics, adaptive logic, updater, subprocess behavior, fonts, and toolchain are unchanged.
+- Windows Dev Build run #100 / run ID `34926765260` is FULL PASS on implementation commit `9b6954f30741437d2aabdf49fa4912d02fad99e6`.
+- All 56 unit tests, pinned toolchain checks, adaptive integration, GIF reference comparison, frozen application build, packaged application smoke, Inno Setup compilation, SHA-256 generation, and artifact uploads passed.
+- The unchanged protected 920×640 packaged UI smoke also passed after these presentation changes.
+- Verified tester artifact: `Polymorph-dev-installer`, artifact ID `10379458708`, ZIP SHA-256 `b15cf034c4d21b6d6eb76bdbe38ca768adf729b840fc1c89ac90c2742554fe9a`.
+- Installer: `Polymorph_Setup_v0.1.0-dev.27.exe`, SHA-256 `738c8f2cb6f55f47e8013b99e8b07815acd1be656841756e5f49682315d0d03e`; companion checksum file matches.
+- Next gate is Amanda's human visual confirmation of these three corrections.
 
 ## POLY-2026-09-14-061 — dev.26 packaged candidate reaches FULL PASS
 
