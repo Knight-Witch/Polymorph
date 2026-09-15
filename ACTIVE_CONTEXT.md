@@ -1,8 +1,7 @@
 # Active Context — Polymorph `dev`
 
 **Updated:** 2026-09-14  
-**Current task:** dev.27 HUMAN VISUAL REVIEW. Amanda's dev.26 review said the app was much better and requested exactly three remaining presentation corrections: option/helper text hierarchy, FRAMING/ASPECT top alignment, and a spyglass icon for CROP ZOOM. dev.27 implements those corrections and Windows Dev Build run #100 is FULL PASS.  
-**Runtime posture:** conversion/framing/adaptive behavior remains closed/validated for current v1 scope; do not reopen it without new evidence.
+**Current task:** isolated Polymorph Motion Lab prototype for the deferred loading/working animation and animated primary action. The production app remains on dev.27; conversion/framing/adaptive behavior remains closed/validated. The Motion Lab is a standalone PySide6 sandbox so loader/button motion can be iterated without touching the shipping UI.
 
 ## Minimum continuation set
 
@@ -11,34 +10,33 @@ Read only:
 1. `PROJECT_CONTRACT.md`
 2. this file
 3. `docs/UX_SPEC.md`
-4. `src/polymorph/app.py`
-5. `src/polymorph/ui/styles.py`
-6. `src/polymorph/ui/branded_layout.py`
-7. `src/polymorph/ui/fidelity_pass.py`
-8. `src/polymorph/ui/visual_patch.py`
-9. `src/polymorph/ui/compact_status_patch.py`
-10. `src/polymorph/ui/final_polish_patch.py`
-11. `src/polymorph/smoke_test.py` only if a package assertion itself is implicated
+4. `docs/MOTION_LAB.md`
+5. `src/polymorph/motion_lab.py`
+6. `src/polymorph/ui/fonts.py` and `src/polymorph/ui/brand_widgets.py` only when typography/shared brand behavior is implicated
+7. `.github/workflows/motion-lab-build.yml` only when the standalone Windows artifact/build is implicated
 
 Do not preload engine/history files unless the current task actually needs them.
 
-## Current Dev candidate
+## Production Dev candidate — protected
 
 - Branch: `dev`.
 - Runtime version: `0.1.0-dev.27`.
-- Implementation commit: `9b6954f30741437d2aabdf49fa4912d02fad99e6`.
+- Production implementation commit: `9b6954f30741437d2aabdf49fa4912d02fad99e6`.
 - Windows Dev Build run #100 / run ID `34926765260`: **FULL PASS**.
 - Tester artifact: `Polymorph-dev-installer`, artifact ID `10379458708`.
-- Artifact ZIP SHA-256: `b15cf034c4d21b6d6eb76bdbe38ca768adf729b840fc1c89ac90c2742554fe9a`.
 - Installer: `Polymorph_Setup_v0.1.0-dev.27.exe`.
-- Installer SHA-256: `738c8f2cb6f55f47e8013b99e8b07815acd1be656841756e5f49682315d0d03e`.
-- Companion `.sha256` was checked and matches.
-- dev.27 changes are presentation-only:
-  - selection/radio labels are explicitly larger than SecondaryText helper subtitles;
-  - FRAMING and ASPECT RATIO card contents are pinned to the top of their equal-height pair so the title/divider baselines match;
-  - CROP ZOOM uses a telescope/spyglass SVG instead of the accidental hourglass.
-- dev.26 features remain preserved: cool white-gold palette, smooth blue-black panels, crisp high-DPI SVG rendering, matched sizing fields, smaller tool headings, full-width deep-crimson action with `CONVERT MEDIA`, larger Ready ring/smaller helper copy, supplied Polymorph fonts, and protected responsive compaction.
+- dev.27 production visual corrections remain unchanged by Motion Lab work.
 - No public release exists; `main` remains non-experimental.
+
+## Motion Lab candidate
+
+- Standalone entry point: `run_motion_lab.py` / `python -m polymorph.motion_lab`.
+- Loader has four deliberately different compositions, real 0–100% progress, independent rune/counter/trace motion, glow and a swappable SVG center emblem.
+- Preview background can switch among black, current Polymorph blue-black, procedural dark textures, a busy contrast stress test, or a custom image.
+- Primary-action prototype treats the button as a clipping window into a larger rotating arcane mechanism; hover wakes it, the POLYMORPH glyphs receive a moving light tracer, click produces a short cast burst, and debug reveal shows the complete mechanism outside the button boundary.
+- Canonical emblem SVG has not yet been committed. The lab exposes `Load emblem SVG…` so the exact supplied artwork can be tested without code changes. Do not approximate/redraw it.
+- Dedicated Windows workflow: `.github/workflows/motion-lab-build.yml`; it source-smokes, packages, packaged-smokes, then uploads `Polymorph-motion-lab`.
+- Motion Lab is visual/prototype-only and does not alter the production Polymorph window, conversion behavior, runtime version, installer, or release state.
 
 ## Protected PASS state — do not reopen without new evidence
 
@@ -52,8 +50,8 @@ Do not preload engine/history files unless the current task actually needs them.
 
 ## Next gate
 
-1. Give Amanda the run #100 dev.27 installer for human visual review.
-2. Review only the three requested corrections: option-label/helper hierarchy, FRAMING/ASPECT alignment, and spyglass icon.
-3. If accepted, record visual-fidelity **HUMAN PASS** and proceed to the deferred working/loading animation phase.
-4. If one remains off, change only that implicated presentation element.
-5. Do not promote to `main` or create a public release without explicit approval.
+1. Get the standalone Motion Lab Windows build to PASS.
+2. Give Amanda the portable Motion Lab artifact for human animation review.
+3. Use the exact supplied emblem SVG once it is available; basic SVG rendering does not depend on source path direction.
+4. Iterate only inside the standalone lab until Amanda selects a loader treatment and button behavior.
+5. Do not integrate animation into the production Polymorph UI, promote to `main`, or create a public release without a separate explicit decision.

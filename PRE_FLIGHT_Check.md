@@ -2,6 +2,18 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md). dev.24-dev.27 technical/visual history remains available in Git history; root tracking is intentionally rolling/compact.
 
+## PFC-2026-09-14-063 — Motion Lab implementation candidate
+
+- PASS static: new standalone Motion Lab source parses/compiles without syntax errors.
+- PASS architecture: Motion Lab is isolated from production `PolymorphWindow`, conversion, framing, updater and encoder code; runtime version remains dev.27.
+- PASS candidate: loader exposes four compositions, 0–100% progress, auto-loop, independent motion/glow controls and runtime SVG emblem loading.
+- PASS candidate: preview surfaces cover black, current blue-black, procedural texture, busy contrast and arbitrary custom images.
+- PASS candidate: primary-action prototype uses an oversized arcane mechanism clipped by the visual button, plus hover wake, text tracer, click burst and expanded clipping-debug view.
+- SVG direction risk is contained: canonical SVG is rendered normally; no CSS-style `stroke-dasharray` dependency exists for the basic emblem layer.
+- Dedicated Motion Lab CI is configured to run source offscreen smoke, package with PyInstaller, run packaged offscreen smoke and upload `Polymorph-motion-lab`.
+- Windows CI/package status is pending this commit's workflow run; do not mark the Motion Lab build FULL PASS until that run succeeds.
+- No production conversion, geometry semantics, adaptive, updater, subprocess, app-window, installer, or release behavior changed.
+
 ## PFC-2026-09-14-062 — dev.27 narrow visual corrections FULL PASS
 
 - Human review of dev.26 reported the overall app much better; remaining scope was presentation-only.

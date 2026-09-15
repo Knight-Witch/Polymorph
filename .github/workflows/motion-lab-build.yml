@@ -1,0 +1,79 @@
+name: Polymorph Motion Lab Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [dev]
+    paths:
+      - "src/polymorph/motion_lab.py"
+      - "src/polymorph/ui/fonts.py"
+      - "src/polymorph/ui/brand_widgets.py"
+      - "src/polymorph/assets/**"
+      - "run_motion_lab.py"
+      - "build/PolymorphMotionLab.spec"
+      - ".github/workflows/motion-lab-build.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install . pyinstaller
+
+      - name: Prepare fallback UI fonts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force src\polymorph\assets\fonts | Out-Null
+          Invoke-WebRequest "https://raw.githubusercontent.com/google/fonts/45071f07c63e863a539442ef3562b71ab1f147a6/ofl/cinzel/Cinzel%5Bwght%5D.ttf" -OutFile src\polymorph\assets\fonts\Cinzel-wght.ttf
+          Invoke-WebRequest "https://raw.githubusercontent.com/google/fonts/e1d6480102fed30739fead0faee463101f892c8f/ofl/inter/Inter%5Bopsz%2Cwght%5D.ttf" -OutFile src\polymorph\assets\fonts\Inter-opsz-wght.ttf
+
+      - name: Source smoke test
+        shell: pwsh
+        env:
+          PYTHONPATH: src
+          QT_QPA_PLATFORM: offscreen
+        run: python -m polymorph.motion_lab --smoke-test
+
+      - name: Build Motion Lab
+        shell: pwsh
+        run: pyinstaller --noconfirm --clean build\PolymorphMotionLab.spec
+
+      - name: Packaged smoke test
+        shell: pwsh
+        run: |
+          $env:QT_QPA_PLATFORM = "offscreen"
+          $proc = Start-Process -FilePath "$PWD\dist\PolymorphMotionLab\PolymorphMotionLab.exe" -ArgumentList "--smoke-test" -PassThru
+          try {
+            Wait-Process -Id $proc.Id -Timeout 60 -ErrorAction Stop
+          }
+          catch {
+            Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+            throw "Packaged Motion Lab smoke test exceeded 60 seconds"
+          }
+          $proc.Refresh()
+          if ($proc.ExitCode -ne 0) {
+            throw "Packaged Motion Lab smoke test failed with exit code $($proc.ExitCode)"
+          }
+
+      - name: Upload portable Motion Lab
+        uses: actions/upload-artifact@v4
+        with:
+          name: Polymorph-motion-lab
+          path: dist/PolymorphMotionLab/
+          if-no-files-found: error

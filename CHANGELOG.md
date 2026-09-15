@@ -2,6 +2,19 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md). dev.24-dev.27 investigation/build history remains available in Git history; root tracking is intentionally rolling/compact.
 
+## POLY-2026-09-14-063 — Standalone Motion Lab prototype
+
+### Summary
+
+- Added a standalone PySide6 Motion Lab for the deferred loader/working animation and animated primary action; production Polymorph behavior and runtime remain dev.27 unchanged.
+- Added four loader compositions with independent rune/counter rotation, energy traces, glow, real 0–100% progress, and a swappable SVG center-emblem layer.
+- Added black, Polymorph blue-black, procedural textured, busy stress-test, and custom-image preview backgrounds so animation legibility can be judged over different surfaces.
+- Added an animated POLYMORPH button prototype that behaves as a clipped window into an oversized arcane mechanism, wakes on hover, carries a moving text-light tracer, and produces a short cast burst on click.
+- Added a debug reveal mode that expands the button preview canvas and shows the full mechanism outside the cyan button clipping boundary.
+- Added runtime `Load emblem SVG…`; basic emblem rendering does not rely on SVG path direction. A future contour-following tracer, if selected, should use a normalized animation path instead of rewriting canonical emblem artwork.
+- Added a dedicated Windows Motion Lab workflow with source smoke, PyInstaller package, packaged smoke, and portable artifact upload.
+- No conversion, framing, adaptive, updater, production UI, runtime-version, installer, or public-release behavior changed.
+
 ## POLY-2026-09-14-062 — dev.27 final presentation polish from human review
 
 ### Summary
