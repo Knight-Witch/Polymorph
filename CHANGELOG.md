@@ -2,7 +2,7 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md). dev.24-dev.27 investigation/build history remains available in Git history; root tracking is intentionally rolling/compact.
 
-## POLY-2026-09-15-064 — Motion Lab Elder Futhark transmutation rebuild candidate
+## POLY-2026-09-15-064 — Motion Lab Elder Futhark transmutation rebuild FULL PASS
 
 ### Summary
 
@@ -17,8 +17,11 @@ Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LO
 - Added four study emphasis modes: Transmutation, Dense Runes, Tracer Ritual and Fractal Echo.
 - Added bundled `assets/kw_emblem.svg`, derived from Amanda's supplied SVG with path-coordinate simplification only and visually checked against the source; the correct emblem no longer depends on the runtime SVG chooser.
 - Clarified every motion control so each slider names the exact animated family it drives.
+- Dedicated `Polymorph Motion Lab Build` run #3 / run ID `34944466899` is FULL PASS on implementation commit `be7939fabedc6c719b5500dd7578ab4b2d8534fd`.
+- PASS: Windows source offscreen smoke, PyInstaller portable build, packaged Windows launch smoke and artifact upload.
+- Portable artifact `Polymorph-motion-lab`, artifact ID `10386399042`, size 50,819,549 bytes, digest `sha256:ca12e0e0bcf2f239c8e2acd75046443e4016bdefb7df11bb040625390bc6b767`.
+- The same implementation also triggered the normal Windows Dev Build run #103 / run ID `34944466940`, which passed all production unit/toolchain/adaptive/GIF-reference/frozen-app/installer gates, confirming the isolated lab work did not regress the protected production app.
 - Production Polymorph remains dev.27 unchanged; no conversion, framing, adaptive, updater, production UI, installer or public-release behavior changed.
-- Dedicated Windows Motion Lab CI/package validation is pending for this candidate.
 
 ## POLY-2026-09-14-063 — Standalone Motion Lab prototype FULL PASS
 
@@ -34,3 +37,7 @@ Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LO
 - Motion Lab Build run #1 / run ID `34931411518` is FULL PASS on implementation commit `0341ea270fb88495cde7f102e155e8ddd44680cc`.
 - Portable artifact `Polymorph-motion-lab`, artifact ID `10381886805`, digest `sha256:b96ff563b952c411614417df483c1996de51d128895b39692f9bf933c12583b6`.
 - No conversion, framing, adaptive, updater, production UI, runtime-version, installer, or public-release behavior changed.
+
+## Documentation note
+
+- This follow-up records completed CI/artifact identities only; no runtime, package, production UI, conversion, or release behavior changed in the documentation-only update.
