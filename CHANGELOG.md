@@ -2,7 +2,7 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md). dev.24-dev.27 investigation/build history remains available in Git history; root tracking is intentionally rolling/compact.
 
-## POLY-2026-09-14-063 — Standalone Motion Lab prototype
+## POLY-2026-09-14-063 — Standalone Motion Lab prototype FULL PASS
 
 ### Summary
 
@@ -13,6 +13,8 @@ Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LO
 - Added a debug reveal mode that expands the button preview canvas and shows the full mechanism outside the cyan button clipping boundary.
 - Added runtime `Load emblem SVG…`; basic emblem rendering does not rely on SVG path direction. A future contour-following tracer, if selected, should use a normalized animation path instead of rewriting canonical emblem artwork.
 - Added a dedicated Windows Motion Lab workflow with source smoke, PyInstaller package, packaged smoke, and portable artifact upload.
+- Motion Lab Build run #1 / run ID `34931411518` is FULL PASS on implementation commit `0341ea270fb88495cde7f102e155e8ddd44680cc`.
+- Portable artifact `Polymorph-motion-lab`, artifact ID `10381886805`, digest `sha256:b96ff563b952c411614417df483c1996de51d128895b39692f9bf933c12583b6`.
 - No conversion, framing, adaptive, updater, production UI, runtime-version, installer, or public-release behavior changed.
 
 ## POLY-2026-09-14-062 — dev.27 final presentation polish from human review
