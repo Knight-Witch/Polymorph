@@ -16,21 +16,52 @@ or, with the package installed/editable:
 python -m polymorph.motion_lab
 ```
 
-## Current prototype controls
+## Current transmutation study
 
-- Switch the preview surface between black, the Polymorph blue-black gradient, two procedural textures, a deliberately busy stress-test surface, or any custom image.
-- Compare four loader compositions: Ritual, Concentric, Cipher, and Hybrid.
-- Scrub real loader progress or auto-loop 0–100%.
-- Tune loader glow, rune rotation, counter-rotation, and energy-trace speed.
-- Load any SVG as the center emblem at runtime. The canonical Knight Witch/Polymorph emblem can be dropped in without changing loader geometry.
-- Hover the real button to wake its oversized clipped arcane mechanism and text tracer.
-- Force Rest/Hover/Pressed states for inspection.
-- Click the button to preview a short cast/activation burst.
-- Reveal the full oversized button mechanism around the cyan clipping boundary to tune the “window into a larger sigil” behavior.
+The current loader direction is based on Amanda's annotated transmutation-circle study and uses real Elder Futhark glyphs through bundled Noto Sans Runic in the standalone Windows build.
 
-## SVG path-direction note
+- Two outer progress rings travel in opposite directions and are the actual 0-100% loading indicators.
+- The outer Elder Futhark ring rotates clockwise and carries six larger designated Elder Futhark glyphs with it.
+- The inner Elder Futhark ring rotates counter-clockwise.
+- Three partial Elder Futhark rings rotate counter-clockwise behind fixed visibility windows, so glyphs disappear outside each exposed arc.
+- A stationary middle rune band glimmers: individual glyphs fade in/out and change only while dim, avoiding hard random pops.
+- Three large rune spheres rotate with the crimson triangle and independently cycle Elder Futhark glyphs without matching each other on the same frame.
+- The crimson triangle rotates clockwise while two offset hexagonal structures rotate counter-clockwise.
+- Four structural circles perform a timed outside-in cascade pulse; other structural groups flicker asynchronously rather than in lockstep.
+- Six radial comet tracers move from the outer points to the center and back, rotating with the hexagon system. The tracers are clipped behind the marked rune spheres, central circle, and partial-ring no-go zones.
+- Glow rendering uses a tight bright core plus multiple wider low-opacity passes for a softer falloff. Tracers use a bright head and fading comet tail.
+- At 100%, the progress rings pulse, the inner ritual fades, a brief radial flash fires, and the Knight Witch emblem materializes with a radial reveal.
 
-The center emblem is rendered as normal SVG artwork rather than relying on CSS `stroke-dasharray` traversal, so source subpath direction is not required for the basic emblem reveal. If a later approved effect needs a tracer to travel along the emblem's actual contours in a prescribed order, that tracer should use a normalized animation path layer rather than mutating the canonical emblem artwork.
+## Study variants
+
+The same transmutation architecture can be compared with four emphasis treatments:
+
+- `A — Transmutation`: balanced reference treatment.
+- `B — Dense Runes`: increases outer/inner rune density.
+- `C — Tracer Ritual`: strengthens radial tracers and adds opposed circular tracer accents.
+- `D — Fractal Echo`: layers low-intensity nested polygon echoes behind the main geometry as an experimental trippy direction.
+
+## Controls
+
+The ambiguous prototype controls were replaced with explicit motion-family controls:
+
+- Master glow and glow spread.
+- Outer rune ring clockwise speed.
+- Inner rune ring counter-clockwise speed.
+- Partial rune-arc counter-clockwise speed.
+- Triangle + rune-sphere clockwise speed.
+- Twin-hexagon counter-clockwise speed.
+- Comet tracer speed.
+- Cascade/flicker pace.
+- Button glow and button rune-ring speed.
+
+Preview backgrounds remain switchable between black, Polymorph blue-black, procedural dark textures, a deliberately busy stress-test surface, or a custom image.
+
+## Emblem handling
+
+`src/polymorph/assets/kw_emblem.svg` is the bundled center asset for this study, derived from Amanda's supplied SVG with path-coordinate simplification only; raster comparison was visually equivalent at review scale.
+
+The emblem is rendered as normal SVG artwork rather than relying on CSS `stroke-dasharray` traversal, so source subpath direction is not required for the reveal. `Load alternate emblem SVG…` remains as an optional development override, but the lab no longer depends on that chooser to show the correct Knight Witch mark.
 
 ## Acceptance boundary
 

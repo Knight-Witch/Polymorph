@@ -1,7 +1,7 @@
 # Active Context — Polymorph `dev`
 
-**Updated:** 2026-09-14  
-**Current task:** human animation review of the isolated Polymorph Motion Lab. The standalone Windows Motion Lab build is FULL PASS; production Polymorph remains on dev.27 and its conversion/framing/adaptive behavior remains closed/validated.
+**Updated:** 2026-09-15  
+**Current task:** Motion Lab transmutation-circle v2 human review candidate. Amanda rejected the original bare-bones loader direction and supplied an annotated Fullmetal Alchemist-inspired motion spec. The standalone lab is being rebuilt around real Elder Futhark, layered line-only glow, opposed rune systems, grouped flicker, comet tracers with no-go masking, dual progress rings, and the real Knight Witch emblem. Production Polymorph remains on dev.27 and its conversion/framing/adaptive behavior remains closed/validated.
 
 ## Minimum continuation set
 
@@ -12,8 +12,11 @@ Read only:
 3. `docs/UX_SPEC.md`
 4. `docs/MOTION_LAB.md`
 5. `src/polymorph/motion_lab.py`
-6. `src/polymorph/ui/fonts.py` and `src/polymorph/ui/brand_widgets.py` only when typography/shared brand behavior is implicated
-7. `.github/workflows/motion-lab-build.yml` only when the standalone Windows artifact/build is implicated
+6. `src/polymorph/motion_loader.py` and `src/polymorph/motion_effects.py` for loader/glow/rune behavior
+7. `src/polymorph/motion_button.py` only when button motion is implicated
+8. `src/polymorph/motion_stage.py` only when preview backgrounds are implicated
+9. `.github/workflows/motion-lab-build.yml` only when the standalone Windows artifact/build is implicated
+10. `src/polymorph/assets/kw_emblem.svg` only when emblem rendering is implicated
 
 Do not preload engine/history files unless the current task actually needs them.
 
@@ -26,22 +29,18 @@ Do not preload engine/history files unless the current task actually needs them.
 - Production dev.27 UI/conversion behavior is unchanged by Motion Lab work.
 - No public release exists; `main` remains non-experimental.
 
-## Motion Lab candidate — FULL PASS
+## Motion Lab v2 candidate — CI PENDING
 
-- Implementation commit: `0341ea270fb88495cde7f102e155e8ddd44680cc`.
-- Workflow: `Polymorph Motion Lab Build` run #1 / run ID `34931411518`: **FULL PASS**.
-- PASS: Windows source offscreen smoke.
-- PASS: PyInstaller portable build.
-- PASS: packaged Windows offscreen launch smoke.
-- Artifact: `Polymorph-motion-lab`, artifact ID `10381886805`, 50,767,525 bytes.
-- Artifact digest: `sha256:b96ff563b952c411614417df483c1996de51d128895b39692f9bf933c12583b6`.
-- Standalone entry point remains `run_motion_lab.py` / `python -m polymorph.motion_lab`.
-- Loader has four deliberately different compositions, real 0–100% progress, independent rune/counter/trace motion, glow and a swappable SVG center emblem.
-- Preview background can switch among black, current Polymorph blue-black, procedural dark textures, a busy contrast stress test, or a custom image.
-- Primary-action prototype treats the button as a clipping window into a larger rotating arcane mechanism; hover wakes it, POLYMORPH receives a moving light tracer, click produces a short cast burst, and debug reveal shows the full mechanism outside the button boundary.
-- Canonical emblem SVG has not yet been committed because the recent attachment was not exposed to the available file tools. The lab exposes `Load emblem SVG…` so the exact artwork can still be tested immediately without code changes.
-- Basic SVG rendering does not depend on source path direction. If a later contour-following tracer is approved, use a normalized animation path layer instead of mutating the canonical emblem artwork.
-- Motion Lab is visual/prototype-only and does not alter production runtime version, installer, conversion behavior, or release state.
+- The v1 standalone lab FULL PASS remains protected at commit `0341ea270fb88495cde7f102e155e8ddd44680cc`, run #1 / `34931411518`.
+- Current v2 rebuild uses Amanda's annotated transmutation-circle spec rather than the original simple geometry.
+- Elder Futhark is the chosen rune system. The standalone workflow downloads/bundles Noto Sans Runic so glyph rendering is not dependent on Windows fallback fonts.
+- Architecture now includes: opposed outer/inner rune rings; six larger designated outer glyphs; three clipped partial rune bands; a non-rotating glimmer/cycling rune band; three independently cycling rune spheres; clockwise triangle family; counter-clockwise offset hexagons; outside-in structural cascade; masked six-ray comet tracers; opposite-direction dual progress rings; completion flash/fade/emblem reveal.
+- Glow uses a tight ivory core plus layered gold/crimson falloff. Tracers use a bright comet head plus gradient tail.
+- Four study modes remain: balanced Transmutation, Dense Runes, Tracer Ritual, and Fractal Echo.
+- `src/polymorph/assets/kw_emblem.svg` is the bundled center asset, derived from Amanda's supplied SVG by simplifying redundant path coordinates only; raster comparison was visually equivalent at review scale.
+- Runtime override chooser remains optional for development comparison.
+- Current implementation needs the dedicated Windows Motion Lab source/package smoke before it can be marked FULL PASS.
+- Motion Lab remains visual/prototype-only and does not alter production runtime version, installer, conversion behavior, or release state.
 
 ## Protected PASS state — do not reopen without new evidence
 
@@ -53,7 +52,8 @@ Do not preload engine/history files unless the current task actually needs them.
 
 ## Next gate
 
-1. Amanda opens the portable Motion Lab and reviews the four loader treatments, speeds/glow, background contrast, button hover/tracer/cast behavior, and clipping-debug visualization.
-2. Load Amanda's exact emblem SVG through `Load emblem SVG…` for visual confirmation if the canonical source asset is not yet committed.
-3. Iterate only inside the standalone lab until a loader treatment and button behavior are selected.
-4. Do not integrate animation into the production Polymorph UI, promote to `main`, or create a public release without a separate explicit decision.
+1. Run the dedicated Motion Lab Windows workflow for the v2 implementation.
+2. Require source smoke, PyInstaller package, packaged smoke and artifact upload to pass.
+3. Give Amanda the new portable Motion Lab for visual review of the annotated transmutation behavior, especially rune readability, partial-arc masking, tracer occlusion/tails, glow spread, cascade timing, completion reveal and the four study variants.
+4. Iterate only inside the standalone lab until the loader/button motion is selected.
+5. Do not integrate animation into the production Polymorph UI, promote to `main`, or create a public release without a separate explicit decision.

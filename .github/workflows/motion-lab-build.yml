@@ -5,7 +5,7 @@ on:
   push:
     branches: [dev]
     paths:
-      - "src/polymorph/motion_lab.py"
+      - "src/polymorph/motion_*.py"
       - "src/polymorph/ui/fonts.py"
       - "src/polymorph/ui/brand_widgets.py"
       - "src/polymorph/assets/**"
@@ -36,12 +36,14 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install . pyinstaller
 
-      - name: Prepare fallback UI fonts
+      - name: Prepare Motion Lab fonts
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force src\polymorph\assets\fonts | Out-Null
           Invoke-WebRequest "https://raw.githubusercontent.com/google/fonts/45071f07c63e863a539442ef3562b71ab1f147a6/ofl/cinzel/Cinzel%5Bwght%5D.ttf" -OutFile src\polymorph\assets\fonts\Cinzel-wght.ttf
           Invoke-WebRequest "https://raw.githubusercontent.com/google/fonts/e1d6480102fed30739fead0faee463101f892c8f/ofl/inter/Inter%5Bopsz%2Cwght%5D.ttf" -OutFile src\polymorph\assets\fonts\Inter-opsz-wght.ttf
+          Invoke-WebRequest "https://raw.githubusercontent.com/google/fonts/809e4d8b8d7e9364a914909bb777679606c178b8/ofl/notosansrunic/NotoSansRunic-Regular.ttf" -OutFile src\polymorph\assets\fonts\NotoSansRunic-Regular.ttf
+          Invoke-WebRequest "https://raw.githubusercontent.com/google/fonts/809e4d8b8d7e9364a914909bb777679606c178b8/ofl/notosansrunic/OFL.txt" -OutFile src\polymorph\assets\fonts\OFL-NotoSansRunic.txt
 
       - name: Source smoke test
         shell: pwsh

@@ -2,6 +2,24 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md). dev.24-dev.27 investigation/build history remains available in Git history; root tracking is intentionally rolling/compact.
 
+## POLY-2026-09-15-064 — Motion Lab Elder Futhark transmutation rebuild candidate
+
+### Summary
+
+- Rebuilt the standalone loader around Amanda's annotated Fullmetal Alchemist-inspired transmutation-circle motion study; the original simple rotating-line treatment is no longer the active direction.
+- Switched rune content to real Elder Futhark and added a dedicated Noto Sans Runic bundle step to the standalone Motion Lab workflow.
+- Added opposed rune motion families: clockwise outer rune band with six larger designated glyphs, counter-clockwise inner band, and three counter-clockwise rune rings clipped to partial visible arcs.
+- Added a stationary middle rune band whose glyphs asynchronously glimmer/change only while dim, plus three large rune spheres that independently cycle glyphs without matching each other on a frame.
+- Added clockwise triangle/rune-sphere motion, two offset counter-clockwise hexagons, grouped structural flicker and a four-stage outside-in cascade pulse.
+- Replaced stub traces with six synchronized radial comet tracers that move outer→center→outer with bright heads, long gradient tails and explicit no-go clipping behind rune spheres, the center circle and partial rune bands.
+- Reworked line glow into a tight ivory core plus multiple wide low-opacity gold/crimson passes for a smoother soft falloff.
+- The two outermost rings are now opposite-direction real progress arcs. At 100% they pulse, the inner ritual fades, a radial flash fires and the Knight Witch emblem materializes.
+- Added four study emphasis modes: Transmutation, Dense Runes, Tracer Ritual and Fractal Echo.
+- Added bundled `assets/kw_emblem.svg`, derived from Amanda's supplied SVG with path-coordinate simplification only and visually checked against the source; the correct emblem no longer depends on the runtime SVG chooser.
+- Clarified every motion control so each slider names the exact animated family it drives.
+- Production Polymorph remains dev.27 unchanged; no conversion, framing, adaptive, updater, production UI, installer or public-release behavior changed.
+- Dedicated Windows Motion Lab CI/package validation is pending for this candidate.
+
 ## POLY-2026-09-14-063 — Standalone Motion Lab prototype FULL PASS
 
 ### Summary
@@ -16,29 +34,3 @@ Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LO
 - Motion Lab Build run #1 / run ID `34931411518` is FULL PASS on implementation commit `0341ea270fb88495cde7f102e155e8ddd44680cc`.
 - Portable artifact `Polymorph-motion-lab`, artifact ID `10381886805`, digest `sha256:b96ff563b952c411614417df483c1996de51d128895b39692f9bf933c12583b6`.
 - No conversion, framing, adaptive, updater, production UI, runtime-version, installer, or public-release behavior changed.
-
-## POLY-2026-09-14-062 — dev.27 final presentation polish from human review
-
-### Summary
-
-- Human review of dev.26 marked the overall presentation substantially improved and identified three narrow remaining visual issues only.
-- Option labels now read larger than their helper subtitles; the helper copy beneath OUTPUT FORMAT and GIF PRIORITY is deliberately smaller and quieter.
-- The FRAMING card stack is pinned to the same top alignment as ASPECT RATIO so both titles/dividers share one horizontal level and the framing radio row follows directly beneath.
-- CROP ZOOM now uses a telescope/spyglass icon instead of the accidental hourglass.
-- Runtime is `0.1.0-dev.27` only to identify this visual tester cleanly. Conversion, framing semantics, adaptive logic, updater, subprocess behavior, fonts, and toolchain are unchanged.
-- Windows Dev Build run #100 / run ID `34926765260` is FULL PASS on implementation commit `9b6954f30741437d2aabdf49fa4912d02fad99e6`.
-- All 56 unit tests, pinned toolchain checks, adaptive integration, GIF reference comparison, frozen application build, packaged application smoke, Inno Setup compilation, SHA-256 generation, and artifact uploads passed.
-- The unchanged protected 920×640 packaged UI smoke also passed after these presentation changes.
-- Verified tester artifact: `Polymorph-dev-installer`, artifact ID `10379458708`, ZIP SHA-256 `b15cf034c4d21b6d6eb76bdbe38ca768adf729b840fc1c89ac90c2742554fe9a`.
-- Installer: `Polymorph_Setup_v0.1.0-dev.27.exe`, SHA-256 `738c8f2cb6f55f47e8013b99e8b07815acd1be656841756e5f49682315d0d03e`; companion checksum file matches.
-- Next gate is Amanda's human visual confirmation of these three corrections.
-
-## POLY-2026-09-14-061 — dev.26 packaged candidate reaches FULL PASS
-
-- Windows Dev Build run #93 / `34923465313` is FULL PASS; verified dev.26 installer artifact was delivered for human review.
-- The protected 920×640 primary-action visibility gate passed unchanged.
-
-## POLY-2026-09-14-058 — Correct mockup palette, button weight, icon sharpness, and status scale
-
-- dev.26 presentation pass added final-device-pixel SVG rendering, smooth blue-black cards, cooler white-gold/champagne accents, equal sizing fields, smaller tool headings, larger Ready ring/smaller helper text, and a substantial deep-red `POLYMORPH` action with small `CONVERT MEDIA` beneath it.
-- Protected conversion/runtime behavior remains unchanged.

@@ -2,6 +2,21 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md). dev.24-dev.27 technical/visual history remains available in Git history; root tracking is intentionally rolling/compact.
 
+## PFC-2026-09-15-064 — Elder Futhark transmutation Motion Lab candidate
+
+- PASS static: rewritten standalone Motion Lab source parses/compiles without syntax errors.
+- PASS architecture: changes remain isolated from production `PolymorphWindow`, conversion, framing, updater and encoder behavior; runtime remains dev.27.
+- PASS source design: real Elder Futhark glyph content is wired through Noto Sans Runic for the standalone build rather than fake rune-like marks.
+- PASS source design: outer CW/inner CCW rune rings, six designated outer glyphs, three clipped partial rune bands, stationary glimmer rune ring and three independently cycling large rune spheres are implemented.
+- PASS source design: clockwise triangle family, twin CCW hexagons, grouped structural flicker and a four-stage outside-in cascade are implemented.
+- PASS source design: six radial comet tracers perform synchronized outer↔center travel with bright heads, gradient tails and explicit no-go clipping under foreground rune structures.
+- PASS source design: glow renderer uses a narrow bright core plus multiple wide low-alpha passes instead of the previous short three-pass glow.
+- PASS source design: dual opposite-direction outer progress arcs drive completion; 100% initiates pulse/flash, inner fade and emblem materialization.
+- PASS emblem: bundled `kw_emblem.svg` is derived from Amanda's supplied SVG with path-coordinate simplification only; raster comparison was visually equivalent at review scale and path direction is not used by the reveal.
+- PASS source design: controls now name the exact motion family they change, removing the ambiguous original Rune/Counter mapping.
+- PENDING: dedicated Windows Motion Lab source smoke, PyInstaller build, packaged smoke and portable artifact upload for this candidate.
+- No production conversion, geometry semantics, adaptive, updater, subprocess, app-window, installer, runtime-version or release behavior changed.
+
 ## PFC-2026-09-14-063 — Motion Lab FULL PASS
 
 - PASS static: standalone Motion Lab source parses/compiles without syntax errors.
@@ -14,24 +29,3 @@ Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LO
 - PASS: Windows source offscreen smoke, PyInstaller portable build, packaged Windows offscreen launch smoke, and artifact upload.
 - Artifact `Polymorph-motion-lab`, artifact ID `10381886805`, size 50,767,525 bytes, digest `sha256:b96ff563b952c411614417df483c1996de51d128895b39692f9bf933c12583b6`.
 - No production conversion, geometry semantics, adaptive, updater, subprocess, app-window, installer, runtime-version, or release behavior changed.
-- Next gate: Amanda's human visual review of the portable Motion Lab only.
-
-## PFC-2026-09-14-062 — dev.27 narrow visual corrections FULL PASS
-
-- Human review of dev.26 reported the overall app much better; remaining scope was presentation-only.
-- PASS: radio/selection labels are larger than their helper subtitles; helper copy is reduced for clear hierarchy.
-- PASS candidate implementation: FRAMING and ASPECT RATIO card stacks share top alignment so headings/dividers sit on the same horizontal level and framing options rise with the corrected stack.
-- PASS candidate implementation: CROP ZOOM hourglass replaced by a telescope/spyglass SVG from the already licensed Lucide icon set.
-- Version identity is consistently dev.27.
-- Windows Dev Build run #100 / `34926765260` completed successfully on `9b6954f30741437d2aabdf49fa4912d02fad99e6`.
-- PASS: bundled fonts, all 56 unit tests, FFmpeg/gifski checks, adaptive integration, GIF reference comparison, PyInstaller build, packaged application smoke, Inno Setup, checksum generation, unpacked app upload, and installer upload.
-- PASS: unchanged protected 920×640 packaged UI smoke.
-- Artifact `Polymorph-dev-installer` ID `10379458708`; ZIP SHA-256 `b15cf034c4d21b6d6eb76bdbe38ca768adf729b840fc1c89ac90c2742554fe9a`.
-- `Polymorph_Setup_v0.1.0-dev.27.exe` SHA-256 `738c8f2cb6f55f47e8013b99e8b07815acd1be656841756e5f49682315d0d03e`; companion `.sha256` matches.
-- No conversion, geometry semantics, adaptive, updater, subprocess, font, or toolchain behavior changed.
-- Next gate: human visual confirmation only.
-
-## PFC-2026-09-14-061 — dev.26 FULL PASS / tester artifact ready
-
-- Run #93 / `34923465313` completed successfully and produced the verified dev.26 tester used for this human review.
-- Technical gate remained closed; only presentation feedback continued.
