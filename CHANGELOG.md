@@ -2,11 +2,11 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md). dev.24-dev.27 investigation/build history remains available in Git history; root tracking is intentionally rolling/compact.
 
-## POLY-2026-09-15-065 — Motion Lab v3 geometry/masking correction candidate
+## POLY-2026-09-15-065 — Motion Lab v3 geometry/masking correction FULL PASS
 
 ### Summary
 
-- Selected `B — Dense Runes` as the active review baseline from Amanda's v2 visual review.
+- Selected `B — Dense Runes` as the active review baseline from Amanda's v2 visual review and made it the default Motion Lab study.
 - Corrected the outer hierarchy to two white progress rings, an inward-shifted gold Elder Futhark ring, red third ring, rotating red hexagons/triangle, and a fourth red ring tangent to the hexagon flats.
 - Kept six designated outer runes; each now replaces its small-rune slot exactly and renders white instead of overlapping a gold rune.
 - Converted the three partial rune structures into fixed opaque annular windows clipped at the fourth ring. Their frames stay anchored; only complete Elder Futhark circles rotate behind the windows.
@@ -16,9 +16,11 @@ Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LO
 - Rebuilt the innermost rune system as an opaque annulus bounded by red fifth/seventh rings, with the smallest gold Elder Futhark ring rotating inside and only tracer convergence visible in the central opening.
 - Tripled radial comet-tail travel from roughly 20% to 60% of each spoke.
 - Standardized palette: white outer progress geometry, red structural geometry, warmer yellow-orange gold ordinary runes, white large runes.
-- Set Dense Runes as the Motion Lab's default review study and clarified partial-window/innermost-rune controls.
-- Production Polymorph remains dev.27 unchanged; no conversion, framing, adaptive, updater, production UI, installer, or public-release behavior changed.
-- Dedicated Windows Motion Lab CI/package validation is pending for this candidate.
+- Dedicated `Polymorph Motion Lab Build` run #4 / run ID `34964398114` is FULL PASS on implementation commit `5b265c7bd1e21f58753f5cfd13d7a0cf19f3bc30`.
+- PASS: Windows source offscreen smoke, PyInstaller portable build, packaged Windows launch smoke and artifact upload.
+- Portable artifact `Polymorph-motion-lab`, artifact ID `10394437743`, size 50,819,173 bytes, digest `sha256:ee9528c126987c26744032d0c144c32ebba0274002aae1c263c577598a2cc4c1`.
+- The same implementation triggered normal Windows Dev Build run #104 / run ID `34964398145`, which passed all protected production unit/toolchain/adaptive/GIF-reference/frozen-app/installer gates.
+- Production Polymorph remains dev.27 unchanged; no conversion, framing, adaptive, updater, production UI, installer or public-release behavior changed.
 
 ## POLY-2026-09-15-064 — Motion Lab Elder Futhark transmutation rebuild FULL PASS
 
