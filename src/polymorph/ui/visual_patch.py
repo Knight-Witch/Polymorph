@@ -131,10 +131,8 @@ class RefinedPolymorphButton(_brand.PolymorphButton):
 
     def apply_scale(self, scale: float) -> None:
         self._scale = scale
-        if scale <= 0.76:
-            self.setMinimumHeight(max(49, round(68 * scale)))
-        else:
-            self.setMinimumHeight(max(62, round(82 * scale)))
+        height = max(49, round(68 * scale)) if scale <= 0.76 else max(62, round(82 * scale))
+        self.setFixedHeight(height)
         self.update()
 
     def paintEvent(self, _event) -> None:
@@ -377,10 +375,8 @@ def _refine_runtime_geometry(window, scale: float) -> None:
 
     button = window.convert_btn
     button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-    if scale <= 0.76:
-        button.setMinimumHeight(max(49, round(68 * scale)))
-    else:
-        button.setMinimumHeight(max(62, round(82 * scale)))
+    height = max(49, round(68 * scale)) if scale <= 0.76 else max(62, round(82 * scale))
+    button.setFixedHeight(height)
 
     status = window.findChild(QWidget, "StatusCard")
     if status is not None:
