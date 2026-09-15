@@ -8,6 +8,7 @@ from pathlib import Path
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QLabel, QSplitter, QWidget
 
+from .constants import APP_VERSION
 from .models import FramingMode, GifMotionMode
 from .resources import asset_path
 from .tools import find_toolchain
@@ -279,7 +280,7 @@ def run_packaged_smoke_test(app: QApplication, sample: Path) -> int:
         lines.append("PASS linked 16:9 resolution controls")
 
         footer_meta = [label.text() for label in window.findChildren(QLabel, "FooterMeta")]
-        if not any(text.startswith("Polymorph v0.1.0-dev.25") for text in footer_meta):
+        if not any(text.startswith(f"Polymorph v{APP_VERSION}") for text in footer_meta):
             raise RuntimeError(f"Footer version metadata is missing: {footer_meta}")
         if "Polymorph 2026, Knight Witch™" not in footer_meta:
             raise RuntimeError(f"Footer creator metadata is missing: {footer_meta}")
