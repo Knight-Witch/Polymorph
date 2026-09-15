@@ -6,45 +6,51 @@ This remains isolated from the production Polymorph window and does not touch co
 
 ## Current review baseline
 
-`B — Dense Runes` is the current visual baseline after Amanda's v2 review.
+`B — Dense Runes` remains the visual baseline, but v4 turns the loader into a live element editor so Amanda can tune the composition directly instead of iterating geometry by guesswork.
 
-The loader uses real Elder Futhark through bundled Noto Sans Runic. The active geometry order is:
+The existing v3 wins are preserved: real Elder Futhark through bundled Noto Sans Runic; fixed opaque partial-rune windows; six large white replacement runes in the outer rune ring; red geometry / gold normal runes / white large runes; opaque large-rune circles; opaque inner annulus; and long comet tracer tails.
 
-1. two white outer progress rings;
-2. one clockwise gold outer rune ring with six larger white designated runes replacing six small-rune slots;
-3. a red third ring;
-4. two red counter-clockwise six-point polygons;
-5. a red fourth ring tangent to the polygon flats;
-6. three fixed opaque partial-rune windows ending at the fourth ring, with complete Elder Futhark circles rotating behind the windows;
-7. one red clockwise triangle with the same circumradius as the polygons;
-8. three opaque large-rune spheres anchored to triangle-edge midpoints, carrying independently cycling white Elder Futhark glyphs;
-9. one stationary/glimmering gold rune ring intersecting the inner third of the large rune spheres;
-10. an inner opaque annulus bounded by red fifth/seventh rings, containing the smallest counter-clockwise gold rune ring;
-11. six red comet tracers that alone pass through the innermost open center and converge at the epicenter.
+The triangle and the three large rune circles are static by default in v4.
 
-All ordinary rune glyphs are warmer yellow-orange gold. Large runes are white. All geometry is red except the two outer progress rings, which are white.
+## Element editor
 
-The tracer tails are approximately three times the v2 length. Partial frames and large rune spheres are opaque foreground masks, so underlying geometry/tracers do not bleed through them.
+Choose an element from the dropdown. Controls are enabled only when they apply to that element.
 
-## Motion families
+Available per-element controls:
 
-- Outer rune ring: clockwise.
-- Innermost rune ring: counter-clockwise.
-- Partial-window rune content: counter-clockwise; window frames stay fixed.
-- Triangle + rune spheres: clockwise.
-- Twin hexagons: counter-clockwise.
-- Middle rune ring: stationary; glyphs asynchronously glimmer/change.
-- Large rune spheres: independently cycle glyphs.
-- Structural rings: outside-in cascade/flicker.
-- Six radial tracers: outer ↔ epicenter, rotating with the hexagon family.
-- At 100%: progress rings pulse, inner ritual fades, a radial flash fires, and the Knight Witch emblem materializes.
+- `Expand / contract span`: changes the radius/circumference/orbit spread without changing glyph or stroke size.
+- `Element scale`: changes glyph size, circle size, or stroke/tracer thickness without changing the element's overall span.
+- `Base rotation`: sets the manual starting/orientation angle independently of animation.
+- `Colour`: Qt colour picker for that element.
+- `Link group`: elements assigned to one link group receive shared span, scale, base-rotation, brightness, and glow-spread edits when those controls are applicable to both elements.
+- `Element brightness`: per-element intensity multiplier.
+- `Element glow spread`: per-element glow falloff multiplier.
+- `Rotation direction / speed`: signed slider; center is static, left is counter-clockwise, right is clockwise, magnitude controls speed.
+- `Static`: disables rotational animation while preserving the stored motion speed for later re-enable.
+- `Include in pulse array`: adds the element to the global outside-to-inside timed pulse order using current element radius/spread.
+- `Rune transition speed`: rune-bearing elements can cycle Elder Futhark; zero means glyph identity stays fixed.
 
-## Study variants
+Controls that are not meaningful for the selected element are disabled. Tracers, for example, do not expose spin or pulse-array controls.
 
-- `A — Transmutation`: balanced treatment.
-- `B — Dense Runes`: current review baseline, with denser ring/window glyph spacing.
-- `C — Tracer Ritual`: emphasizes tracer motion.
-- `D — Fractal Echo`: experimental nested red polygon echoes.
+## Global pulse controls
+
+- Pulse speed.
+- Pulse trail / hold length.
+- Pulse dark-end length.
+
+Master brightness, master glow spread, progress, tracer travel speed, study variant, background switching, emblem override, and the separate Polymorph-button preview remain available.
+
+## Export
+
+`Export motion spec…` writes a UTF-8 JSON file containing:
+
+- every element's span, scale, base rotation, color, brightness, glow spread, spin direction/speed, static state, pulse membership, rune transition speed, and link group;
+- global pulse timing;
+- selected study variant;
+- master brightness / master glow spread;
+- tracer travel speed.
+
+That JSON is the exact implementation handoff for the selected loader setup.
 
 ## Acceptance boundary
 
