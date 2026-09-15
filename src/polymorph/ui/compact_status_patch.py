@@ -11,11 +11,18 @@ _original_runtime_geometry = _visual._refine_runtime_geometry
 
 
 def _compact_aware_runtime_geometry(window, scale: float) -> None:
-    """Keep the enlarged Ready ring without stealing the minimum-size rail budget."""
+    """Preserve the richer normal-size treatment while protecting the 920x640 rail budget."""
     _original_runtime_geometry(window, scale)
     if scale > 0.76:
         return
 
+    # The normal-size primary action is intentionally substantial. At the protected
+    # minimum window, compact it just enough to keep the full action inside the rail
+    # without changing any conversion state or weakening the smoke gate.
+    window.convert_btn.setFixedHeight(max(42, round(55 * scale)))
+
+    # Likewise, keep the enlarged Ready ring at normal sizes but return it to the
+    # proven compact footprint at the minimum responsive breakpoint.
     status = window.findChild(QWidget, "StatusCard")
     if status is None:
         return
