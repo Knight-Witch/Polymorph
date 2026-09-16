@@ -2,13 +2,17 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md). dev.24-dev.27 technical/visual history remains available in Git history; root tracking is intentionally rolling/compact.
 
-## PFC-2026-09-16-068 — Motion Lab panel readability pass
+## PFC-2026-09-16-068 — Motion Lab panel readability pass — FULL PASS
 
 - PASS source review: change is limited to standalone Motion Lab styling at the entrypoint/theme layer.
 - PASS styling intent: section headers use a brighter crimson/red treatment with stronger weight and a deep-red divider for clearer scanning.
 - PASS styling intent: slider unused-track backgrounds are transparent; active red fill and existing handles remain visible.
-- PASS architecture: production conversion, framing, adaptive, updater, subprocess, app-window, installer and runtime-version behavior are untouched.
-- Next gate: dedicated Motion Lab Windows build plus normal Windows Dev Build, followed by Amanda's visual review of the new panel treatment.
+- PASS CI: dedicated `Polymorph Motion Lab Build` run #10 / run ID `35064912753` succeeded on readability implementation commit `845b029df1027bf6f4fac2a3a346c5d04d32d134`.
+- PASS CI: source smoke, PyInstaller portable build, packaged Windows smoke and artifact upload.
+- Artifact `Polymorph-motion-lab`, ID `10433348032`, size 50,890,729 bytes, digest `sha256:59d479d9cba0a2bd1b830093c566b0dfa97d19d62a9aae7220a28c898c922af5`.
+- PASS isolation: the normal Windows Dev Build path filter did not trigger because no production `src/**`, build, installer, pyproject or `run_polymorph.py` path changed; protected production run #109 remains FULL PASS.
+- No production conversion, framing, adaptive, updater, subprocess, app-window, installer, runtime-version or public-release behavior changed.
+- Next gate: Amanda visually reviews the packaged header/slider treatment.
 
 ## PFC-2026-09-16-067 — Motion Lab v7 scene-builder controls — FULL PASS
 

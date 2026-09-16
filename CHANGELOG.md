@@ -2,15 +2,19 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md). dev.24-dev.27 investigation/build history remains available in Git history; root tracking is intentionally rolling/compact.
 
-## POLY-2026-09-16-068 — Motion Lab panel readability pass
+## POLY-2026-09-16-068 — Motion Lab panel readability pass — FULL PASS
 
 ### Summary
 
 - Kept the standalone Motion Lab behavior unchanged and adjusted only the scene-builder control-panel styling.
 - Section headers are now brighter crimson/red with stronger weight and a thin deep-red divider, making major sections easier to scan while scrolling.
 - Removed the grey/unfilled slider-track background; the unused portion of sliders is transparent while the active red fill and existing ivory handle remain visible.
-- Change remains isolated to the Motion Lab entrypoint/theme layer; production Polymorph dev.27 conversion/framing/adaptive behavior is untouched.
-- Human visual review remains required for appearance acceptance.
+- Readability implementation commit `845b029df1027bf6f4fac2a3a346c5d04d32d134`.
+- Dedicated `Polymorph Motion Lab Build` run #10 / run ID `35064912753`: **FULL PASS**.
+- PASS: source smoke, PyInstaller portable build, packaged Windows smoke and portable artifact upload.
+- Portable artifact `Polymorph-motion-lab`, artifact ID `10433348032`, size 50,890,729 bytes, digest `sha256:59d479d9cba0a2bd1b830093c566b0dfa97d19d62a9aae7220a28c898c922af5`.
+- The normal Windows Dev Build did not trigger because this styling pass changed only `run_motion_lab.py` plus tracking docs, which are outside that workflow's production path filters; protected production run #109 remains FULL PASS and no production source changed.
+- Production Polymorph remains dev.27 unchanged; human visual review is still required for appearance acceptance.
 
 ## POLY-2026-09-16-067 — Motion Lab v7 scene-builder controls — FULL PASS
 
