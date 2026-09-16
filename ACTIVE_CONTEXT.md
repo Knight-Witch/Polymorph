@@ -1,7 +1,7 @@
 # Active Context — Polymorph `dev`
 
 **Updated:** 2026-09-16  
-**Current task:** Motion Lab scene-builder v7 validation and human tuning. v7 folds the post-v5 tuning requests into the standalone lab: mask opacity, selectable loader-ring behavior, tracer tail controls, transparent colors, rune render styles, context-aware control visibility, layer-first editing, undo/redo, geometry pulse order editing, and layer/group renaming. Production Polymorph remains on dev.27 and its conversion/framing/adaptive behavior remains closed/validated.
+**Current task:** Motion Lab human tuning with a focused control-panel readability pass. The standalone lab now uses brighter crimson section headers and transparent unused slider tracks so the right-side editor is easier to scan. Production Polymorph remains on dev.27 and its conversion/framing/adaptive behavior remains closed/validated.
 
 ## Minimum continuation set
 
@@ -16,7 +16,8 @@ Read only:
 7. `src/polymorph/motion_loader.py`
 8. `src/polymorph/motion_loader_base.py`
 9. `src/polymorph/motion_effects.py`
-10. `.github/workflows/motion-lab-build.yml` only when the standalone Windows artifact/build is implicated
+10. `run_motion_lab.py` when the standalone scene-builder shell/theme is implicated
+11. `.github/workflows/motion-lab-build.yml` only when the standalone Windows artifact/build is implicated
 
 Do not preload engine/history files unless the current task actually needs them.
 
@@ -25,34 +26,18 @@ Do not preload engine/history files unless the current task actually needs them.
 - Branch: `dev`.
 - Runtime version: `0.1.0-dev.27`.
 - Production implementation commit: `9b6954f30741437d2aabdf49fa4912d02fad99e6`.
-- Motion Lab v5 implementation `d6d694e59358e9507bba540d43c44fb1fe32abc2` previously passed normal Windows Dev Build run #108 / run ID `35056008609`.
-- Production app/conversion source remains untouched by the v7 Motion Lab work.
+- Normal Windows Dev Build run #109 / run ID `35060729361`: **FULL PASS** across protected production gates.
+- Production app/conversion source remains untouched by Motion Lab visual-tuning work.
 - No public release exists; `main` remains non-experimental.
 
-## Motion Lab v7 candidate — FULL PASS / human visual tuning
+## Motion Lab current state
 
-- Standalone-only source candidate contains the following additional editor/runtime behavior:
-  - undo/redo with standard `Ctrl+Z`, `Ctrl+Y`, and `Ctrl+Shift+Z` shortcuts plus UI buttons;
-  - drag/drop geometry pulse-order editor, persisted in presets/workspaces;
-  - layer rename, link-group rename, and expandable drag/drop group-hierarchy editing;
-  - selected-layer opacity for opaque masks;
-  - transparent/cleared colors for element, rune and sparkle colors;
-  - loading-ring types `Static Ring`, `Progress Arc`, and `Gradient Tail`, with tail length/fade/balance controls;
-  - tracer length/fade/front-back balance controls;
-  - center completion flash removed and auto-loop avoids completion reveal/flash;
-  - layer selection is the primary element-selection mechanism;
-  - stronger section separation and context-aware rune/loader/tracer special-control visibility;
-  - rune `Outline` / `Solid` rendering and `Thin` / `Regular` / `Bold` weight controls;
-  - geometry-pulse master enable plus explicit editable pulse order;
-  - per-layer visibility enable plus rune transition/glimmer toggles;
-  - speed ceilings remain 2000% and existing/imported tuning values are not automatically raised.
-- Existing v4/v5 preset values remain backward-compatible; newly introduced fields receive defaults.
-- Six large outer runes remain frontmost by default.
-- Accepted partial-window behavior and large-rune-circle masks remain preserved.
-- Implementation commit `06750079ee2dfa837a56600011367f16cb87646b`.
-- Dedicated Motion Lab run #9 / run ID `35060729400`: **FULL PASS** (source smoke, PyInstaller build, packaged smoke, artifact upload).
-- Artifact `Polymorph-motion-lab`, ID `10431614039`, size 50,932,008 bytes, digest `sha256:41aed1fcdb226f028c76d962e97f5d36b7beaf9f8d2ad698a81e7cbf19b207f9`.
-- Normal Windows Dev Build run #109 / run ID `35060729361`: **FULL PASS** across protected production gates.
+- v7 implementation commit `06750079ee2dfa837a56600011367f16cb87646b` previously passed dedicated Motion Lab run #9 / run ID `35060729400` and normal Windows Dev Build run #109.
+- v7 artifact `Polymorph-motion-lab`, ID `10431614039`, digest `sha256:41aed1fcdb226f028c76d962e97f5d36b7beaf9f8d2ad698a81e7cbf19b207f9`.
+- Current candidate is a styling-only follow-up on top of v7:
+  - section headers are brighter crimson/red, heavier, and separated with a thin deep-red rule;
+  - the grey/unfilled slider track is removed; unused slider area is transparent while the active red fill and ivory handle remain.
+- No element values, presets, motion behavior, animation timing, loader geometry or production code are intentionally changed by this pass.
 
 ## Protected PASS state — do not reopen without new evidence
 
@@ -63,7 +48,7 @@ Do not preload engine/history files unless the current task actually needs them.
 
 ## Next gate
 
-1. Amanda loads her current exported workspace into the validated v7 portable build and continues visual tuning.
-2. Preserve imported/current values; new v7 fields use defaults until explicitly edited.
-3. Treat runtime/packaging as validated but appearance as still under the human visual gate.
+1. Run the dedicated Motion Lab Windows build and normal Windows Dev Build for the styling candidate.
+2. Amanda visually reviews the right-panel section headers and slider treatment in the packaged Motion Lab.
+3. Preserve all imported/current workspace values during further visual tuning.
 4. Do not integrate animation into production Polymorph, promote to `main`, or create a public release without a separate explicit decision.

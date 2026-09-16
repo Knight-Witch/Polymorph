@@ -2,6 +2,16 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md). dev.24-dev.27 investigation/build history remains available in Git history; root tracking is intentionally rolling/compact.
 
+## POLY-2026-09-16-068 — Motion Lab panel readability pass
+
+### Summary
+
+- Kept the standalone Motion Lab behavior unchanged and adjusted only the scene-builder control-panel styling.
+- Section headers are now brighter crimson/red with stronger weight and a thin deep-red divider, making major sections easier to scan while scrolling.
+- Removed the grey/unfilled slider-track background; the unused portion of sliders is transparent while the active red fill and existing ivory handle remain visible.
+- Change remains isolated to the Motion Lab entrypoint/theme layer; production Polymorph dev.27 conversion/framing/adaptive behavior is untouched.
+- Human visual review remains required for appearance acceptance.
+
 ## POLY-2026-09-16-067 — Motion Lab v7 scene-builder controls — FULL PASS
 
 ### Summary

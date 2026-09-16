@@ -2,6 +2,14 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md). dev.24-dev.27 technical/visual history remains available in Git history; root tracking is intentionally rolling/compact.
 
+## PFC-2026-09-16-068 — Motion Lab panel readability pass
+
+- PASS source review: change is limited to standalone Motion Lab styling at the entrypoint/theme layer.
+- PASS styling intent: section headers use a brighter crimson/red treatment with stronger weight and a deep-red divider for clearer scanning.
+- PASS styling intent: slider unused-track backgrounds are transparent; active red fill and existing handles remain visible.
+- PASS architecture: production conversion, framing, adaptive, updater, subprocess, app-window, installer and runtime-version behavior are untouched.
+- Next gate: dedicated Motion Lab Windows build plus normal Windows Dev Build, followed by Amanda's visual review of the new panel treatment.
+
 ## PFC-2026-09-16-067 — Motion Lab v7 scene-builder controls — FULL PASS
 
 - PASS static: updated local Motion Lab editor/loader/rune/effects/lab sources parse without Python syntax errors.
