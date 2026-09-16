@@ -16,13 +16,7 @@ Read only:
 7. `src/polymorph/motion_loader.py`
 8. `src/polymorph/motion_loader_base.py`
 9. `src/polymorph/motion_effects.py`
-10. `src/polymorph/motion_v7_state.py`
-11. `src/polymorph/motion_v7_render.py`
-12. `src/polymorph/motion_v7_ui_build.py`
-13. `src/polymorph/motion_v7_ui_dialogs.py`
-14. `src/polymorph/motion_v7_history.py`
-15. `src/polymorph/motion_v7_lab.py`
-16. `.github/workflows/motion-lab-build.yml` only when the standalone Windows artifact/build is implicated
+10. `.github/workflows/motion-lab-build.yml` only when the standalone Windows artifact/build is implicated
 
 Do not preload engine/history files unless the current task actually needs them.
 
@@ -35,7 +29,7 @@ Do not preload engine/history files unless the current task actually needs them.
 - Production app/conversion source remains untouched by the v7 Motion Lab work.
 - No public release exists; `main` remains non-experimental.
 
-## Motion Lab v7 candidate — CI PENDING
+## Motion Lab v7 candidate — FULL PASS / human visual tuning
 
 - Standalone-only source candidate contains the following additional editor/runtime behavior:
   - undo/redo with standard `Ctrl+Z`, `Ctrl+Y`, and `Ctrl+Shift+Z` shortcuts plus UI buttons;
@@ -55,7 +49,10 @@ Do not preload engine/history files unless the current task actually needs them.
 - Existing v4/v5 preset values remain backward-compatible; newly introduced fields receive defaults.
 - Six large outer runes remain frontmost by default.
 - Accepted partial-window behavior and large-rune-circle masks remain preserved.
-- Next gate: dedicated Windows Motion Lab source smoke -> PyInstaller build -> packaged smoke -> artifact upload, followed by the normal Windows Dev isolation build.
+- Implementation commit `06750079ee2dfa837a56600011367f16cb87646b`.
+- Dedicated Motion Lab run #9 / run ID `35060729400`: **FULL PASS** (source smoke, PyInstaller build, packaged smoke, artifact upload).
+- Artifact `Polymorph-motion-lab`, ID `10431614039`, size 50,932,008 bytes, digest `sha256:41aed1fcdb226f028c76d962e97f5d36b7beaf9f8d2ad698a81e7cbf19b207f9`.
+- Normal Windows Dev Build run #109 / run ID `35060729361`: **FULL PASS** across protected production gates.
 
 ## Protected PASS state — do not reopen without new evidence
 
@@ -66,8 +63,7 @@ Do not preload engine/history files unless the current task actually needs them.
 
 ## Next gate
 
-1. Complete the dedicated Motion Lab Windows build and packaged smoke.
-2. Confirm the normal Windows Dev build still passes all protected production gates.
-3. Hand Amanda the portable Motion Lab artifact directly.
-4. Amanda loads her current exported workspace and continues visual tuning; imported/current values should remain intact while new v7 controls receive defaults.
-5. Do not integrate animation into production Polymorph, promote to `main`, or create a public release without a separate explicit decision.
+1. Amanda loads her current exported workspace into the validated v7 portable build and continues visual tuning.
+2. Preserve imported/current values; new v7 fields use defaults until explicitly edited.
+3. Treat runtime/packaging as validated but appearance as still under the human visual gate.
+4. Do not integrate animation into production Polymorph, promote to `main`, or create a public release without a separate explicit decision.

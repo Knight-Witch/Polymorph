@@ -2,7 +2,7 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md). dev.24-dev.27 investigation/build history remains available in Git history; root tracking is intentionally rolling/compact.
 
-## POLY-2026-09-16-067 — Motion Lab v7 scene-builder controls — CI PENDING
+## POLY-2026-09-16-067 — Motion Lab v7 scene-builder controls — FULL PASS
 
 ### Summary
 
@@ -21,7 +21,11 @@ Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LO
 - Made layer selection the primary editor-selection workflow; retained the internal combo only for compatibility/synchronization.
 - Strengthened panel section separation and added hover help for non-obvious controls.
 - Preserved v4/v5 workspace compatibility; existing values are retained and new fields receive defaults.
-- Dedicated Motion Lab and normal Windows Dev builds are pending for the implementation commit.
+- Implementation commit `06750079ee2dfa837a56600011367f16cb87646b`.
+- Dedicated `Polymorph Motion Lab Build` run #9 / run ID `35060729400`: **FULL PASS**.
+- Portable artifact `Polymorph-motion-lab`, artifact ID `10431614039`, size 50,932,008 bytes, digest `sha256:41aed1fcdb226f028c76d962e97f5d36b7beaf9f8d2ad698a81e7cbf19b207f9`.
+- Normal Windows Dev Build run #109 / run ID `35060729361`: **FULL PASS** across unit/toolchain/adaptive/GIF-reference/frozen-app/installer/checksum/artifact gates.
+- Production Polymorph remains dev.27 unchanged; v7 remains standalone exploratory tooling pending human visual approval.
 
 ## POLY-2026-09-15-066 — Motion Lab v5 scene builder FULL PASS
 
