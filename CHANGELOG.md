@@ -2,7 +2,7 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md). dev.24-dev.27 investigation/build history remains available in Git history; root tracking is intentionally rolling/compact.
 
-## POLY-2026-09-15-066 — Motion Lab v5 scene-builder candidate
+## POLY-2026-09-15-066 — Motion Lab v5 scene builder FULL PASS
 
 ### Summary
 
@@ -18,7 +18,12 @@ Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LO
 - Added element remove, plain duplicate, duplicate-with-linked-group, clear-selected-group and clear-all-groups workflows.
 - Added `+ New Study` copy/rename workflow so multiple loader variants can be edited in one workspace.
 - Accepted v4 opaque partial-window behavior and outer large-rune placement remain preserved.
-- Candidate requires dedicated Windows Motion Lab CI and human visual/editor review before any production integration.
+- Implementation commit `d6d694e59358e9507bba540d43c44fb1fe32abc2`.
+- Dedicated `Polymorph Motion Lab Build` run #8 / run ID `35056008606`: **FULL PASS**.
+- PASS: Windows source smoke, PyInstaller portable build, packaged Windows smoke and artifact upload.
+- Portable artifact `Polymorph-motion-lab`, artifact ID `10430402445`, size 50,889,797 bytes, digest `sha256:4ae317285edc9a7fc821ea0374f2eb8ef1aacb4094e5e7a1abee9c2c08482ee4`.
+- The same implementation triggered normal Windows Dev Build run #108 / run ID `35056008609`, which passed all protected unit/toolchain/adaptive/GIF-reference/frozen-app/installer/checksum/artifact gates.
+- Production Polymorph remains dev.27 unchanged; no conversion, framing, adaptive, updater, production UI, installer, runtime-version or public-release behavior changed.
 
 ## POLY-2026-09-15-065 — Motion Lab v3 geometry/masking correction FULL PASS
 
@@ -26,3 +31,7 @@ Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LO
 - Dedicated Motion Lab run #4 / `34964398114`: FULL PASS.
 - Artifact `10394437743`, digest `sha256:ee9528c126987c26744032d0c144c32ebba0274002aae1c263c577598a2cc4c1`.
 - Normal Windows Dev Build run #104 / `34964398145`: FULL PASS.
+
+## Documentation note
+
+- This follow-up records completed v5 CI/artifact identities only; it changes no runtime, package, production UI, conversion, installer, or public-release behavior.

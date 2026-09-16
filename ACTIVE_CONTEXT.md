@@ -1,7 +1,7 @@
 # Active Context — Polymorph `dev`
 
 **Updated:** 2026-09-15  
-**Current task:** Motion Lab v5 scene-builder candidate: restore Amanda's v4 exported state, provide high-range motion/rune controls, layer ordering, study/version management, duplication/grouping, checkpoint/reset and workspace export. Production Polymorph remains on dev.27 and its conversion/framing/adaptive behavior remains closed/validated.
+**Current task:** human tuning of Motion Lab v5 using the scene-builder/preset workflow. Amanda should load her existing v4 export, verify the old tuning resumes, then continue visually editing and export the selected v5 workspace. Production Polymorph remains on dev.27 and its conversion/framing/adaptive behavior remains closed/validated.
 
 ## Minimum continuation set
 
@@ -25,23 +25,29 @@ Do not preload engine/history files unless the current task actually needs them.
 - Branch: `dev`.
 - Runtime version: `0.1.0-dev.27`.
 - Production implementation commit: `9b6954f30741437d2aabdf49fa4912d02fad99e6`.
-- Last confirmed protected full production pass before v5: Windows Dev Build run #104 / `34964398145` on the v3 Motion Lab implementation.
-- Motion Lab source remains isolated from production app/conversion code.
+- Motion Lab v5 implementation commit `d6d694e59358e9507bba540d43c44fb1fe32abc2` triggered Windows Dev Build run #108 / run ID `35056008609`: **FULL PASS**.
+- PASS on run #108: unit tests, pinned FFmpeg/gifski checks, adaptive integration, GIF reference comparison, production PyInstaller build, packaged production smoke, installer compilation, checksum and artifact uploads.
+- Production app/conversion source remains unchanged by Motion Lab v5.
 - No public release exists; `main` remains non-experimental.
 
-## Motion Lab v5 candidate
+## Motion Lab v5 candidate — FULL PASS
 
-- v4 FULL PASS baseline artifact: run #7 / `34972811122`, artifact `10398081397`.
-- v5 preserves accepted opaque partial-window behavior and outer large-rune placement.
-- Six large outer runes are now the default frontmost layer above both progress rings.
-- All rune families use the same asynchronous transition engine with Fade/Snap, timing randomization, bright/dark holds, brightness/color range, and zero-transition radial/twinkle/pulse glimmer modes.
-- Exposed speed controls extend to 2000% without modifying imported/current values.
-- v4 `polymorph-motion-spec` JSON can be loaded directly; v5 exports multi-study workspaces.
-- Editor adds drag/drop layers, duplicate/remove/group-copy/group-clear, study copy/rename, checkpoint/reset, numeric spinboxes and wheel-safe scrolling.
-- Background sparkle particles expose spread/fade/density/speed/brightness and three cycling colors.
+- Implementation commit: `d6d694e59358e9507bba540d43c44fb1fe32abc2`.
+- Dedicated workflow: `Polymorph Motion Lab Build` run #8 / run ID `35056008606`: **FULL PASS**.
+- PASS: Windows source smoke.
+- PASS: PyInstaller portable build.
+- PASS: packaged Windows smoke.
+- PASS: portable artifact upload.
+- Artifact: `Polymorph-motion-lab`, artifact ID `10430402445`, 50,889,797 bytes.
+- Artifact digest: `sha256:4ae317285edc9a7fc821ea0374f2eb8ef1aacb4094e5e7a1abee9c2c08482ee4`.
+- v4 `polymorph-motion-spec` JSON loads directly and preserves old saved values; missing v5-only fields receive v5 defaults.
+- Six large outer runes are the default frontmost layer above both progress rings.
+- Rune families share asynchronous Fade/Snap transitions with timing randomization, hold timing, dim/bright ranges and zero-transition radial/twinkle/pulse glimmer modes.
+- Exposed speed controls reach 2000% without modifying imported/current values.
+- Editor provides wheel-safe sliders/spinboxes/combos, numeric entry/precision arrows, checkpoint resets, drag/drop layers, duplicate/remove/group-copy/group-clear and multi-study copy/rename/workspace export.
+- Background sparkles expose spread/fade/density/speed/brightness and three cycling colors.
 - Geometry pulse membership is restricted to linework/geometry, not rune rings/glyphs.
-- Dedicated Windows Motion Lab CI: pending at candidate creation.
-- Normal Windows Dev Build isolation check: pending at candidate creation.
+- Accepted v4 opaque partial-window behavior and large outer rune size/placement remain preserved.
 
 ## Protected PASS state — do not reopen without new evidence
 
@@ -52,9 +58,9 @@ Do not preload engine/history files unless the current task actually needs them.
 
 ## Next gate
 
-1. Complete v5 dedicated Motion Lab Windows CI and protected normal Windows Dev Build isolation check.
-2. Give Amanda the validated v5 portable artifact directly.
-3. Amanda loads her existing v4 exported JSON and confirms the old tuning resumes without value changes.
-4. Amanda tunes/reorders/duplicates as desired, saves checkpoints, and exports the selected v5 workspace.
-5. Treat the returned workspace JSON as authoritative for final loader implementation.
+1. Amanda opens the validated v5 portable Motion Lab.
+2. Amanda loads her existing v4 exported JSON and verifies the old tuning resumes without unexpected value changes.
+3. Amanda tunes rune timing/glimmer, sparkle field, layers, geometry and studies as desired, using checkpoints while iterating.
+4. Amanda exports the selected v5 workspace and returns the JSON; treat it as authoritative for final loader implementation.
+5. Review the animated POLYMORPH button separately; loader approval does not automatically approve button motion.
 6. Do not integrate animation into production Polymorph, promote to `main`, or create a public release without a separate explicit decision.
