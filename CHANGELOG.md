@@ -2,36 +2,31 @@
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md). dev.24-dev.27 investigation/build history remains available in Git history; root tracking is intentionally rolling/compact.
 
-## POLY-2026-09-15-066 — Motion Lab v5 scene builder FULL PASS
+## POLY-2026-09-16-067 — Motion Lab v7 scene-builder controls — CI PENDING
 
 ### Summary
 
-- Promoted the standalone Motion Lab from fixed per-element tuning to a persistent scene-builder workflow while keeping production Polymorph dev.27 untouched.
-- Added backward-compatible preset loading for v4 `polymorph-motion-spec` JSON plus v5 multi-study workspace export/load and in-memory progress checkpoints.
-- Added numeric spinboxes/precision arrows and checkpoint reset controls to editable fields; wheel events no longer change sliders/spinboxes/combos while scrolling the control panel.
-- Raised all exposed motion-speed ceilings to 2000% without altering saved/current values.
-- Standardized every rune family on asynchronous deterministic rune transitions with Fade/Snap, timing randomization, bright/dark holds, dim/max brightness and dim/bright colors.
-- Added zero-transition rune glimmer modes: radial, twinkle and whole-ring pulse, with mode-specific timing/fade/balance/direction controls.
-- Added configurable background sparkle particles with spread/fade/density/speed/brightness and three cycling colors.
-- Geometry pulse membership is now limited to linework/geometry; rune elements use their dedicated transition/glimmer system.
-- Added drag/drop bottom→top layer order. Six large outer runes are the default frontmost loader layer, above both progress rings.
-- Added element remove, plain duplicate, duplicate-with-linked-group, clear-selected-group and clear-all-groups workflows.
-- Added `+ New Study` copy/rename workflow so multiple loader variants can be edited in one workspace.
-- Accepted v4 opaque partial-window behavior and outer large-rune placement remain preserved.
+- Continued the standalone Motion Lab editor without touching production Polymorph dev.27 conversion/framing/adaptive code.
+- Added undo/redo with UI controls plus `Ctrl+Z`, `Ctrl+Y`, and `Ctrl+Shift+Z`, including coalescing for continuous slider edits.
+- Added a drag/drop geometry-pulse-order editor and persisted explicit pulse order in workspaces/presets.
+- Added layer renaming and link-group renaming, plus an expandable drag/drop group-hierarchy editor for moving layers between groups or ungrouping them.
+- Added per-layer enabled/visible state and a geometry-pulse master enable.
+- Added opacity control for opaque mask-capable elements.
+- Added explicit clear-to-transparent behavior for element, rune and sparkle colors.
+- Removed the periodic center completion flash and changed automatic preview looping so it does not enter the completion reveal/flash path.
+- Added loading-ring types `Static Ring`, `Progress Arc`, and `Gradient Tail`, with tail length/fade/balance controls.
+- Added tracer length, fade/softness and front/back gradient-balance controls.
+- Added rune `Outline` / `Solid` render styles and `Thin` / `Regular` / `Bold` weight controls.
+- Added rune transition/glimmer enable controls and context-aware visibility/enablement for incompatible mode-specific controls.
+- Made layer selection the primary editor-selection workflow; retained the internal combo only for compatibility/synchronization.
+- Strengthened panel section separation and added hover help for non-obvious controls.
+- Preserved v4/v5 workspace compatibility; existing values are retained and new fields receive defaults.
+- Dedicated Motion Lab and normal Windows Dev builds are pending for the implementation commit.
+
+## POLY-2026-09-15-066 — Motion Lab v5 scene builder FULL PASS
+
 - Implementation commit `d6d694e59358e9507bba540d43c44fb1fe32abc2`.
-- Dedicated `Polymorph Motion Lab Build` run #8 / run ID `35056008606`: **FULL PASS**.
-- PASS: Windows source smoke, PyInstaller portable build, packaged Windows smoke and artifact upload.
-- Portable artifact `Polymorph-motion-lab`, artifact ID `10430402445`, size 50,889,797 bytes, digest `sha256:4ae317285edc9a7fc821ea0374f2eb8ef1aacb4094e5e7a1abee9c2c08482ee4`.
-- The same implementation triggered normal Windows Dev Build run #108 / run ID `35056008609`, which passed all protected unit/toolchain/adaptive/GIF-reference/frozen-app/installer/checksum/artifact gates.
-- Production Polymorph remains dev.27 unchanged; no conversion, framing, adaptive, updater, production UI, installer, runtime-version or public-release behavior changed.
-
-## POLY-2026-09-15-065 — Motion Lab v3 geometry/masking correction FULL PASS
-
-- v3 implementation commit `5b265c7bd1e21f58753f5cfd13d7a0cf19f3bc30`.
-- Dedicated Motion Lab run #4 / `34964398114`: FULL PASS.
-- Artifact `10394437743`, digest `sha256:ee9528c126987c26744032d0c144c32ebba0274002aae1c263c577598a2cc4c1`.
-- Normal Windows Dev Build run #104 / `34964398145`: FULL PASS.
-
-## Documentation note
-
-- This follow-up records completed v5 CI/artifact identities only; it changes no runtime, package, production UI, conversion, installer, or public-release behavior.
+- Dedicated Motion Lab run #8 / `35056008606`: FULL PASS.
+- Artifact `10430402445`, digest `sha256:4ae317285edc9a7fc821ea0374f2eb8ef1aacb4094e5e7a1abee9c2c08482ee4`.
+- Normal Windows Dev Build run #108 / `35056008609`: FULL PASS.
+- Production Polymorph remains dev.27 unchanged.

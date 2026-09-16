@@ -6,7 +6,7 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from polymorph.motion_lab import main
+from polymorph.motion_v7_lab import main
 
 if __name__ == "__main__":
     raise SystemExit(main())

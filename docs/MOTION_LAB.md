@@ -4,43 +4,57 @@ Standalone PySide6 design sandbox for Polymorph's deferred loading/working anima
 
 ## Current review baseline
 
-`B — Dense Runes` remains the visual baseline, but v5 turns the lab into a reusable scene builder rather than a fixed one-off editor.
+`B — Dense Runes` remains the visual baseline, while the lab now functions as a reusable scene builder rather than a fixed one-off editor.
 
-The six large outer runes are the default frontmost loader layer, above both white progress rings. The accepted opaque partial-window behavior and opaque large-rune-circle masks are preserved.
+The six large outer runes remain the default frontmost loader layer, above both white loading rings. Accepted partial-rune-window behavior and the opaque large-rune-circle treatment remain preserved.
 
 ## Scene builder
 
-Every visual element has an editable state and a drag/drop layer position. Relevant controls include span, element scale, base rotation, color, brightness, glow spread, signed rotation speed, Static, geometry-pulse membership, and link group. Speed ceilings are 2000% for rotational motion, tracer motion, geometry pulse, rune transition/glimmer motion, and sparkle motion without changing existing saved values.
+The layer list is the primary element selector and is ordered bottom -> top. Click a layer to edit it, drag it to change z-order, and double-click it to rename it. Link groups can also be renamed, cleared individually, or cleared globally. `Group hierarchy…` opens an expandable drag/drop group view so layers can be moved between groups or into `Ungrouped` without using the flat group dropdown.
 
-Elements can be duplicated, removed, or duplicated together with their linked group. Link groups can be cleared individually or globally. Plain duplication intentionally disconnects the new element; `Duplicate + group` clones the full linked family into a new linked group.
+Every element persists editable span, element scale, base rotation, color, brightness, glow spread, rotation speed/static state, link group and layer visibility. Opaque-mask layers additionally expose mask opacity. Existing v4/v5 workspace values remain loadable; fields introduced later receive defaults rather than rewriting saved values.
 
-Study workspaces can be copied with `+ New Study`, renamed, checkpointed in-memory, exported, and loaded again. v5 reads v4 `polymorph-motion-spec` JSON and preserves the values that existed in the older format. New exports use a workspace format so multiple study variants can travel together.
+Undo/redo is workspace-aware and available from buttons plus standard hotkeys: `Ctrl+Z` for Undo, and `Ctrl+Y` or `Ctrl+Shift+Z` for Redo. Continuous slider edits are coalesced so a drag behaves like one editing action rather than dozens of tiny history steps.
 
-Each numeric field has a slider plus editable spinbox and precision arrows. Mouse-wheel input is ignored by sliders/spinboxes/combos so the right-side panel scrolls instead of accidentally changing values. Each editable field has a reset control that returns to the last saved checkpoint.
+## Geometry pulse
 
-## Rune transitions and glimmer
+Geometry pulse is restricted to linework/geometry. A global enable toggle can suspend the pulse without deleting membership or timing. `Geometry pulse order...` opens a drag/drop list of currently pulse-enabled geometry so the firing sequence can be authored explicitly rather than inferred from radius.
 
-All rune families now use the same deterministic asynchronous transition engine rather than synchronized whole-ring alphabet snaps.
+Pulse speed, trail/hold, and dark-end length remain independently adjustable.
 
-- Transition speed controls fade-out/fade-in duration; 0 disables glyph changes.
-- Transition timing randomizer ranges from synchronized timing to independent per-rune timing.
-- Transition type can be `Fade` or `Snap`.
-- Bright-hold and dark-hold durations are independently editable.
-- Dim/max brightness and dim/bright colors define the rune's visual range.
-- When transition speed is 0, glyphs stay fixed and can use `Radial`, `Twinkle`, `Pulse`, or no special glimmer.
-- Radial glimmer exposes speed, length, fade span, head/tail balance, and direction.
-- Twinkle exposes speed and neighbor/random independence.
-- Rune pulse exposes speed, fade span, and balance.
+## Rune transitions and rendering
 
-Rune rings are not members of the geometry pulse array; geometry pulse remains limited to linework/geometry.
+Rune families share the deterministic asynchronous transition engine. Relevant controls include transition enable, transition speed, timing randomization, Fade/Snap type, bright/dark holds, dim/max brightness, dim/bright colors, and special glimmer.
 
-## Sparkle particles
+When transition behavior permits it, special glimmer supports Radial, Twinkle, Pulse, or None, with only the controls relevant to the selected mode shown. Runes can render as `Outline` or `Solid`, with `Thin`, `Regular`, or `Bold` glyph weight.
 
-A deterministic background sparkle field can be enabled independently of loader geometry. Controls cover spread, outer fade softness, density, speed, max brightness, and three independently cycling particle colors.
+Rune colors can be cleared completely; a cleared color is treated as transparent rather than silently replaced.
 
-## Layering
+## Loading rings
 
-The layer list is ordered bottom → top and supports drag/drop. Because large outer runes are last in the default order, they render in front of both progress rings. Duplicated elements participate in the same renderer and can be reordered like built-in elements.
+Loading-ring layers expose a ring type:
+
+- `Static Ring` — ordinary full circle, independent of progress;
+- `Progress Arc` — progress-driven arc;
+- `Gradient Tail` — progress-driven traveling head/tail treatment suited to seamless looping.
+
+Gradient tails expose tail length, fade span and head/tail balance. Auto-loop avoids the old completion flash/reveal restart path, and the old center flash has been removed.
+
+## Tracers
+
+Tracer layers expose travel speed plus tracer length, gradient/fade softness, and front/back balance so the head/tail emphasis can be tuned directly.
+
+## Opaque masks and transparency
+
+Partial-window masks, large rune circles, and other mask-capable layers expose opacity from 0% to 100%. Color controls include an explicit clear action; cleared colors are fully transparent.
+
+## Background sparkles
+
+Background sparkle particles remain independently switchable and expose spread, outer fade softness, density, speed, max brightness, and three independently cycling colors. Each color can also be cleared to transparent.
+
+## Editing ergonomics
+
+Numeric fields combine a wheel-safe slider, editable numerical spinbox and precision arrows. Mouse-wheel scrolling no longer changes slider/spinbox/combo values. Fields retain checkpoint reset behavior, and effect-specific controls are shown/hidden according to the selected layer and selected effect type. Section headers use stronger visual separation, and hover tooltips explain the less obvious controls.
 
 ## Acceptance boundary
 
