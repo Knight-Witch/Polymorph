@@ -1,7 +1,7 @@
 # Active Context — Polymorph `dev`
 
 **Updated:** 2026-09-15  
-**Current task:** human tuning of Motion Lab v4 using the new per-element editor/export workflow. `B — Dense Runes` remains the review baseline. Production Polymorph remains on dev.27 and its conversion/framing/adaptive behavior remains closed/validated.
+**Current task:** Motion Lab v5 scene-builder candidate: restore Amanda's v4 exported state, provide high-range motion/rune controls, layer ordering, study/version management, duplication/grouping, checkpoint/reset and workspace export. Production Polymorph remains on dev.27 and its conversion/framing/adaptive behavior remains closed/validated.
 
 ## Minimum continuation set
 
@@ -11,11 +11,12 @@ Read only:
 2. this file
 3. `docs/MOTION_LAB.md`
 4. `src/polymorph/motion_lab.py`
-5. `src/polymorph/motion_loader.py`
-6. `src/polymorph/motion_editor.py`
-7. `src/polymorph/motion_loader_base.py`
-8. `src/polymorph/motion_effects.py`
-9. `.github/workflows/motion-lab-build.yml` only when the standalone Windows artifact/build is implicated
+5. `src/polymorph/motion_editor.py`
+6. `src/polymorph/motion_runes.py`
+7. `src/polymorph/motion_loader.py`
+8. `src/polymorph/motion_loader_base.py`
+9. `src/polymorph/motion_effects.py`
+10. `.github/workflows/motion-lab-build.yml` only when the standalone Windows artifact/build is implicated
 
 Do not preload engine/history files unless the current task actually needs them.
 
@@ -24,28 +25,23 @@ Do not preload engine/history files unless the current task actually needs them.
 - Branch: `dev`.
 - Runtime version: `0.1.0-dev.27`.
 - Production implementation commit: `9b6954f30741437d2aabdf49fa4912d02fad99e6`.
-- Last confirmed protected full production pass before v4: Windows Dev Build run #104 / `34964398145` on the v3 Motion Lab implementation.
-- v4 implementation head `8f68d4003be672de93cb5ae576abb1c8fb642a39` triggered Windows Dev Build run #107 / `34972810969`; it was still in progress when this baton was updated.
-- Production app/conversion source was not modified by Motion Lab v4.
+- Last confirmed protected full production pass before v5: Windows Dev Build run #104 / `34964398145` on the v3 Motion Lab implementation.
+- Motion Lab source remains isolated from production app/conversion code.
 - No public release exists; `main` remains non-experimental.
 
-## Motion Lab v4 candidate — FULL PASS
+## Motion Lab v5 candidate
 
-- Implementation head: `8f68d4003be672de93cb5ae576abb1c8fb642a39` (includes new `motion_editor.py`, element-driven loader, and editor UI).
-- Dedicated workflow: `Polymorph Motion Lab Build` run #7 / run ID `34972811122`: **FULL PASS**.
-- PASS: Windows source offscreen smoke.
-- PASS: PyInstaller portable build.
-- PASS: packaged Windows offscreen launch smoke.
-- PASS: portable artifact upload.
-- Artifact: `Polymorph-motion-lab`, artifact ID `10398081397`, 50,856,993 bytes.
-- Artifact digest: `sha256:4f49ffffcfbcf8b96d8a3ef418fb72e67e51641237f08203bb6b0d87b60651a0`.
-- Triangle and three large rune circles are static by default.
-- Per-element editor supports span, scale, base rotation, color, link group, brightness, glow spread, signed rotation speed, Static, pulse membership and rune-transition speed where applicable.
-- Irrelevant controls are disabled per selected element.
-- Linked elements propagate span/scale/base-rotation/brightness/glow edits where both elements support the field.
-- Global pulse controls: speed, trail/hold and dark-end length. Pulse order derives from current outside-to-inside radius/spread.
-- `Export motion spec…` writes exact UTF-8 JSON state for direct implementation handoff.
-- v3 accepted masking/window behavior and outer large-rune placement/size remain preserved in the loader path.
+- v4 FULL PASS baseline artifact: run #7 / `34972811122`, artifact `10398081397`.
+- v5 preserves accepted opaque partial-window behavior and outer large-rune placement.
+- Six large outer runes are now the default frontmost layer above both progress rings.
+- All rune families use the same asynchronous transition engine with Fade/Snap, timing randomization, bright/dark holds, brightness/color range, and zero-transition radial/twinkle/pulse glimmer modes.
+- Exposed speed controls extend to 2000% without modifying imported/current values.
+- v4 `polymorph-motion-spec` JSON can be loaded directly; v5 exports multi-study workspaces.
+- Editor adds drag/drop layers, duplicate/remove/group-copy/group-clear, study copy/rename, checkpoint/reset, numeric spinboxes and wheel-safe scrolling.
+- Background sparkle particles expose spread/fade/density/speed/brightness and three cycling colors.
+- Geometry pulse membership is restricted to linework/geometry, not rune rings/glyphs.
+- Dedicated Windows Motion Lab CI: pending at candidate creation.
+- Normal Windows Dev Build isolation check: pending at candidate creation.
 
 ## Protected PASS state — do not reopen without new evidence
 
@@ -56,8 +52,9 @@ Do not preload engine/history files unless the current task actually needs them.
 
 ## Next gate
 
-1. Amanda tunes the loader in Motion Lab v4 rather than requesting geometry changes by description.
-2. When satisfied, Amanda presses `Export motion spec…` and sends the generated `polymorph-motion-spec.json` back into chat.
-3. Treat that JSON as the authoritative visual/motion configuration for implementation.
-4. Review the animated POLYMORPH button separately; loader approval does not automatically approve button motion.
-5. Do not integrate animation into production Polymorph, promote to `main`, or create a public release without a separate explicit decision.
+1. Complete v5 dedicated Motion Lab Windows CI and protected normal Windows Dev Build isolation check.
+2. Give Amanda the validated v5 portable artifact directly.
+3. Amanda loads her existing v4 exported JSON and confirms the old tuning resumes without value changes.
+4. Amanda tunes/reorders/duplicates as desired, saves checkpoints, and exports the selected v5 workspace.
+5. Treat the returned workspace JSON as authoritative for final loader implementation.
+6. Do not integrate animation into production Polymorph, promote to `main`, or create a public release without a separate explicit decision.

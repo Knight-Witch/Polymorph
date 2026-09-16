@@ -1,56 +1,46 @@
 # Polymorph Motion Lab
 
-Standalone PySide6 design sandbox for Polymorph's deferred loading/working animation and animated primary action.
-
-This remains isolated from the production Polymorph window and does not touch conversion, framing, updater, queue, or encoder behavior.
+Standalone PySide6 design sandbox for Polymorph's deferred loading/working animation and animated primary action. It remains isolated from the production Polymorph window and does not touch conversion, framing, updater, queue, or encoder behavior.
 
 ## Current review baseline
 
-`B — Dense Runes` remains the visual baseline, but v4 turns the loader into a live element editor so Amanda can tune the composition directly instead of iterating geometry by guesswork.
+`B — Dense Runes` remains the visual baseline, but v5 turns the lab into a reusable scene builder rather than a fixed one-off editor.
 
-The existing v3 wins are preserved: real Elder Futhark through bundled Noto Sans Runic; fixed opaque partial-rune windows; six large white replacement runes in the outer rune ring; red geometry / gold normal runes / white large runes; opaque large-rune circles; opaque inner annulus; and long comet tracer tails.
+The six large outer runes are the default frontmost loader layer, above both white progress rings. The accepted opaque partial-window behavior and opaque large-rune-circle masks are preserved.
 
-The triangle and the three large rune circles are static by default in v4.
+## Scene builder
 
-## Element editor
+Every visual element has an editable state and a drag/drop layer position. Relevant controls include span, element scale, base rotation, color, brightness, glow spread, signed rotation speed, Static, geometry-pulse membership, and link group. Speed ceilings are 2000% for rotational motion, tracer motion, geometry pulse, rune transition/glimmer motion, and sparkle motion without changing existing saved values.
 
-Choose an element from the dropdown. Controls are enabled only when they apply to that element.
+Elements can be duplicated, removed, or duplicated together with their linked group. Link groups can be cleared individually or globally. Plain duplication intentionally disconnects the new element; `Duplicate + group` clones the full linked family into a new linked group.
 
-Available per-element controls:
+Study workspaces can be copied with `+ New Study`, renamed, checkpointed in-memory, exported, and loaded again. v5 reads v4 `polymorph-motion-spec` JSON and preserves the values that existed in the older format. New exports use a workspace format so multiple study variants can travel together.
 
-- `Expand / contract span`: changes the radius/circumference/orbit spread without changing glyph or stroke size.
-- `Element scale`: changes glyph size, circle size, or stroke/tracer thickness without changing the element's overall span.
-- `Base rotation`: sets the manual starting/orientation angle independently of animation.
-- `Colour`: Qt colour picker for that element.
-- `Link group`: elements assigned to one link group receive shared span, scale, base-rotation, brightness, and glow-spread edits when those controls are applicable to both elements.
-- `Element brightness`: per-element intensity multiplier.
-- `Element glow spread`: per-element glow falloff multiplier.
-- `Rotation direction / speed`: signed slider; center is static, left is counter-clockwise, right is clockwise, magnitude controls speed.
-- `Static`: disables rotational animation while preserving the stored motion speed for later re-enable.
-- `Include in pulse array`: adds the element to the global outside-to-inside timed pulse order using current element radius/spread.
-- `Rune transition speed`: rune-bearing elements can cycle Elder Futhark; zero means glyph identity stays fixed.
+Each numeric field has a slider plus editable spinbox and precision arrows. Mouse-wheel input is ignored by sliders/spinboxes/combos so the right-side panel scrolls instead of accidentally changing values. Each editable field has a reset control that returns to the last saved checkpoint.
 
-Controls that are not meaningful for the selected element are disabled. Tracers, for example, do not expose spin or pulse-array controls.
+## Rune transitions and glimmer
 
-## Global pulse controls
+All rune families now use the same deterministic asynchronous transition engine rather than synchronized whole-ring alphabet snaps.
 
-- Pulse speed.
-- Pulse trail / hold length.
-- Pulse dark-end length.
+- Transition speed controls fade-out/fade-in duration; 0 disables glyph changes.
+- Transition timing randomizer ranges from synchronized timing to independent per-rune timing.
+- Transition type can be `Fade` or `Snap`.
+- Bright-hold and dark-hold durations are independently editable.
+- Dim/max brightness and dim/bright colors define the rune's visual range.
+- When transition speed is 0, glyphs stay fixed and can use `Radial`, `Twinkle`, `Pulse`, or no special glimmer.
+- Radial glimmer exposes speed, length, fade span, head/tail balance, and direction.
+- Twinkle exposes speed and neighbor/random independence.
+- Rune pulse exposes speed, fade span, and balance.
 
-Master brightness, master glow spread, progress, tracer travel speed, study variant, background switching, emblem override, and the separate Polymorph-button preview remain available.
+Rune rings are not members of the geometry pulse array; geometry pulse remains limited to linework/geometry.
 
-## Export
+## Sparkle particles
 
-`Export motion spec…` writes a UTF-8 JSON file containing:
+A deterministic background sparkle field can be enabled independently of loader geometry. Controls cover spread, outer fade softness, density, speed, max brightness, and three independently cycling particle colors.
 
-- every element's span, scale, base rotation, color, brightness, glow spread, spin direction/speed, static state, pulse membership, rune transition speed, and link group;
-- global pulse timing;
-- selected study variant;
-- master brightness / master glow spread;
-- tracer travel speed.
+## Layering
 
-That JSON is the exact implementation handoff for the selected loader setup.
+The layer list is ordered bottom → top and supports drag/drop. Because large outer runes are last in the default order, they render in front of both progress rings. Duplicated elements participate in the same renderer and can be reordered like built-in elements.
 
 ## Acceptance boundary
 
