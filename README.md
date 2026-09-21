@@ -37,4 +37,6 @@ The project intentionally keeps conversion logic separate from UI code so qualit
 
 ## License
 
-A project license will be selected before the first public binary release. Third-party components retain their own licenses; see `THIRD_PARTY.md`.
+Knight Witch-owned Polymorph source is distributed under the **Knight Witch Community Source License v1.0**; see `LICENSE`. The license permits normal personal and professional use of Polymorph, including commercial work product created with it, while reserving redistribution, repackaging, hosted-service, and software-commercialization rights.
+
+Third-party components retain their own licenses; see `THIRD_PARTY.md`. Public binary releases must continue to satisfy the applicable third-party distribution requirements.
