@@ -43,7 +43,9 @@ Do not preload engine/history files unless the current task actually needs them.
   - the grey/unfilled slider track is removed; unused slider area is transparent while the active red fill and ivory handle remain.
 - No element values, presets, motion behavior, animation timing, loader geometry or production code were changed by the prior readability pass.
 - New candidate: a separate `Polymorph Loader Preview` tab adds an isolated Qt-rendered review concept with rotating runes/inner segments, progress ring, angular neon geometry, and progress-driven sparkle materialization of the bundled exact emblem. Existing scene-builder studies/presets remain separate.
-- Candidate CI/build identity will be recorded after the dedicated Motion Lab workflow completes.
+- Dedicated Motion Lab run #11 / run ID `36098491868`: **FULL PASS** (source smoke, PyInstaller build, packaged smoke, artifact upload).
+- Artifact `Polymorph-motion-lab`, ID `10848177893`, size 50,903,007 bytes, digest `sha256:df052b79f4dfa6fb3c5a586455bf0a0bfa2ea0de9def00291621cac1b975b2d1`.
+- Normal Windows Dev Build run #110 / run ID `36098491841` was triggered by the `src/**` path filter and failed only while fetching the pinned external FFmpeg 9.0.1 archive because the upstream `gyan.dev` URL returned 404. All 56 unit tests passed before that external-download failure; no production package stage ran. This is not evidence of a loader-preview regression, and protected production run #109 remains the last full production PASS.
 
 ## Protected PASS state — do not reopen without new evidence
 
@@ -54,7 +56,7 @@ Do not preload engine/history files unless the current task actually needs them.
 
 ## Next gate
 
-1. Build the isolated Polymorph loader-preview candidate through the dedicated Motion Lab Windows workflow.
-2. Amanda reviews the new `Polymorph Loader Preview` tab in motion and gives visual feedback on rune speed, ring motion, sparkle/materialization behavior, progress treatment, spacing and glow.
-3. Preserve all existing scene-builder workspace values and controls during loader-preview tuning.
+1. Amanda reviews the packaged `Polymorph Loader Preview` tab from Motion Lab run #11 and gives visual feedback on rune speed, ring motion, sparkle/materialization behavior, progress treatment, spacing and glow.
+2. Preserve all existing scene-builder workspace values and controls during loader-preview tuning.
+3. Treat the external FFmpeg 404 in normal Windows Dev Build run #110 as separate build-infrastructure evidence; do not broaden the loader-preview task into production toolchain repair unless explicitly requested.
 4. Do not integrate the new loader into production Polymorph, promote to `main`, or create a public release without a separate explicit decision.

@@ -1,6 +1,6 @@
 # Changelog
 
-## POLY-2026-09-24-069 — Standalone Polymorph loader preview tab — CANDIDATE
+## POLY-2026-09-24-069 — Standalone Polymorph loader preview tab — FULL PASS / human visual gate
 
 ### Summary
 
@@ -10,7 +10,10 @@
 - Added review-only controls for auto-loop progress, manual progress scrubbing, animation speed, motion freeze and replay.
 - Existing Motion Lab scene-builder studies, presets, layers, groups and values remain separate and untouched by the new preview page.
 - Production Polymorph dev.27 conversion/framing/adaptive/updater/encoder behavior remains untouched.
-- Dedicated Motion Lab Windows CI and packaged visual review are the next gates.
+- Dedicated `Polymorph Motion Lab Build` run #11 / run ID `36098491868`: **FULL PASS** across source smoke, PyInstaller portable build, packaged Windows smoke and artifact upload.
+- Portable artifact `Polymorph-motion-lab`, artifact ID `10848177893`, size 50,903,007 bytes, digest `sha256:df052b79f4dfa6fb3c5a586455bf0a0bfa2ea0de9def00291621cac1b975b2d1`.
+- Normal Windows Dev Build run #110 / run ID `36098491841` also triggered because the new module lives under `src/**`; its 56 unit tests passed, then the run stopped at the pinned FFmpeg download because the upstream `gyan.dev` URL returned 404. No production package stage ran, so this is recorded as unrelated external build-infrastructure evidence rather than a loader-preview regression.
+- Human visual review of the packaged loader preview is now the active gate.
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md). dev.24-dev.27 investigation/build history remains available in Git history; root tracking is intentionally rolling/compact.
 

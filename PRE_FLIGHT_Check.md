@@ -1,13 +1,16 @@
 # Polymorph Pre-Flight Log
 
-## PFC-2026-09-24-069 — Standalone Polymorph loader preview tab — CANDIDATE
+## PFC-2026-09-24-069 — Standalone Polymorph loader preview tab — FULL PASS / human visual gate
 
 - PASS architecture review: the new loader is isolated in `src/polymorph/motion_polymorph_loader_preview.py` and is reachable only from the standalone Motion Lab tab surface.
 - PASS source intent: the preview uses the bundled canonical emblem SVG renderer at runtime; the emblem is not regenerated or approximated by image-generation tooling.
 - PASS source intent: progress controls only the new preview ring/materialization state; the existing Motion Lab scene-builder studies, presets and editor state are not mutated.
 - PASS visual scope: rune rotation, counter-rotating inner segments, angular tech geometry and sparkle/pixel materialization are authored as deterministic Qt motion layers suitable for live review.
 - Production Polymorph dev.27 runtime, conversion, framing, adaptive, updater, encoder, installer and public-release behavior are intentionally untouched.
-- Pending gate: dedicated Motion Lab source smoke, PyInstaller build, packaged smoke and artifact upload, followed by Amanda's human visual review.
+- PASS CI: dedicated `Polymorph Motion Lab Build` run #11 / run ID `36098491868` succeeded across source smoke, PyInstaller portable build, packaged Windows smoke and artifact upload.
+- Artifact `Polymorph-motion-lab`, ID `10848177893`, size 50,903,007 bytes, digest `sha256:df052b79f4dfa6fb3c5a586455bf0a0bfa2ea0de9def00291621cac1b975b2d1`.
+- INFO production-build side effect: normal Windows Dev Build run #110 / run ID `36098491841` ran 56 unit tests successfully, then failed before toolchain/package stages because the pinned external FFmpeg 9.0.1 URL on `gyan.dev` returned 404. This is not evidence of a source regression in the loader preview; protected production run #109 remains the last full production PASS.
+- Next gate: Amanda visually reviews the packaged loader animation in motion.
 
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md). dev.24-dev.27 technical/visual history remains available in Git history; root tracking is intentionally rolling/compact.
 
