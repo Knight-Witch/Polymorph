@@ -1,5 +1,14 @@
 # Polymorph Pre-Flight Log
 
+## PFC-2026-09-24-069 — Standalone Polymorph loader preview tab — CANDIDATE
+
+- PASS architecture review: the new loader is isolated in `src/polymorph/motion_polymorph_loader_preview.py` and is reachable only from the standalone Motion Lab tab surface.
+- PASS source intent: the preview uses the bundled canonical emblem SVG renderer at runtime; the emblem is not regenerated or approximated by image-generation tooling.
+- PASS source intent: progress controls only the new preview ring/materialization state; the existing Motion Lab scene-builder studies, presets and editor state are not mutated.
+- PASS visual scope: rune rotation, counter-rotating inner segments, angular tech geometry and sparkle/pixel materialization are authored as deterministic Qt motion layers suitable for live review.
+- Production Polymorph dev.27 runtime, conversion, framing, adaptive, updater, encoder, installer and public-release behavior are intentionally untouched.
+- Pending gate: dedicated Motion Lab source smoke, PyInstaller build, packaged smoke and artifact upload, followed by Amanda's human visual review.
+
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/PRE_FLIGHT_THROUGH_DEV23.md). dev.24-dev.27 technical/visual history remains available in Git history; root tracking is intentionally rolling/compact.
 
 ## PFC-2026-09-16-068 — Motion Lab panel readability pass — FULL PASS

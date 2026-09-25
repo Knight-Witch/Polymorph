@@ -4,9 +4,24 @@ Standalone PySide6 design sandbox for Polymorph's deferred loading/working anima
 
 ## Current review baseline
 
-`B — Dense Runes` remains the visual baseline, while the lab now functions as a reusable scene builder rather than a fixed one-off editor.
+`B — Dense Runes` remains the visual baseline for the existing scene builder, while the lab now functions as a reusable scene builder rather than a fixed one-off editor.
 
 The six large outer runes remain the default frontmost loader layer, above both white loading rings. Accepted partial-rune-window behavior and the opaque large-rune-circle treatment remain preserved.
+
+## Polymorph loader preview
+
+Motion Lab now has a separate `Polymorph Loader Preview` tab for the newer working/loading concept. It is intentionally isolated from the scene-builder workspace and from production Polymorph.
+
+The preview is a purpose-built animation rather than an AI frame sequence. It uses the bundled canonical Knight Witch SVG renderer at runtime and layers deterministic Qt drawing around it:
+
+- an outer progress ring that fills from 0–100%;
+- a slowly rotating Elder Futhark rune ring;
+- a counter-rotating segmented inner ring;
+- a restrained cyan/blue-to-violet/magenta angular tech-diamond frame;
+- progress-driven emblem materialization from top to bottom;
+- a moving sparkle/pixel front below the reveal edge so the emblem appears to form out of light.
+
+The review page exposes auto-loop progress, manual progress scrubbing, motion speed, motion freeze, and replay. Those controls affect only this preview tab and do not mutate Motion Lab scene-builder studies, presets, layers, groups, or production application state.
 
 ## Scene builder
 

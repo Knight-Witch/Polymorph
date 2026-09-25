@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QScrollArea,
     QSlider,
+    QTabWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -35,6 +36,7 @@ from .motion_button import ArcaneButton
 from .motion_editor import MotionEditorState
 from .motion_effects import load_runic_font
 from .motion_loader import ArcaneLoader
+from .motion_polymorph_loader_preview import PolymorphLoaderPage
 from .motion_stage import Stage
 from .ui.fonts import load_brand_fonts
 
@@ -154,8 +156,12 @@ class MotionLab(QMainWindow):
         self._syncing = False
         self._switching_study = False
 
+        self.tabs = QTabWidget()
+        self.tabs.setObjectName("MotionTabs")
+        self.setCentralWidget(self.tabs)
+
         root = QWidget()
-        self.setCentralWidget(root)
+        self.tabs.addTab(root, "Scene Builder")
         outer = QHBoxLayout(root)
         outer.setContentsMargins(18, 18, 18, 18)
         outer.setSpacing(18)
@@ -212,6 +218,9 @@ class MotionLab(QMainWindow):
         self._build_rune_section()
         self._build_button_section()
         self.panel_layout.addStretch()
+
+        self.polymorph_preview = PolymorphLoaderPage(self.rune_family)
+        self.tabs.addTab(self.polymorph_preview, "Polymorph Loader Preview")
 
         self._apply_style()
         self.hold = 0
@@ -501,7 +510,12 @@ class MotionLab(QMainWindow):
             "QSlider::groove:horizontal{height:4px;background:#17191d;border-radius:2px} "
             "QSlider::sub-page:horizontal{background:#b4212c;border-radius:2px} "
             "QSlider::handle:horizontal{width:12px;margin:-5px 0;border-radius:6px;background:#e7d5ae} "
-            "QSlider:disabled::handle:horizontal{background:#4a4a4a} QCheckBox:disabled{color:#555}"
+            "QSlider:disabled::handle:horizontal{background:#4a4a4a} QCheckBox:disabled{color:#555} "
+            "QTabWidget::pane{border:0;background:#040506} "
+            "QTabBar::tab{background:#0b0d10;color:#8f8b84;border:1px solid #2d3038;border-bottom:none;"
+            "padding:8px 16px;margin-right:3px;border-top-left-radius:4px;border-top-right-radius:4px} "
+            "QTabBar::tab:selected{background:#151922;color:#f1edf7;border-color:#545c72} "
+            "QTabBar::tab:hover:!selected{color:#d6d1df;background:#10141b}"
         )
 
     def _populate_study_combo(self, selected: int = 0) -> None:
@@ -1060,6 +1074,7 @@ def main(argv: list[str] | None = None) -> int:
         window.loader.editor.set_value("middle_runes", "rune_speed", 0.0)
         window.loader.editor.set_value("middle_runes", "glimmer_type", "Radial")
         window.button.forced = "hover"
+        window.polymorph_preview.preview.set_progress(0.68)
         QTimer.singleShot(260, app.quit)
     return app.exec()
 

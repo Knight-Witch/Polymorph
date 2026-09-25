@@ -1,5 +1,17 @@
 # Changelog
 
+## POLY-2026-09-24-069 — Standalone Polymorph loader preview tab — CANDIDATE
+
+### Summary
+
+- Added a separate `Polymorph Loader Preview` tab to the standalone Motion Lab so the newer loading/working concept can be reviewed without integrating it into production Polymorph.
+- Added a purpose-built Qt animation using the bundled canonical emblem renderer rather than generated animation frames.
+- Preview concept includes an outer progress ring, rotating Elder Futhark rune ring, counter-rotating segmented ring, restrained angular cyber-arcane geometry, and progress-driven emblem materialization with a sparkle/pixel reveal front.
+- Added review-only controls for auto-loop progress, manual progress scrubbing, animation speed, motion freeze and replay.
+- Existing Motion Lab scene-builder studies, presets, layers, groups and values remain separate and untouched by the new preview page.
+- Production Polymorph dev.27 conversion/framing/adaptive/updater/encoder behavior remains untouched.
+- Dedicated Motion Lab Windows CI and packaged visual review are the next gates.
+
 Historical entries through dev.23 are preserved verbatim in [`HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md`](HISTORY/PROJECT_LOGS/CHANGELOG_THROUGH_DEV23.md). dev.24-dev.27 investigation/build history remains available in Git history; root tracking is intentionally rolling/compact.
 
 ## POLY-2026-09-16-068 — Motion Lab panel readability pass — FULL PASS

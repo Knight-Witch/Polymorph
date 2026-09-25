@@ -1,7 +1,7 @@
 # Active Context — Polymorph `dev`
 
-**Updated:** 2026-09-16  
-**Current task:** Motion Lab human tuning after the control-panel readability pass. The standalone lab now uses brighter crimson section headers and transparent unused slider tracks so the right-side editor is easier to scan. Production Polymorph remains on dev.27 and its conversion/framing/adaptive behavior remains closed/validated.
+**Updated:** 2026-09-24  
+**Current task:** Human visual review of a new standalone Polymorph loader prototype inside Motion Lab. A separate `Polymorph Loader Preview` tab is being added so the newer rune-ring / progress-ring / sparkle-materialization concept can be reviewed in motion without integrating it into production Polymorph or altering the existing scene-builder workspace. Production Polymorph remains on dev.27 and its conversion/framing/adaptive behavior remains closed/validated.
 
 ## Minimum continuation set
 
@@ -16,8 +16,9 @@ Read only:
 7. `src/polymorph/motion_loader.py`
 8. `src/polymorph/motion_loader_base.py`
 9. `src/polymorph/motion_effects.py`
-10. `run_motion_lab.py` when the standalone scene-builder shell/theme is implicated
-11. `.github/workflows/motion-lab-build.yml` only when the standalone Windows artifact/build is implicated
+10. `src/polymorph/motion_polymorph_loader_preview.py`
+11. `run_motion_lab.py` when the standalone scene-builder shell/theme is implicated
+12. `.github/workflows/motion-lab-build.yml` only when the standalone Windows artifact/build is implicated
 
 Do not preload engine/history files unless the current task actually needs them.
 
@@ -31,7 +32,7 @@ Do not preload engine/history files unless the current task actually needs them.
 - Production app/conversion source remains untouched by Motion Lab visual-tuning work.
 - No public release exists; `main` remains non-experimental.
 
-## Motion Lab current state — FULL PASS / human visual gate
+## Motion Lab current state — loader-preview candidate / human visual gate
 
 - v7 implementation commit `06750079ee2dfa837a56600011367f16cb87646b` previously passed dedicated Motion Lab run #9 / run ID `35060729400` and normal Windows Dev Build run #109.
 - Readability implementation commit: `845b029df1027bf6f4fac2a3a346c5d04d32d134`.
@@ -40,7 +41,9 @@ Do not preload engine/history files unless the current task actually needs them.
 - Styling-only changes:
   - section headers are brighter crimson/red, heavier, and separated with a thin deep-red rule;
   - the grey/unfilled slider track is removed; unused slider area is transparent while the active red fill and ivory handle remain.
-- No element values, presets, motion behavior, animation timing, loader geometry or production code are intentionally changed by this pass.
+- No element values, presets, motion behavior, animation timing, loader geometry or production code were changed by the prior readability pass.
+- New candidate: a separate `Polymorph Loader Preview` tab adds an isolated Qt-rendered review concept with rotating runes/inner segments, progress ring, angular neon geometry, and progress-driven sparkle materialization of the bundled exact emblem. Existing scene-builder studies/presets remain separate.
+- Candidate CI/build identity will be recorded after the dedicated Motion Lab workflow completes.
 
 ## Protected PASS state — do not reopen without new evidence
 
@@ -51,7 +54,7 @@ Do not preload engine/history files unless the current task actually needs them.
 
 ## Next gate
 
-1. Amanda visually reviews the right-panel section headers and slider treatment in the packaged Motion Lab artifact from run #10.
-2. Preserve all imported/current workspace values during further visual tuning.
-3. Treat runtime/packaging as validated but appearance as still under the human visual gate.
-4. Do not integrate animation into production Polymorph, promote to `main`, or create a public release without a separate explicit decision.
+1. Build the isolated Polymorph loader-preview candidate through the dedicated Motion Lab Windows workflow.
+2. Amanda reviews the new `Polymorph Loader Preview` tab in motion and gives visual feedback on rune speed, ring motion, sparkle/materialization behavior, progress treatment, spacing and glow.
+3. Preserve all existing scene-builder workspace values and controls during loader-preview tuning.
+4. Do not integrate the new loader into production Polymorph, promote to `main`, or create a public release without a separate explicit decision.
