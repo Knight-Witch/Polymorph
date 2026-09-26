@@ -14,12 +14,13 @@ Motion Lab now has a separate `Polymorph Loader Preview` tab for the newer worki
 
 The preview is a purpose-built animation rather than an AI frame sequence. It uses the bundled canonical Knight Witch SVG renderer at runtime and layers deterministic Qt drawing around it:
 
-- an outer progress ring that fills from 0–100%;
-- a slowly rotating Elder Futhark rune ring;
-- a counter-rotating segmented inner ring;
-- a restrained cyan/blue-to-violet/magenta angular tech-diamond frame;
+- the exact user-supplied `KW_EMBLEM_PATH.svg` asset, preserved as path geometry and tinted white at render time;
+- one continuous outer progress ring that fills from 0–100% and becomes a complete solid ring at completion;
+- a slowly rotating Elder Futhark rune band contained between two luminous rings;
+- a brighter cyan/blue-to-violet/magenta ornate angular tech frame modeled more closely on the approved still mockup;
+- four larger true-diamond cardinal nodes, horizontal tech stubs, paired side diamonds and cascading top/bottom dot trails;
 - progress-driven emblem materialization from top to bottom;
-- a moving sparkle/pixel front below the reveal edge so the emblem appears to form out of light.
+- a denser sparkle/data-light front below the reveal edge so the emblem visibly forms out of light rather than simply appearing.
 
 The review page exposes auto-loop progress, manual progress scrubbing, motion speed, motion freeze, and replay. Those controls affect only this preview tab and do not mutate Motion Lab scene-builder studies, presets, layers, groups, or production application state.
 

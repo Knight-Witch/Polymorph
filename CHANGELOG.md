@@ -1,5 +1,19 @@
 # Changelog
 
+## POLY-2026-09-25-070 — Polymorph loader visual-fidelity second pass — CANDIDATE
+
+### Summary
+
+- Reworked the standalone loader preview after the first packaged visual review.
+- Added Amanda's newly supplied exact `KW_EMBLEM_PATH.svg` as a packaged Motion Lab asset; the renderer uses that SVG directly and tints it white rather than approximating the mark.
+- Replaced the broken/segmented progress treatment with one continuous outer progress ring that becomes a complete ring at 100%.
+- Moved the runes into a dedicated band bounded by two luminous rings.
+- Increased cyan/blue/violet/magenta saturation and glow strength.
+- Rebuilt the center framing as a more ornate angular cyber-arcane structure closer to the approved still mockup, including larger true-diamond cardinal nodes, side tech stubs, paired mini-diamonds and cascading top/bottom dot trails.
+- Strengthened the top-to-bottom emblem reveal with denser sparkles plus restrained vertical data-light streaks at the materialization front.
+- Existing Motion Lab scene-builder studies and production Polymorph remain isolated and untouched.
+- Dedicated packaged Motion Lab review is the next gate.
+
 ## POLY-2026-09-24-069 — Standalone Polymorph loader preview tab — FULL PASS / human visual gate
 
 ### Summary

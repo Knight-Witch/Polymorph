@@ -1,7 +1,7 @@
 # Active Context — Polymorph `dev`
 
 **Updated:** 2026-09-24  
-**Current task:** Human visual review of a new standalone Polymorph loader prototype inside Motion Lab. A separate `Polymorph Loader Preview` tab is being added so the newer rune-ring / progress-ring / sparkle-materialization concept can be reviewed in motion without integrating it into production Polymorph or altering the existing scene-builder workspace. Production Polymorph remains on dev.27 and its conversion/framing/adaptive behavior remains closed/validated.
+**Current task:** Second-pass visual tuning of the standalone `Polymorph Loader Preview` after Amanda's first review. The candidate now uses Amanda's newly supplied exact path SVG, a continuous outer progress ring, a rune band bounded by two rings, stronger neon color/glow, more ornate mockup-matched angular geometry, corrected cardinal diamonds, top/bottom dot cascades, and a stronger top-to-bottom sparkle materialization effect. Production Polymorph remains on dev.27 and its conversion/framing/adaptive behavior remains closed/validated.
 
 ## Minimum continuation set
 
@@ -42,7 +42,9 @@ Do not preload engine/history files unless the current task actually needs them.
   - section headers are brighter crimson/red, heavier, and separated with a thin deep-red rule;
   - the grey/unfilled slider track is removed; unused slider area is transparent while the active red fill and ivory handle remain.
 - No element values, presets, motion behavior, animation timing, loader geometry or production code were changed by the prior readability pass.
-- New candidate: a separate `Polymorph Loader Preview` tab adds an isolated Qt-rendered review concept with rotating runes/inner segments, progress ring, angular neon geometry, and progress-driven sparkle materialization of the bundled exact emblem. Existing scene-builder studies/presets remain separate.
+- First preview pass was rejected visually because it did not use the newly re-supplied exact emblem and diverged too far from the approved still mockup.
+- Second-pass candidate uses the supplied `KW_EMBLEM_PATH.svg` path asset directly, keeps the emblem white, puts rotating runes inside a two-ring band, uses a third continuous outer progress ring, restores ornate angled mockup geometry and decorative nodes/dot trails, increases neon saturation/glow, and strengthens the top-to-bottom sparkle materialization front.
+- Existing scene-builder studies/presets remain separate.
 - Dedicated Motion Lab run #11 / run ID `36098491868`: **FULL PASS** (source smoke, PyInstaller build, packaged smoke, artifact upload).
 - Artifact `Polymorph-motion-lab`, ID `10848177893`, size 50,903,007 bytes, digest `sha256:df052b79f4dfa6fb3c5a586455bf0a0bfa2ea0de9def00291621cac1b975b2d1`.
 - Normal Windows Dev Build run #110 / run ID `36098491841` was triggered by the `src/**` path filter and failed only while fetching the pinned external FFmpeg 9.0.1 archive because the upstream `gyan.dev` URL returned 404. All 56 unit tests passed before that external-download failure; no production package stage ran. This is not evidence of a loader-preview regression, and protected production run #109 remains the last full production PASS.
@@ -56,7 +58,7 @@ Do not preload engine/history files unless the current task actually needs them.
 
 ## Next gate
 
-1. Amanda reviews the packaged `Polymorph Loader Preview` tab from Motion Lab run #11 and gives visual feedback on rune speed, ring motion, sparkle/materialization behavior, progress treatment, spacing and glow.
+1. Build the second-pass loader preview through the dedicated Motion Lab Windows workflow, then Amanda reviews the packaged tab for fidelity to the approved still mockup and exact emblem.
 2. Preserve all existing scene-builder workspace values and controls during loader-preview tuning.
 3. Treat the external FFmpeg 404 in normal Windows Dev Build run #110 as separate build-infrastructure evidence; do not broaden the loader-preview task into production toolchain repair unless explicitly requested.
 4. Do not integrate the new loader into production Polymorph, promote to `main`, or create a public release without a separate explicit decision.

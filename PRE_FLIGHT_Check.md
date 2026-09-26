@@ -1,5 +1,14 @@
 # Polymorph Pre-Flight Log
 
+## PFC-2026-09-25-070 — Polymorph loader visual-fidelity second pass — CANDIDATE
+
+- PASS asset source: candidate packages the exact conversation-supplied `KW_EMBLEM_PATH.svg` path asset (960 × 1920 viewBox) and loads it directly in the isolated preview.
+- PASS isolation by source review: changes are limited to Motion Lab preview code/assets/docs; production conversion, framing, adaptive, updater, encoder and release behavior are untouched.
+- PASS visual intent: runes sit between two luminous rings; the third/outer ring is a single continuous progress arc.
+- PASS visual intent: cardinal ornaments are true diamonds rather than square/check-box shapes, with restored top/bottom cascading dot trails and more ornate straight/angled interior geometry.
+- PASS visual intent: exact white emblem materializes top-to-bottom with a denser sparkle/data-light frontier and stronger cyan-to-magenta glow.
+- Pending gate: dedicated Motion Lab source smoke, PyInstaller build, packaged smoke and artifact upload, followed by Amanda's human visual review.
+
 ## PFC-2026-09-24-069 — Standalone Polymorph loader preview tab — FULL PASS / human visual gate
 
 - PASS architecture review: the new loader is isolated in `src/polymorph/motion_polymorph_loader_preview.py` and is reachable only from the standalone Motion Lab tab surface.
