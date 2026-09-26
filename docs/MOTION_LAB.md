@@ -75,3 +75,15 @@ Numeric fields combine a wheel-safe slider, editable numerical spinbox and preci
 ## Acceptance boundary
 
 This lab is exploratory visual tooling. None of its motion is part of the shipping Polymorph UI until Amanda explicitly approves a treatment and it is deliberately integrated behind a separate human visual gate.
+
+
+### Loader preview third-pass tuning
+
+The current loader-review candidate uses Amanda's newly supplied Blender-vector emblem path as a dedicated cleaned SVG mask with the original path geometry preserved. The runtime fill is not taken from the source SVG: Qt applies a fully opaque animated white/neon gradient through that alpha mask.
+
+The third-pass visual changes specifically address the prior review:
+- emblem reveal remains a top-to-bottom solid fill, with compact particles only at the moving reveal edge;
+- long vertical materialization streaks were removed;
+- the rune inscription band uses larger, denser glyphs packed more tightly between its two boundary rings;
+- all major rings and angular geometry use a slowly shifting conical cyan/blue/violet/magenta gradient rather than a fixed left/right split;
+- inner geometry is rebuilt as two cleaner nested angular frames with short corner rails instead of the previous awkward split scaffolding.

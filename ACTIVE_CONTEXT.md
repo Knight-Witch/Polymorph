@@ -1,7 +1,7 @@
 # Active Context — Polymorph `dev`
 
 **Updated:** 2026-09-24  
-**Current task:** Second-pass visual tuning of the standalone `Polymorph Loader Preview` after Amanda's first review. The candidate now uses Amanda's newly supplied exact path SVG, a continuous outer progress ring, a rune band bounded by two rings, stronger neon color/glow, more ornate mockup-matched angular geometry, corrected cardinal diamonds, top/bottom dot cascades, and a stronger top-to-bottom sparkle materialization effect. Production Polymorph remains on dev.27 and its conversion/framing/adaptive behavior remains closed/validated.
+**Current task:** Third-pass visual tuning of the standalone `Polymorph Loader Preview` after Amanda's second review. The new candidate uses her Blender-vector emblem path as a dedicated clean alpha mask, restores a fully solid emblem fill, removes string-like materialization streaks, densifies/enlarges the rune band, replaces the static cyan-left/magenta-right split with an animated rotating spectrum, and rebuilds the inner geometry as cleaner nested angular frames. Production Polymorph remains on dev.27 and its conversion/framing/adaptive behavior remains closed/validated.
 
 ## Minimum continuation set
 
@@ -58,7 +58,7 @@ Do not preload engine/history files unless the current task actually needs them.
 
 ## Next gate
 
-1. Amanda reviews the packaged second-pass `Polymorph Loader Preview` from Motion Lab run #13 for fidelity to the approved still mockup and exact emblem.
+1. Build the third-pass `Polymorph Loader Preview` through the dedicated Motion Lab workflow, then Amanda reviews the packaged result for solid emblem fill, particle behavior, denser rune band, animated color movement and cleaner inner geometry.
 2. Preserve all existing scene-builder workspace values and controls during loader-preview tuning.
 3. Treat the external FFmpeg 404 in normal Windows Dev Build run #110 as separate build-infrastructure evidence; do not broaden the loader-preview task into production toolchain repair unless explicitly requested.
 4. Do not integrate the new loader into production Polymorph, promote to `main`, or create a public release without a separate explicit decision.

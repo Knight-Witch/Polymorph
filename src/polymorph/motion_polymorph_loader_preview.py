@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 
 from PySide6.QtCore import QPointF, QRectF, Qt, QTimer, QSize
-from PySide6.QtGui import QColor, QBrush, QImage, QLinearGradient, QPainter, QPainterPath, QPen
+from PySide6.QtGui import QColor, QBrush, QConicalGradient, QImage, QLinearGradient, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import (
     QCheckBox,
     QFrame,
@@ -37,13 +37,24 @@ def _mix(a: QColor, b: QColor, amount: float) -> QColor:
     )
 
 
-def _side_color(degrees: float) -> QColor:
-    # Screen-left stays cyan/blue and screen-right resolves violet/magenta.
-    x = math.cos(math.radians(degrees))
-    amount = (x + 1.0) * 0.5
-    cool = _mix(CYAN, ELECTRIC_BLUE, 0.34)
-    warm = _mix(VIOLET, MAGENTA, 0.48)
-    return _mix(cool, warm, amount)
+def _spectrum_color(degrees: float, t: float = 0.0) -> QColor:
+    """Animated cyan -> blue -> violet -> magenta palette sampled around the sigil."""
+    phase = ((degrees + t * 22.0) % 360.0) / 360.0
+    stops = (
+        (0.00, CYAN),
+        (0.24, ELECTRIC_BLUE),
+        (0.50, VIOLET),
+        (0.74, MAGENTA),
+        (1.00, CYAN),
+    )
+    for index in range(len(stops) - 1):
+        left_pos, left_color = stops[index]
+        right_pos, right_color = stops[index + 1]
+        if left_pos <= phase <= right_pos:
+            local = (phase - left_pos) / max(0.0001, right_pos - left_pos)
+            return _mix(left_color, right_color, local)
+    return CYAN
+
 
 
 def _diamond(center: QPointF, radius: float) -> QPainterPath:
@@ -71,13 +82,15 @@ def _ring(center: QPointF, radius: float) -> QPainterPath:
     return path
 
 
-def _gradient(center: QPointF, radius: float) -> QLinearGradient:
-    gradient = QLinearGradient(center.x() - radius, center.y(), center.x() + radius, center.y())
-    gradient.setColorAt(0.0, CYAN)
-    gradient.setColorAt(0.30, ELECTRIC_BLUE)
-    gradient.setColorAt(0.60, VIOLET)
-    gradient.setColorAt(1.0, MAGENTA)
+def _gradient(center: QPointF, radius: float, t: float) -> QConicalGradient:
+    gradient = QConicalGradient(center, 90.0 - t * 22.0)
+    gradient.setColorAt(0.00, CYAN)
+    gradient.setColorAt(0.24, ELECTRIC_BLUE)
+    gradient.setColorAt(0.50, VIOLET)
+    gradient.setColorAt(0.74, MAGENTA)
+    gradient.setColorAt(1.00, CYAN)
     return gradient
+
 
 
 def _gradient_path(
@@ -85,6 +98,7 @@ def _gradient_path(
     path: QPainterPath,
     center: QPointF,
     radius: float,
+    t: float,
     *,
     intensity: float = 1.0,
     core_width: float = 1.25,
@@ -94,7 +108,7 @@ def _gradient_path(
         return
     painter.save()
     painter.setBrush(Qt.BrushStyle.NoBrush)
-    brush = QBrush(_gradient(center, radius))
+    brush = QBrush(_gradient(center, radius, t))
     passes = (
         (10.0 * spread, 0.055),
         (6.5 * spread, 0.095),
@@ -132,7 +146,7 @@ class PolymorphLoaderPreview(ArcaneLoaderBase):
         self._load_exact_emblem()
 
     def _load_exact_emblem(self) -> bool:
-        exact_path = asset_path("KW_EMBLEM_PATH.svg")
+        exact_path = asset_path("KW_EMBLEM_LOADER_EXACT.svg")
         if not exact_path.is_file():
             return False
         return self.load_emblem(str(exact_path))
@@ -161,14 +175,14 @@ class PolymorphLoaderPreview(ArcaneLoaderBase):
         outer = side * 0.405
         t = self._time()
 
-        self._draw_outer_progress(painter, center, outer)
+        self._draw_outer_progress(painter, center, outer, t)
         self._draw_rune_band(painter, center, outer, t)
         self._draw_cardinal_ornaments(painter, center, outer, t)
         self._draw_ornate_geometry(painter, center, outer, t)
         self._draw_emblem_materialize(painter, center, outer, t)
         painter.end()
 
-    def _draw_outer_progress(self, painter: QPainter, center: QPointF, radius: float) -> None:
+    def _draw_outer_progress(self, painter: QPainter, center: QPointF, radius: float, t: float) -> None:
         track = _ring(center, radius)
         painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.setPen(QPen(DIM_RING, max(1.7, radius * 0.012), Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
@@ -181,15 +195,16 @@ class PolymorphLoaderPreview(ArcaneLoaderBase):
             active,
             center,
             radius,
-            intensity=1.28,
-            core_width=max(1.7, radius * 0.010),
-            spread=1.15,
+            t,
+            intensity=1.32,
+            core_width=max(1.75, radius * 0.0105),
+            spread=1.18,
         )
 
         if 0.01 < self.progress < 0.995:
             head_degrees = -90.0 + 360.0 * self.progress
             head = polar(center, radius, head_degrees)
-            color = _side_color(head_degrees)
+            color = _spectrum_color(head_degrees, t)
             for dot_radius, opacity in ((8.0, 24), (5.2, 50), (2.7, 130)):
                 painter.setPen(Qt.PenStyle.NoPen)
                 painter.setBrush(alpha(color, opacity))
@@ -198,47 +213,49 @@ class PolymorphLoaderPreview(ArcaneLoaderBase):
             painter.drawEllipse(head, 1.55, 1.55)
 
     def _draw_rune_band(self, painter: QPainter, center: QPointF, outer: float, t: float) -> None:
-        band_outer = outer * 0.865
-        band_inner = outer * 0.705
-        for radius, width, intensity in ((band_outer, 1.35, 0.94), (band_inner, 1.15, 0.82)):
+        band_outer = outer * 0.875
+        band_inner = outer * 0.685
+        for radius, width, intensity in ((band_outer, 1.55, 1.02), (band_inner, 1.35, 0.92)):
             _gradient_path(
                 painter,
                 _ring(center, radius),
                 center,
                 outer,
+                t,
                 intensity=intensity,
                 core_width=width,
-                spread=0.76,
+                spread=0.80,
             )
 
-        count = 22
+        # Dense inscription band: larger glyphs, more slots, less dead space between rings.
+        count = 30
         rune_radius = (band_outer + band_inner) * 0.5
-        angle = -90.0 + t * 5.4
+        angle = -90.0 + t * 5.1
         for slot in range(count):
             degrees = angle + slot * 360.0 / count
-            color = _side_color(degrees)
-            pulse = 0.90 + 0.16 * math.sin(t * 1.65 + slot * 0.72)
-            rune = ELDER_FUTHARK[(slot * 5 + 2) % len(ELDER_FUTHARK)]
+            color = _spectrum_color(degrees, t)
+            pulse = 0.92 + 0.14 * math.sin(t * 1.45 + slot * 0.58)
+            rune = ELDER_FUTHARK[(slot * 7 + 3) % len(ELDER_FUTHARK)]
             self.runes.draw(
                 painter,
                 rune,
                 polar(center, rune_radius, degrees),
-                max(12.0, outer * 0.062),
+                max(14.0, outer * 0.076),
                 degrees + 90.0,
                 color=color,
-                core=_mix(color, WHITE, 0.58),
+                core=_mix(color, WHITE, 0.64),
                 intensity=pulse,
-                spread=0.58,
+                spread=0.62,
             )
 
     def _draw_cardinal_ornaments(self, painter: QPainter, center: QPointF, outer: float, t: float) -> None:
-        node_radius = outer * 0.865
+        node_radius = outer * 0.875
         marker_size = max(13.0, outer * 0.070)
         breathe = 0.92 + 0.08 * (0.5 + 0.5 * math.sin(t * 1.45))
 
         for degrees in (-90.0, 0.0, 90.0, 180.0):
             position = polar(center, node_radius, degrees)
-            color = _side_color(degrees)
+            color = _spectrum_color(degrees, t)
             glow_path(
                 painter,
                 _diamond(position, marker_size),
@@ -263,9 +280,8 @@ class PolymorphLoaderPreview(ArcaneLoaderBase):
                 spread=0.52,
             )
 
-        # Cascading luminous dot trails at the top and bottom, matching the approved mockup language.
         for degrees in (-90.0, 90.0):
-            color = _side_color(degrees)
+            color = _spectrum_color(degrees, t)
             start = node_radius + marker_size * 1.55
             for index in range(6):
                 distance = start + index * outer * 0.038
@@ -279,9 +295,8 @@ class PolymorphLoaderPreview(ArcaneLoaderBase):
                     painter.setBrush(alpha(WHITE, opacity * 0.62))
                     painter.drawEllipse(point, max(0.72, size * 0.38), max(0.72, size * 0.38))
 
-        # Side line extensions make the cardinal diamonds read as tech nodes rather than floating ornaments.
         for degrees in (0.0, 180.0):
-            color = _side_color(degrees)
+            color = _spectrum_color(degrees, t)
             a = polar(center, node_radius + marker_size * 1.15, degrees)
             b = polar(center, outer * 1.075, degrees)
             glow_path(
@@ -295,73 +310,88 @@ class PolymorphLoaderPreview(ArcaneLoaderBase):
             )
 
     def _draw_ornate_geometry(self, painter: QPainter, center: QPointF, outer: float, t: float) -> None:
-        pulse = 0.88 + 0.12 * (0.5 + 0.5 * math.sin(t * 1.22))
+        pulse = 0.90 + 0.10 * (0.5 + 0.5 * math.sin(t * 1.16))
 
-        def half_frame(side: int, scale: float, inset: float) -> QPainterPath:
-            sx = float(side)
-            rx = outer * 0.54 * scale
-            ry = outer * 0.67 * scale
+        def frame_path(scale: float) -> QPainterPath:
+            r = outer * scale
             points = [
-                QPointF(center.x(), center.y() - ry),
-                QPointF(center.x() + sx * rx * 0.58, center.y() - ry * 0.72),
-                QPointF(center.x() + sx * rx * 0.58, center.y() - ry * 0.36),
-                QPointF(center.x() + sx * rx * (0.94 - inset), center.y()),
-                QPointF(center.x() + sx * rx * 0.58, center.y() + ry * 0.36),
-                QPointF(center.x() + sx * rx * 0.58, center.y() + ry * 0.72),
-                QPointF(center.x(), center.y() + ry),
+                QPointF(center.x(), center.y() - r * 0.80),
+                QPointF(center.x() + r * 0.50, center.y() - r * 0.61),
+                QPointF(center.x() + r * 0.50, center.y() - r * 0.30),
+                QPointF(center.x() + r * 0.77, center.y()),
+                QPointF(center.x() + r * 0.50, center.y() + r * 0.30),
+                QPointF(center.x() + r * 0.50, center.y() + r * 0.61),
+                QPointF(center.x(), center.y() + r * 0.80),
+                QPointF(center.x() - r * 0.50, center.y() + r * 0.61),
+                QPointF(center.x() - r * 0.50, center.y() + r * 0.30),
+                QPointF(center.x() - r * 0.77, center.y()),
+                QPointF(center.x() - r * 0.50, center.y() - r * 0.30),
+                QPointF(center.x() - r * 0.50, center.y() - r * 0.61),
             ]
-            return _polyline(points)
+            path = _polyline(points)
+            path.closeSubpath()
+            return path
 
-        for side, color in ((-1, _mix(CYAN, ELECTRIC_BLUE, 0.34)), (1, _mix(VIOLET, MAGENTA, 0.50))):
-            glow_path(
+        _gradient_path(
+            painter,
+            frame_path(0.74),
+            center,
+            outer,
+            t,
+            intensity=0.78 * pulse,
+            core_width=1.04,
+            spread=0.62,
+        )
+        _gradient_path(
+            painter,
+            frame_path(0.66),
+            center,
+            outer,
+            -t * 0.72,
+            intensity=0.44 * pulse,
+            core_width=0.82,
+            spread=0.46,
+        )
+
+        # Short corner rails reinforce the straight cyber-arcane line language without scaffolding clutter.
+        rail_sets = (
+            (-0.44, -0.48, -0.25, -0.62),
+            (0.44, -0.48, 0.25, -0.62),
+            (-0.44, 0.48, -0.25, 0.62),
+            (0.44, 0.48, 0.25, 0.62),
+        )
+        for ax, ay, bx, by in rail_sets:
+            path = _polyline([
+                QPointF(center.x() + outer * ax, center.y() + outer * ay),
+                QPointF(center.x() + outer * bx, center.y() + outer * by),
+            ])
+            _gradient_path(
                 painter,
-                half_frame(side, 1.0, 0.0),
-                color,
-                core=_mix(color, WHITE, 0.50),
-                intensity=0.88 * pulse,
-                core_width=1.10,
-                spread=0.64,
-            )
-            glow_path(
-                painter,
-                half_frame(side, 0.90, 0.055),
-                color,
-                core=_mix(color, WHITE, 0.44),
-                intensity=0.55 * pulse,
-                core_width=0.82,
-                spread=0.48,
+                path,
+                center,
+                outer,
+                t,
+                intensity=0.48,
+                core_width=0.78,
+                spread=0.42,
             )
 
-            # Small paired diamonds beside the emblem, present in the visual mockup but intentionally restrained.
-            x = center.x() + side * outer * 0.555
-            for y_offset, size in ((-outer * 0.060, outer * 0.024), (outer * 0.018, outer * 0.019)):
+        for side in (-1, 1):
+            x = center.x() + side * outer * 0.57
+            degrees = 180.0 if side < 0 else 0.0
+            color = _spectrum_color(degrees, t)
+            for y_offset, size in ((-outer * 0.058, outer * 0.024), (outer * 0.020, outer * 0.019)):
                 glow_path(
                     painter,
                     _diamond(QPointF(x, center.y() + y_offset), size),
                     color,
-                    core=_mix(color, WHITE, 0.58),
-                    intensity=0.78,
+                    core=_mix(color, WHITE, 0.60),
+                    intensity=0.76,
                     core_width=0.82,
                     spread=0.46,
                 )
 
-            # Extra straight diagonal rails echo the mockup's ornate, technical linework without adding noisy curves.
-            upper_a = QPointF(center.x() + side * outer * 0.31, center.y() - outer * 0.50)
-            upper_b = QPointF(center.x() + side * outer * 0.50, center.y() - outer * 0.37)
-            lower_a = QPointF(center.x() + side * outer * 0.31, center.y() + outer * 0.50)
-            lower_b = QPointF(center.x() + side * outer * 0.50, center.y() + outer * 0.37)
-            for a, b in ((upper_a, upper_b), (lower_a, lower_b)):
-                glow_path(
-                    painter,
-                    _polyline([a, b]),
-                    color,
-                    core=_mix(color, WHITE, 0.46),
-                    intensity=0.54,
-                    core_width=0.76,
-                    spread=0.42,
-                )
-
-    def _emblem_image(self, target_height: float) -> tuple[QImage, float, float] | None:
+    def _emblem_image(self, target_height: float, t: float) -> tuple[QImage, float, float] | None:
         if self.emblem is None:
             return None
         view = self.emblem.viewBoxF()
@@ -380,13 +410,22 @@ class PolymorphLoaderPreview(ArcaneLoaderBase):
         ip = QPainter(image)
         ip.setRenderHint(QPainter.RenderHint.Antialiasing, True)
         self.emblem.render(ip, QRectF(0.0, 0.0, image.width(), image.height()))
+
+        # Use the SVG only as an alpha mask. The visible emblem is always a fully-filled,
+        # opaque moving neon/white gradient rather than the SVG's source fill/stroke.
         ip.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceIn)
-        ip.fillRect(image.rect(), WHITE)
+        fill = QLinearGradient(0.0, 0.0, float(image.width()), float(image.height()))
+        fill.setColorAt(0.00, _mix(_spectrum_color(-135.0, t), WHITE, 0.42))
+        fill.setColorAt(0.32, _mix(_spectrum_color(-35.0, t), WHITE, 0.28))
+        fill.setColorAt(0.58, WHITE)
+        fill.setColorAt(0.78, _mix(_spectrum_color(80.0, t), WHITE, 0.30))
+        fill.setColorAt(1.00, _mix(_spectrum_color(155.0, t), WHITE, 0.42))
+        ip.fillRect(image.rect(), fill)
         ip.end()
         return image, width, height
 
     def _draw_emblem_materialize(self, painter: QPainter, center: QPointF, outer: float, t: float) -> None:
-        rendered = self._emblem_image(outer * 1.40)
+        rendered = self._emblem_image(outer * 1.40, t)
         if rendered is None:
             return
         image, width, height = rendered
@@ -436,65 +475,51 @@ class PolymorphLoaderPreview(ArcaneLoaderBase):
         if not columns:
             return
 
-        trail = max(46.0, dest.height() * 0.25)
+        trail = max(26.0, dest.height() * 0.115)
         painter.save()
         painter.setPen(Qt.PenStyle.NoPen)
 
-        # A few vertical data-light streaks extend below the moving materialization edge.
-        streak_count = min(14, max(5, len(columns) // 3))
-        for index in range(streak_count):
-            px = columns[(index * 7 + 3) % len(columns)]
+        # Compact particles hug the moving reveal edge. No long hanging streaks.
+        for index in range(92):
+            px = columns[(index * 11 + index // 4) % len(columns)]
             x_frac = px / max(1, image.width() - 1)
-            x = dest.left() + x_frac * dest.width()
-            phase = (index * 0.173 + t * 0.17) % 1.0
-            length = trail * (0.22 + 0.62 * phase)
-            color = _mix(CYAN, MAGENTA, x_frac)
-            path = QPainterPath(QPointF(x, reveal_y + 1.0))
-            path.lineTo(QPointF(x, reveal_y + length))
-            glow_path(
-                painter,
-                path,
-                color,
-                core=_mix(color, WHITE, 0.48),
-                intensity=0.28 * (1.0 - phase * 0.45),
-                core_width=0.62 + (index % 3) * 0.18,
-                spread=0.48,
-            )
-
-        # Sparkles and tiny data pixels form directly around the moving reveal edge.
-        for index in range(86):
-            px = columns[(index * 11 + index // 5) % len(columns)]
-            x_frac = px / max(1, image.width() - 1)
-            phase = (index * 0.61803398875 + t * (0.13 + (index % 7) * 0.006)) % 1.0
-            jitter = math.sin(index * 2.73 + t * 2.0) * dest.width() * 0.012
-            x = dest.left() + x_frac * dest.width() + jitter
-            y = reveal_y + (phase - 0.14) * trail
-            fade = max(0.0, 1.0 - phase) ** 1.30
-            color = _mix(CYAN, MAGENTA, x_frac)
-            size = 0.9 + (index % 5) * 0.52
-            opacity = 80 + 175 * fade
+            phase = (index * 0.61803398875 + t * (0.19 + (index % 5) * 0.009)) % 1.0
+            jitter_x = math.sin(index * 2.31 + t * 2.6) * dest.width() * 0.015
+            drift_y = (phase - 0.18) * trail
+            x = dest.left() + x_frac * dest.width() + jitter_x
+            y = reveal_y + drift_y
+            fade = max(0.0, 1.0 - phase) ** 1.18
+            color = _spectrum_color(x_frac * 360.0 - 180.0, t)
+            size = 0.85 + (index % 5) * 0.48
+            opacity = 72 + 183 * fade
             painter.setBrush(alpha(color, opacity))
 
-            if index % 6 == 0:
+            if index % 8 == 0:
                 spark = QPainterPath()
-                spark.moveTo(x, y - size * 3.2)
-                spark.lineTo(x + size * 0.58, y - size * 0.58)
-                spark.lineTo(x + size * 3.2, y)
-                spark.lineTo(x + size * 0.58, y + size * 0.58)
-                spark.lineTo(x, y + size * 3.2)
-                spark.lineTo(x - size * 0.58, y + size * 0.58)
-                spark.lineTo(x - size * 3.2, y)
-                spark.lineTo(x - size * 0.58, y - size * 0.58)
+                spark.moveTo(x, y - size * 2.7)
+                spark.lineTo(x + size * 0.52, y - size * 0.52)
+                spark.lineTo(x + size * 2.7, y)
+                spark.lineTo(x + size * 0.52, y + size * 0.52)
+                spark.lineTo(x, y + size * 2.7)
+                spark.lineTo(x - size * 0.52, y + size * 0.52)
+                spark.lineTo(x - size * 2.7, y)
+                spark.lineTo(x - size * 0.52, y - size * 0.52)
                 spark.closeSubpath()
                 painter.drawPath(spark)
-                painter.setBrush(alpha(WHITE, min(255, opacity * 1.12)))
-                painter.drawEllipse(QPointF(x, y), max(0.60, size * 0.34), max(0.60, size * 0.34))
-            elif index % 4 == 0:
+                painter.setBrush(alpha(WHITE, min(255, opacity * 1.10)))
+                painter.drawEllipse(QPointF(x, y), max(0.55, size * 0.30), max(0.55, size * 0.30))
+            elif index % 5 == 0:
+                # Tiny short data fragment, never a long vertical string.
+                painter.setPen(QPen(alpha(color, opacity), max(0.7, size * 0.45), Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
+                painter.drawLine(QPointF(x - size * 1.8, y + size * 0.8), QPointF(x + size * 1.8, y - size * 0.8))
+                painter.setPen(Qt.PenStyle.NoPen)
+            elif index % 3 == 0:
                 painter.drawEllipse(QPointF(x, y), size, size)
             else:
                 painter.drawRect(QRectF(x - size / 2.0, y - size / 2.0, size, size))
 
         painter.restore()
+
 
 class PolymorphLoaderPage(QWidget):
     """Self-contained review page; no production Polymorph runtime is touched."""

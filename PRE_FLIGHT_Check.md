@@ -1,5 +1,16 @@
 # Polymorph Pre-Flight Log
 
+## PFC-2026-09-26-071 — Loader materialization / rune density / animated spectrum pass — CANDIDATE
+
+- PASS asset intent: new `KW_EMBLEM_LOADER_EXACT.svg` is derived directly from Amanda's supplied 3000 × 6000 Blender-vector path and preserves its path data; only presentation styling is normalized to a simple opaque mask.
+- PASS render intent: the SVG is used only for alpha; Qt supplies a fully opaque animated white/neon fill so materialized emblem regions cannot inherit black source fill or red source stroke.
+- PASS particle intent: long hanging data streaks are removed; only compact pixels, starbursts and very short fragments remain near the reveal front.
+- PASS rune intent: inscription band increases density and glyph scale while remaining bounded by two luminous rings.
+- PASS color intent: major animated geometry uses a time-shifted conical cyan/blue/violet/magenta spectrum instead of a fixed side split.
+- PASS geometry intent: prior split scaffolding is replaced with cleaner nested angular frames and limited short rails.
+- PASS isolation by source design: production conversion/framing/adaptive/updater/encoder code is untouched.
+- Pending gate: dedicated Motion Lab source smoke, PyInstaller build, packaged smoke and artifact upload, followed by Amanda's visual review.
+
 ## PFC-2026-09-25-070 — Polymorph loader visual-fidelity second pass — FULL PASS / human visual gate
 
 - PASS asset source: candidate packages the exact conversation-supplied `KW_EMBLEM_PATH.svg` path asset (960 × 1920 viewBox) and loads it directly in the isolated preview.

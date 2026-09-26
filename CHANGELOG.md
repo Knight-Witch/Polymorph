@@ -1,5 +1,18 @@
 # Changelog
 
+## POLY-2026-09-26-071 — Loader materialization / rune density / animated spectrum pass — CANDIDATE
+
+### Summary
+
+- Replaced the loader emblem asset with a cleaned dedicated SVG derived from Amanda's newly supplied Blender-vector path; original path geometry is preserved while source stroke/fill styling is removed.
+- Emblem rendering now treats the SVG strictly as an alpha mask and applies a fully opaque animated white/neon gradient, so revealed portions are solid rather than dark/outlined.
+- Removed the long vertical materialization streak system; the reveal edge now uses compact pixels, starbursts and very short fragments clustered at the moving front.
+- Increased rune count and glyph size while tightening the inscription band between its inner/outer ring boundaries.
+- Replaced the static left/right cyan-magenta split with a slowly rotating cyan/blue/violet/magenta spectrum across progress rings, rune glyphs and angular geometry.
+- Rebuilt the awkward split inner scaffolding as two cleaner nested angular frames with short corner rails and retained restrained side-diamond accents.
+- Changes remain isolated to the standalone Motion Lab preview; production Polymorph remains untouched.
+- Dedicated Motion Lab Windows CI and human visual review are the next gates.
+
 ## POLY-2026-09-25-070 — Polymorph loader visual-fidelity second pass — FULL PASS / human visual gate
 
 ### Summary
