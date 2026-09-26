@@ -1,6 +1,6 @@
 # Changelog
 
-## POLY-2026-09-25-070 — Polymorph loader visual-fidelity second pass — CANDIDATE
+## POLY-2026-09-25-070 — Polymorph loader visual-fidelity second pass — FULL PASS / human visual gate
 
 ### Summary
 
@@ -13,7 +13,10 @@
 - Strengthened the top-to-bottom emblem reveal with denser sparkles plus restrained vertical data-light streaks at the materialization front.
 - Existing Motion Lab scene-builder studies and production Polymorph remain isolated and untouched.
 - Fixed the second-pass source assembly typo found by Motion Lab run #12 source smoke before packaging; no visual design intent changed.
-- Dedicated packaged Motion Lab review remains the next gate.
+- Dedicated `Polymorph Motion Lab Build` run #13 / run ID `36220819410`: **FULL PASS** across source smoke, PyInstaller portable build, packaged Windows smoke and artifact upload.
+- Portable artifact `Polymorph-motion-lab`, artifact ID `10898992118`, size 50,936,267 bytes, digest `sha256:5b42ade50295d5d4e6586bb5e57143e2645b9b13374ee8ca1a3cc3cabf6b1c8a`.
+- Normal Windows Dev Build run #112 again passed all 56 unit tests and then stopped at the already-known upstream FFmpeg 9.0.1 404; no production package stage ran and no loader-preview regression is indicated.
+- Human visual review of the packaged second-pass loader is now the active gate.
 
 ## POLY-2026-09-24-069 — Standalone Polymorph loader preview tab — FULL PASS / human visual gate
 

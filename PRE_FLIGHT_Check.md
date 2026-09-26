@@ -1,6 +1,6 @@
 # Polymorph Pre-Flight Log
 
-## PFC-2026-09-25-070 — Polymorph loader visual-fidelity second pass — CANDIDATE
+## PFC-2026-09-25-070 — Polymorph loader visual-fidelity second pass — FULL PASS / human visual gate
 
 - PASS asset source: candidate packages the exact conversation-supplied `KW_EMBLEM_PATH.svg` path asset (960 × 1920 viewBox) and loads it directly in the isolated preview.
 - PASS isolation by source review: changes are limited to Motion Lab preview code/assets/docs; production conversion, framing, adaptive, updater, encoder and release behavior are untouched.
@@ -8,7 +8,10 @@
 - PASS visual intent: cardinal ornaments are true diamonds rather than square/check-box shapes, with restored top/bottom cascading dot trails and more ornate straight/angled interior geometry.
 - PASS visual intent: exact white emblem materializes top-to-bottom with a denser sparkle/data-light frontier and stronger cyan-to-magenta glow.
 - Run #12 correctly caught a source-assembly syntax typo before packaging; the duplicate class stub was removed with no visual/behavioral design change.
-- Pending gate: dedicated Motion Lab source smoke, PyInstaller build, packaged smoke and artifact upload, followed by Amanda's human visual review.
+- PASS CI: dedicated `Polymorph Motion Lab Build` run #13 / run ID `36220819410` succeeded across source smoke, PyInstaller portable build, packaged Windows smoke and artifact upload.
+- Artifact `Polymorph-motion-lab`, ID `10898992118`, size 50,936,267 bytes, digest `sha256:5b42ade50295d5d4e6586bb5e57143e2645b9b13374ee8ca1a3cc3cabf6b1c8a`.
+- INFO production-build side effect: normal Windows Dev Build run #112 passed all 56 unit tests and then failed at the already-known pinned FFmpeg 9.0.1 external download 404 before package stages.
+- Next gate: Amanda visually reviews the packaged second-pass loader animation.
 
 ## PFC-2026-09-24-069 — Standalone Polymorph loader preview tab — FULL PASS / human visual gate
 

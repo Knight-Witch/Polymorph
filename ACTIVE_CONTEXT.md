@@ -45,9 +45,9 @@ Do not preload engine/history files unless the current task actually needs them.
 - First preview pass was rejected visually because it did not use the newly re-supplied exact emblem and diverged too far from the approved still mockup.
 - Second-pass candidate uses the supplied `KW_EMBLEM_PATH.svg` path asset directly, keeps the emblem white, puts rotating runes inside a two-ring band, uses a third continuous outer progress ring, restores ornate angled mockup geometry and decorative nodes/dot trails, increases neon saturation/glow, and strengthens the top-to-bottom sparkle materialization front. Motion Lab run #12 caught a source-assembly syntax typo before packaging; that duplicate class stub is now removed.
 - Existing scene-builder studies/presets remain separate.
-- Dedicated Motion Lab run #11 / run ID `36098491868`: **FULL PASS** (source smoke, PyInstaller build, packaged smoke, artifact upload).
-- Artifact `Polymorph-motion-lab`, ID `10848177893`, size 50,903,007 bytes, digest `sha256:df052b79f4dfa6fb3c5a586455bf0a0bfa2ea0de9def00291621cac1b975b2d1`.
-- Normal Windows Dev Build run #110 / run ID `36098491841` was triggered by the `src/**` path filter and failed only while fetching the pinned external FFmpeg 9.0.1 archive because the upstream `gyan.dev` URL returned 404. All 56 unit tests passed before that external-download failure; no production package stage ran. This is not evidence of a loader-preview regression, and protected production run #109 remains the last full production PASS.
+- Dedicated Motion Lab run #13 / run ID `36220819410`: **FULL PASS** for the second-pass loader candidate (source smoke, PyInstaller build, packaged smoke, artifact upload).
+- Artifact `Polymorph-motion-lab`, ID `10898992118`, size 50,936,267 bytes, digest `sha256:5b42ade50295d5d4e6586bb5e57143e2645b9b13374ee8ca1a3cc3cabf6b1c8a`.
+- Normal Windows Dev Build run #112 / run ID `36220819411` was again triggered by the `src/**` path filter and again failed only at the pinned external FFmpeg 9.0.1 download after all 56 unit tests passed. No production package stage ran; protected production run #109 remains the last full production PASS.
 
 ## Protected PASS state — do not reopen without new evidence
 
@@ -58,7 +58,7 @@ Do not preload engine/history files unless the current task actually needs them.
 
 ## Next gate
 
-1. Build the second-pass loader preview through the dedicated Motion Lab Windows workflow, then Amanda reviews the packaged tab for fidelity to the approved still mockup and exact emblem.
+1. Amanda reviews the packaged second-pass `Polymorph Loader Preview` from Motion Lab run #13 for fidelity to the approved still mockup and exact emblem.
 2. Preserve all existing scene-builder workspace values and controls during loader-preview tuning.
 3. Treat the external FFmpeg 404 in normal Windows Dev Build run #110 as separate build-infrastructure evidence; do not broaden the loader-preview task into production toolchain repair unless explicitly requested.
 4. Do not integrate the new loader into production Polymorph, promote to `main`, or create a public release without a separate explicit decision.
