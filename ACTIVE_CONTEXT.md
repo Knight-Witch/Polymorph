@@ -32,7 +32,7 @@ Do not preload engine/history files unless the current task actually needs them.
 - Production app/conversion source remains untouched by Motion Lab visual-tuning work.
 - No public release exists; `main` remains non-experimental.
 
-## Motion Lab current state — loader-preview candidate / human visual gate
+## Motion Lab current state — loader-preview FULL PASS / human visual gate
 
 - v7 implementation commit `06750079ee2dfa837a56600011367f16cb87646b` previously passed dedicated Motion Lab run #9 / run ID `35060729400` and normal Windows Dev Build run #109.
 - Readability implementation commit: `845b029df1027bf6f4fac2a3a346c5d04d32d134`.
@@ -45,7 +45,11 @@ Do not preload engine/history files unless the current task actually needs them.
 - First preview pass was rejected visually because it did not use the newly re-supplied exact emblem and diverged too far from the approved still mockup.
 - Second-pass candidate uses the supplied `KW_EMBLEM_PATH.svg` path asset directly, keeps the emblem white, puts rotating runes inside a two-ring band, uses a third continuous outer progress ring, restores ornate angled mockup geometry and decorative nodes/dot trails, increases neon saturation/glow, and strengthens the top-to-bottom sparkle materialization front. Motion Lab run #12 caught a source-assembly syntax typo before packaging; that duplicate class stub is now removed.
 - Existing scene-builder studies/presets remain separate.
-- Dedicated Motion Lab run #13 / run ID `36220819410`: **FULL PASS** for the second-pass loader candidate (source smoke, PyInstaller build, packaged smoke, artifact upload).
+- Third-pass implementation commit `aa6e91c9eb137b73923a70b1f7fb5fc76905bf38` uses the newly supplied Blender-vector emblem path as a dedicated clean mask, solid animated emblem fill, compact reveal particles, denser/larger rune band, moving full-sigil spectrum, and cleaner nested angular frames.
+- Dedicated Motion Lab run #14 / run ID `36226971648`: **FULL PASS** for the third-pass loader candidate (source smoke, PyInstaller build, packaged smoke, artifact upload).
+- Artifact `Polymorph-motion-lab`, ID `10900393943`, size 50,937,862 bytes, digest `sha256:b7bb6b363f8e5509b3fd3aefc38f197ebb420364477649820dcf7c3fbbbfceb8`.
+- Normal Windows Dev Build run #113 / run ID `36226971451` passed all 56 unit tests and then failed only at the already-known pinned external FFmpeg 9.0.1 download 404 before production package stages; protected production run #109 remains the last full production PASS.
+- Dedicated Motion Lab run #13 / run ID `36220819410`: **FULL PASS** for the prior second-pass loader candidate (source smoke, PyInstaller build, packaged smoke, artifact upload).
 - Artifact `Polymorph-motion-lab`, ID `10898992118`, size 50,936,267 bytes, digest `sha256:5b42ade50295d5d4e6586bb5e57143e2645b9b13374ee8ca1a3cc3cabf6b1c8a`.
 - Normal Windows Dev Build run #112 / run ID `36220819411` was again triggered by the `src/**` path filter and again failed only at the pinned external FFmpeg 9.0.1 download after all 56 unit tests passed. No production package stage ran; protected production run #109 remains the last full production PASS.
 
@@ -58,7 +62,7 @@ Do not preload engine/history files unless the current task actually needs them.
 
 ## Next gate
 
-1. Build the third-pass `Polymorph Loader Preview` through the dedicated Motion Lab workflow, then Amanda reviews the packaged result for solid emblem fill, particle behavior, denser rune band, animated color movement and cleaner inner geometry.
+1. Amanda reviews the packaged third-pass `Polymorph Loader Preview` from Motion Lab run #14 for solid emblem fill, particle behavior, denser rune band, animated color movement and cleaner inner geometry.
 2. Preserve all existing scene-builder workspace values and controls during loader-preview tuning.
 3. Treat the external FFmpeg 404 in normal Windows Dev Build run #110 as separate build-infrastructure evidence; do not broaden the loader-preview task into production toolchain repair unless explicitly requested.
 4. Do not integrate the new loader into production Polymorph, promote to `main`, or create a public release without a separate explicit decision.

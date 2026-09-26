@@ -1,6 +1,6 @@
 # Polymorph Pre-Flight Log
 
-## PFC-2026-09-26-071 — Loader materialization / rune density / animated spectrum pass — CANDIDATE
+## PFC-2026-09-26-071 — Loader materialization / rune density / animated spectrum pass — FULL PASS / human visual gate
 
 - PASS asset intent: new `KW_EMBLEM_LOADER_EXACT.svg` is derived directly from Amanda's supplied 3000 × 6000 Blender-vector path and preserves its path data; only presentation styling is normalized to a simple opaque mask.
 - PASS render intent: the SVG is used only for alpha; Qt supplies a fully opaque animated white/neon fill so materialized emblem regions cannot inherit black source fill or red source stroke.
@@ -9,7 +9,10 @@
 - PASS color intent: major animated geometry uses a time-shifted conical cyan/blue/violet/magenta spectrum instead of a fixed side split.
 - PASS geometry intent: prior split scaffolding is replaced with cleaner nested angular frames and limited short rails.
 - PASS isolation by source design: production conversion/framing/adaptive/updater/encoder code is untouched.
-- Pending gate: dedicated Motion Lab source smoke, PyInstaller build, packaged smoke and artifact upload, followed by Amanda's visual review.
+- PASS CI: dedicated `Polymorph Motion Lab Build` run #14 / run ID `36226971648` succeeded across source smoke, PyInstaller portable build, packaged Windows smoke and artifact upload.
+- Artifact `Polymorph-motion-lab`, ID `10900393943`, size 50,937,862 bytes, digest `sha256:b7bb6b363f8e5509b3fd3aefc38f197ebb420364477649820dcf7c3fbbbfceb8`.
+- INFO production-build side effect: normal Windows Dev Build run #113 passed all 56 unit tests and then failed at the already-known pinned FFmpeg 9.0.1 external download 404 before package stages.
+- Next gate: Amanda visually reviews the packaged third-pass loader animation.
 
 ## PFC-2026-09-25-070 — Polymorph loader visual-fidelity second pass — FULL PASS / human visual gate
 

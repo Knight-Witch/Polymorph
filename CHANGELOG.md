@@ -1,6 +1,6 @@
 # Changelog
 
-## POLY-2026-09-26-071 — Loader materialization / rune density / animated spectrum pass — CANDIDATE
+## POLY-2026-09-26-071 — Loader materialization / rune density / animated spectrum pass — FULL PASS / human visual gate
 
 ### Summary
 
@@ -11,7 +11,10 @@
 - Replaced the static left/right cyan-magenta split with a slowly rotating cyan/blue/violet/magenta spectrum across progress rings, rune glyphs and angular geometry.
 - Rebuilt the awkward split inner scaffolding as two cleaner nested angular frames with short corner rails and retained restrained side-diamond accents.
 - Changes remain isolated to the standalone Motion Lab preview; production Polymorph remains untouched.
-- Dedicated Motion Lab Windows CI and human visual review are the next gates.
+- Dedicated `Polymorph Motion Lab Build` run #14 / run ID `36226971648`: **FULL PASS** across source smoke, PyInstaller portable build, packaged Windows smoke and artifact upload.
+- Portable artifact `Polymorph-motion-lab`, artifact ID `10900393943`, size 50,937,862 bytes, digest `sha256:b7bb6b363f8e5509b3fd3aefc38f197ebb420364477649820dcf7c3fbbbfceb8`.
+- Normal Windows Dev Build run #113 passed all 56 unit tests and then stopped at the existing upstream FFmpeg 9.0.1 404 before package stages; no loader-preview regression is indicated.
+- Human visual review of the packaged third-pass loader is now the active gate.
 
 ## POLY-2026-09-25-070 — Polymorph loader visual-fidelity second pass — FULL PASS / human visual gate
 
