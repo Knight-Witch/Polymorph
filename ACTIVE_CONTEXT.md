@@ -43,7 +43,7 @@ Do not preload engine/history files unless the current task actually needs them.
   - the grey/unfilled slider track is removed; unused slider area is transparent while the active red fill and ivory handle remain.
 - No element values, presets, motion behavior, animation timing, loader geometry or production code were changed by the prior readability pass.
 - First preview pass was rejected visually because it did not use the newly re-supplied exact emblem and diverged too far from the approved still mockup.
-- Second-pass candidate uses the supplied `KW_EMBLEM_PATH.svg` path asset directly, keeps the emblem white, puts rotating runes inside a two-ring band, uses a third continuous outer progress ring, restores ornate angled mockup geometry and decorative nodes/dot trails, increases neon saturation/glow, and strengthens the top-to-bottom sparkle materialization front.
+- Second-pass candidate uses the supplied `KW_EMBLEM_PATH.svg` path asset directly, keeps the emblem white, puts rotating runes inside a two-ring band, uses a third continuous outer progress ring, restores ornate angled mockup geometry and decorative nodes/dot trails, increases neon saturation/glow, and strengthens the top-to-bottom sparkle materialization front. Motion Lab run #12 caught a source-assembly syntax typo before packaging; that duplicate class stub is now removed.
 - Existing scene-builder studies/presets remain separate.
 - Dedicated Motion Lab run #11 / run ID `36098491868`: **FULL PASS** (source smoke, PyInstaller build, packaged smoke, artifact upload).
 - Artifact `Polymorph-motion-lab`, ID `10848177893`, size 50,903,007 bytes, digest `sha256:df052b79f4dfa6fb3c5a586455bf0a0bfa2ea0de9def00291621cac1b975b2d1`.

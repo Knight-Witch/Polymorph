@@ -7,6 +7,7 @@
 - PASS visual intent: runes sit between two luminous rings; the third/outer ring is a single continuous progress arc.
 - PASS visual intent: cardinal ornaments are true diamonds rather than square/check-box shapes, with restored top/bottom cascading dot trails and more ornate straight/angled interior geometry.
 - PASS visual intent: exact white emblem materializes top-to-bottom with a denser sparkle/data-light frontier and stronger cyan-to-magenta glow.
+- Run #12 correctly caught a source-assembly syntax typo before packaging; the duplicate class stub was removed with no visual/behavioral design change.
 - Pending gate: dedicated Motion Lab source smoke, PyInstaller build, packaged smoke and artifact upload, followed by Amanda's human visual review.
 
 ## PFC-2026-09-24-069 — Standalone Polymorph loader preview tab — FULL PASS / human visual gate

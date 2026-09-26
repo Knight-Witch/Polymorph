@@ -119,8 +119,6 @@ def _polyline(points: list[QPointF]) -> QPainterPath:
     return path
 
 
-class PolymorphLoaderPreview
-
 class PolymorphLoaderPreview(ArcaneLoaderBase):
     """Standalone visual prototype for the deferred Polymorph working animation."""
 

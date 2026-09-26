@@ -12,7 +12,8 @@
 - Rebuilt the center framing as a more ornate angular cyber-arcane structure closer to the approved still mockup, including larger true-diamond cardinal nodes, side tech stubs, paired mini-diamonds and cascading top/bottom dot trails.
 - Strengthened the top-to-bottom emblem reveal with denser sparkles plus restrained vertical data-light streaks at the materialization front.
 - Existing Motion Lab scene-builder studies and production Polymorph remain isolated and untouched.
-- Dedicated packaged Motion Lab review is the next gate.
+- Fixed the second-pass source assembly typo found by Motion Lab run #12 source smoke before packaging; no visual design intent changed.
+- Dedicated packaged Motion Lab review remains the next gate.
 
 ## POLY-2026-09-24-069 — Standalone Polymorph loader preview tab — FULL PASS / human visual gate
 
