@@ -18,14 +18,12 @@ Polymorph 0.1.0 is the first public release of Knight Witch's Windows media-conv
 ## Install
 
 Download the official release assets:
-
 - `Polymorph_Setup_v0.1.0.exe`
 - `Polymorph_Setup_v0.1.0.exe.sha256`
 
 Polymorph 0.1.0 is unsigned. Windows SmartScreen may therefore display an **Unknown Publisher** warning. Verify the installer against the SHA-256 file published alongside it if desired.
 
 ## Supported platform
-
 - 64-bit Windows 10
 - 64-bit Windows 11
 
@@ -51,9 +49,9 @@ Preview and export use the same framing geometry.
 
 ## Privacy
 
-Polymorph performs conversion locally on your computer. It does not upload source media, require an account, or include telemetry.
-
-The update checker contacts the official GitHub Releases API for `Knight-Witch/Polymorph` only.
+Polymorph performs conversion locally on your computer. It does not upload source media, require an account, include telemetry or unnecessary bloat.
+- This program contains ONLY the Polymorph application and its required runtime/support components (codecs, UI loader/dist. framework, installer,  etc).
+- The update checker contacts the official GitHub Releases API for `Knight-Witch/Polymorph` only.
 
 ## Source and licensing
 
