@@ -1,6 +1,6 @@
 # Third-Party Source Availability
 
-Polymorph 0.1.0 bundles or invokes third-party components under their own licenses. This file identifies the source corresponding to the public Windows release. These third-party rights are separate from the Knight Witch Community Source License that applies to Polymorph's own code and first-party assets.
+Polymorph 0.1.0 bundles or invokes third-party components under their own licenses. This file identifies the exact source corresponding to the Windows release. These third-party rights are separate from the Knight Witch Community Source License that applies to Polymorph's own code and first-party assets.
 
 ## FFmpeg / ffprobe 9.0.1
 
@@ -13,7 +13,7 @@ Polymorph ships the checksum-pinned Gyan Essentials build used by the validated 
 - Upstream project: https://ffmpeg.org/
 - License used by the bundled build: GPLv3
 
-The public `v0.1.0` GitHub Release will also attach an FFmpeg source archive for the source revision identified above.
+The public `v0.1.0` release also attaches an FFmpeg source archive for the source revision identified above.
 
 ## gifski 1.32.0
 
@@ -22,7 +22,7 @@ The public `v0.1.0` GitHub Release will also attach an FFmpeg source archive for
 - Upstream source tag: https://github.com/ImageOptim/gifski/tree/1.32.0
 - License: AGPL-3.0-or-later
 
-The public `v0.1.0` GitHub Release will also attach the exact Cargo source package used for this version.
+The public `v0.1.0` release also attaches the exact Cargo source package used for this version.
 
 ## PySide6 / Qt for Python 6.11.2
 
@@ -64,6 +64,10 @@ Polymorph Regular and Polymorph Bold are original first-party Knight Witch typef
 
 ## Build-only installer compiler
 
-The Windows release build uses Inno Setup 6.4.3. Inno Setup is used only to produce the installer and is not bundled as part of Polymorph.
+The Windows release pipeline uses NSIS 3.12.0. NSIS is used only to produce the installer and is not bundled as part of Polymorph.
 
-For the complete component inventory and purposes, see `THIRD_PARTY.md`. Full license texts used by the packaged release are installed with the application.
+- Project: https://nsis.sourceforge.io/
+- Version: `3.12.0`
+- License documentation: https://nsis.sourceforge.io/Docs/AppendixI.html
+
+For the complete component inventory and purposes, see `THIRD_PARTY.md`. Full license texts used by the packaged release are installed under the application's `licenses` directory.
