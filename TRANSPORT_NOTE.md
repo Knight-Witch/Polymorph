@@ -1,0 +1,1 @@
+This staging repository receives curated source from the private engineering repository only after full validation. This note will be replaced by the source export commit.
