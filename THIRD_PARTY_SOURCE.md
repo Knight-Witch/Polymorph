@@ -1,6 +1,6 @@
 # Third-Party Source Availability
 
-Polymorph 0.1.0 bundles or invokes third-party components under their own licenses. This file identifies the source corresponding to the public Windows release. These third-party rights are separate from the Knight Witch Community Source License that applies to Polymorph's own code.
+Polymorph 0.1.0 bundles or invokes third-party components under their own licenses. This file identifies the source corresponding to the public Windows release. These third-party rights are separate from the Knight Witch Community Source License that applies to Polymorph's own code and first-party assets.
 
 ## FFmpeg / ffprobe 9.0.1
 
@@ -60,7 +60,7 @@ The Windows CPython 3.12.10 distribution bundles OpenSSL 3.0.16.
 
 Cinzel and Inter are distributed under the SIL Open Font License 1.1 and their OFL texts ship with the application. Lucide attribution/license text ships with the application. Simple Icons artwork is CC0 1.0; third-party brand names and logos remain subject to their respective trademark rights.
 
-The Polymorph display-font assets are being reviewed separately for redistribution/embedding rights before the public release is finalized. They are not relicensed by the third-party licenses listed here.
+Polymorph Regular and Polymorph Bold are original first-party Knight Witch typefaces owned by Amanda Ivans / Knight Witch. Their packaged subsets are covered by the main Knight Witch Community Source License v1.0 rather than a separate third-party font license. See `FIRST_PARTY_ASSETS.md`.
 
 ## Build-only installer compiler
 
