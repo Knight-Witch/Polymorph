@@ -38,6 +38,8 @@ def choose_reference_next_scale(
     if current_size > max_bytes:
         ratio = math.sqrt(target_bytes / current_size)
         proposed = current_scale * ratio * 0.985
+
+        # Preserve the standalone's guaranteed meaningful downward move.
         proposed = min(proposed, current_scale * 0.96)
 
         if passed_scale is not None:
@@ -49,8 +51,10 @@ def choose_reference_next_scale(
         return None
 
     if failed_scale is None:
+        # A full-size pass cannot be improved by increasing resolution.
         return None
 
+    # Reclaim resolution without crossing the known failing scale.
     ratio = math.sqrt(target_bytes / max(current_size, 1))
     predicted = current_scale * ratio * 0.985
     midpoint = (current_scale + failed_scale) / 2.0

@@ -54,10 +54,16 @@ def native_geometry_for_size(sw: int, sh: int, framing: FramingSettings) -> Fram
     if framing.mode is FramingMode.CROP:
         zoom = max(1.0, float(framing.zoom or 1.0))
         if source_ratio > ratio:
+            # Source is wider than the requested canvas. Height is the limiting
+            # dimension at 1x; zoom reduces both crop dimensions proportionally.
             ch = min(sh, even(sh / zoom))
             cw = min(sw, even(ch * ratio))
+            # Re-derive height after even rounding so the crop stays as close as
+            # possible to the requested ratio without exceeding the source.
             ch = min(sh, even(cw / ratio))
         else:
+            # Source is taller/narrower than the requested canvas. Width is the
+            # limiting dimension at 1x; zoom again reduces both dimensions.
             cw = min(sw, even(sw / zoom))
             ch = min(sh, even(cw / ratio))
             cw = min(sw, even(ch * ratio))

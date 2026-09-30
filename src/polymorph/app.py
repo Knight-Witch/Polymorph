@@ -28,12 +28,10 @@ def main() -> int:
     app.setApplicationName("Polymorph")
     app.setOrganizationName("Knight Witch")
     load_brand_fonts(app)
-
     window = MainWindow()
     rebuild_brand_layout(window)
     apply_brand_skin(window)
     window.show()
-
     cli_files = [Path(arg) for arg in sys.argv[1:] if Path(arg).suffix.lower() == ".webp"]
     if cli_files:
         window._add_files(cli_files)

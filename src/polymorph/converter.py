@@ -124,6 +124,8 @@ class Converter:
                 progress,
             )
 
+        # MP4 sizing is already human-validated. Keep its existing search exactly
+        # as-is while GIF adopts the patched standalone's proven smart-fit logic.
         return self._encode_mp4_to_size(
             info,
             settings,
@@ -206,6 +208,8 @@ class Converter:
 
                 scale = next_scale
 
+            # Preserve the standalone's emergency path for unusually large/long
+            # sources. This is only reached if none of the normal six passes fit.
             if best is None:
                 scale = min(scale, minimum_scale)
                 emergency_index = 0
