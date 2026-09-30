@@ -44,7 +44,7 @@ Polymorph bundles or invokes third-party software under licenses separate from t
 
 ## Polymorph Regular / Bold
 
-Polymorph Regular and Polymorph Bold are original first-party typefaces owned by Amanda Ivans / Knight Witch. They are covered by the project's main Knight Witch Community Source License v1.0 rather than a third-party font license. See `FIRST_PARTY_ASSETS.md`.
+Polymorph Regular and Polymorph Bold are original first-party custom typefaces. They are covered by the project's main Knight Witch Community Source License v1.0 rather than a third-party font license. See `FIRST_PARTY_ASSETS.md`.
 
 ## Inter and Cinzel
 
