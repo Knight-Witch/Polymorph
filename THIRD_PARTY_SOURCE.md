@@ -60,7 +60,7 @@ The Windows CPython 3.12.10 distribution bundles OpenSSL 3.0.16.
 
 Cinzel and Inter are distributed under the SIL Open Font License 1.1 and their OFL texts ship with the application. Lucide attribution/license text ships with the application. Simple Icons artwork is CC0 1.0; third-party brand names and logos remain subject to their respective trademark rights.
 
-Knight Witch's Polymorph display-font assets are covered separately by the project's own rights and are not relicensed by the third-party licenses listed here.
+The Polymorph display-font assets are being reviewed separately for redistribution/embedding rights before the public release is finalized. They are not relicensed by the third-party licenses listed here.
 
 ## Build-only installer compiler
 
