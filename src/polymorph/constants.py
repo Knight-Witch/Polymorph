@@ -18,7 +18,7 @@ FILE_SIZE_HEADROOM = 0.97
 MAX_SIZE_PASSES = 6
 MIN_SCALE = 0.10
 
-SUPPORTED_INPUT_EXTENSIONS = {".webp"}
+SUPPORTED_INPUT_EXTENSIONS = {".webp", ".mp4"}
 
 RATIO_PRESETS: list[tuple[str, float | None]] = [
     ("Original", None),

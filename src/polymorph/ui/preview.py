@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import QPoint, QRect, QRectF, Qt, Signal
+from PySide6.QtCore import QPoint, QRect, QRectF, Qt, QUrl, Signal
 from PySide6.QtGui import QColor, QFont, QMovie, QPainter, QPen, QPixmap
+from PySide6.QtMultimedia import QMediaPlayer, QVideoFrame, QVideoSink
 from PySide6.QtWidgets import QWidget
 
 from ..geometry import native_geometry_for_size
@@ -19,34 +20,48 @@ class AnimatedPreview(QWidget):
         self.setMinimumSize(420, 320)
         self.setAcceptDrops(False)
         self._movie: QMovie | None = None
+        self._player = QMediaPlayer(self)
+        self._video_sink = QVideoSink(self)
+        self._player.setVideoOutput(self._video_sink)
+        self._video_sink.videoFrameChanged.connect(self._on_video_frame)
+        self._player.positionChanged.connect(self._on_video_position)
+        self._player.durationChanged.connect(self._on_video_duration)
+        self._player.playbackStateChanged.connect(lambda _state: self._emit_playback())
         self._pixmap = QPixmap()
         self._framing = FramingSettings()
         self._drag_origin: QPoint | None = None
         self._drag_start_offsets = (0.0, 0.0)
-        self._empty_text = "Drop animated WebP files here"
+        self._empty_text = "Drop animated WebP or MP4 files here"
         self._frame_count = 0
         self._duration_ms = 0
         self._frame_durations_ms: list[int] = []
         self._frame_offsets_ms: list[int] = []
         self._current_frame = 0
+        self._video_source = False
 
     def set_source(self, path: Path | None) -> None:
         if self._movie:
             self._movie.stop()
             self._movie.deleteLater()
             self._movie = None
+        self._player.stop()
+        self._player.setSource(QUrl())
+        self._video_source = False
         self._pixmap = QPixmap()
         self._current_frame = 0
+
         if path:
-            movie = QMovie(str(path))
-            # CacheAll proved capable of stalling the frozen/offscreen Qt path.
-            # CacheNone was already stable in production preview builds and still
-            # supports frame seeking for animated WebP without retaining the full
-            # loop in memory.
-            movie.setCacheMode(QMovie.CacheMode.CacheNone)
-            movie.frameChanged.connect(self._on_frame)
-            self._movie = movie
-            movie.start()
+            path = Path(path)
+            if path.suffix.lower() == ".mp4":
+                self._video_source = True
+                self._player.setSource(QUrl.fromLocalFile(str(path)))
+                self._player.play()
+            else:
+                movie = QMovie(str(path))
+                movie.setCacheMode(QMovie.CacheMode.CacheNone)
+                movie.frameChanged.connect(self._on_frame)
+                self._movie = movie
+                movie.start()
         else:
             self._frame_count = 0
             self._duration_ms = 0
@@ -64,7 +79,7 @@ class AnimatedPreview(QWidget):
         self._frame_count = max(0, int(frame_count))
         self._duration_ms = max(0, int(round(float(duration_s) * 1000.0)))
         durations = [max(1, int(value)) for value in (frame_durations_ms or [])]
-        if self._frame_count and len(durations) != self._frame_count:
+        if durations and self._frame_count and len(durations) != self._frame_count:
             average = max(1, round(self._duration_ms / self._frame_count)) if self._duration_ms else 40
             durations = [average] * self._frame_count
         self._frame_durations_ms = durations
@@ -76,6 +91,7 @@ class AnimatedPreview(QWidget):
         self._frame_offsets_ms = offsets
         if not self._duration_ms and elapsed:
             self._duration_ms = elapsed
+        self._sync_video_frame_from_position()
         self._emit_playback()
         self.update()
 
@@ -84,6 +100,14 @@ class AnimatedPreview(QWidget):
         self.update()
 
     def toggle_playback(self) -> None:
+        if self._video_source:
+            if self._player.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
+                self._player.pause()
+            else:
+                self._player.play()
+            self._emit_playback()
+            return
+
         movie = self._movie
         if movie is None or not movie.isValid():
             return
@@ -96,16 +120,26 @@ class AnimatedPreview(QWidget):
         self._emit_playback()
 
     def seek_frame(self, frame_index: int) -> bool:
-        movie = self._movie
-        if movie is None or not movie.isValid():
-            return False
         total = self.total_frames()
         if total <= 0:
             return False
         target = max(0, min(total - 1, int(frame_index)))
 
-        # Scrubbing should be deterministic. Pause the movie before jumping so
-        # the playback timer cannot advance concurrently with the requested seek.
+        if self._video_source:
+            if self._player.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
+                self._player.pause()
+            duration = self._duration_ms or self._player.duration()
+            if duration <= 0:
+                return False
+            position = round((target / max(1, total - 1)) * duration)
+            self._player.setPosition(position)
+            self._current_frame = target
+            self._emit_playback()
+            return True
+
+        movie = self._movie
+        if movie is None or not movie.isValid():
+            return False
         if movie.state() == QMovie.MovieState.Running:
             movie.setPaused(True)
         ok = movie.jumpToFrame(target)
@@ -133,9 +167,14 @@ class AnimatedPreview(QWidget):
         return 0
 
     def duration_seconds(self) -> float:
-        return self._duration_ms / 1000.0
+        duration = self._duration_ms
+        if self._video_source and self._player.duration() > 0:
+            duration = self._player.duration()
+        return duration / 1000.0
 
     def current_seconds(self) -> float:
+        if self._video_source:
+            return max(0, self._player.position()) / 1000.0
         if self._frame_offsets_ms and 0 <= self._current_frame < len(self._frame_offsets_ms):
             return self._frame_offsets_ms[self._current_frame] / 1000.0
         total = self.total_frames()
@@ -144,6 +183,8 @@ class AnimatedPreview(QWidget):
         return 0.0
 
     def is_playing(self) -> bool:
+        if self._video_source:
+            return self._player.playbackState() == QMediaPlayer.PlaybackState.PlayingState
         return self._movie is not None and self._movie.state() == QMovie.MovieState.Running
 
     def _on_frame(self, index: int) -> None:
@@ -152,6 +193,39 @@ class AnimatedPreview(QWidget):
             self._pixmap = self._movie.currentPixmap()
             self._emit_playback()
             self.update()
+
+    def _on_video_frame(self, frame: QVideoFrame) -> None:
+        if not frame.isValid():
+            return
+        image = frame.toImage()
+        if image.isNull():
+            return
+        self._pixmap = QPixmap.fromImage(image)
+        self._sync_video_frame_from_position()
+        self._emit_playback()
+        self.update()
+
+    def _on_video_position(self, _position: int) -> None:
+        self._sync_video_frame_from_position()
+        self._emit_playback()
+        self.update()
+
+    def _on_video_duration(self, duration_ms: int) -> None:
+        if self._video_source and duration_ms > 0 and self._duration_ms <= 0:
+            self._duration_ms = int(duration_ms)
+        self._sync_video_frame_from_position()
+        self._emit_playback()
+
+    def _sync_video_frame_from_position(self) -> None:
+        if not self._video_source:
+            return
+        total = self.total_frames()
+        duration = self._duration_ms or self._player.duration()
+        if total <= 1 or duration <= 0:
+            self._current_frame = 0
+            return
+        fraction = max(0.0, min(1.0, self._player.position() / duration))
+        self._current_frame = min(total - 1, round(fraction * (total - 1)))
 
     def _emit_playback(self) -> None:
         self.playbackChanged.emit(
@@ -165,8 +239,6 @@ class AnimatedPreview(QWidget):
     def paintEvent(self, _event) -> None:
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
-        # Match the parent preview card instead of creating a visibly separate gray
-        # panel inside it. Only the actual media receives its own tight border.
         painter.fillRect(self.rect(), QColor("#070809"))
 
         inner = self.rect().adjusted(5, 5, -5, -5)

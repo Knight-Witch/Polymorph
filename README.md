@@ -2,13 +2,13 @@
 
 **Media conversion magic by Knight Witch™**
 
-Polymorph is a Windows desktop utility for converting animated WebP media into high-quality GIF or MP4 output, with file-size targeting, framing controls, and a live animated preview.
+Polymorph is a Windows desktop utility for converting animated WebP and MP4 media into high-quality GIF or MP4 output, with file-size targeting, framing controls, and a live animated preview.
 
 Everything runs locally on your PC. Polymorph does not upload your media to a cloud service and does not include telemetry.
 
 ## What Polymorph does
 
-- Converts animated WebP to GIF or MP4.
+- Accepts animated WebP and MP4 input and converts either to GIF or MP4.
 - Preserves source animation timing by default.
 - Offers an optional **Favor Resolution** GIF mode that can retain fewer original source frames only when measured encoding results show a worthwhile resolution gain.
 - Targets a maximum output size in decimal MB or lets you choose exact output dimensions.
@@ -36,7 +36,7 @@ Polymorph 0.1.0 is currently unsigned, so Windows SmartScreen may show an **Unkn
 
 ## Basic use
 
-1. Add one or more animated WebP files.
+1. Add one or more animated WebP or MP4 files.
 2. Choose GIF or MP4.
 3. Choose a sizing mode:
    - **Fit under file size** — Polymorph adjusts spatial resolution to stay under the requested limit.

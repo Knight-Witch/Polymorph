@@ -2,6 +2,9 @@ Unicode true
 
 !include "MUI2.nsh"
 
+!define MUI_ICON "..\build\polymorph.ico"
+!define MUI_UNICON "..\build\polymorph.ico"
+
 !define APP_NAME "Polymorph"
 !define APP_VERSION "0.1.0"
 !define APP_PUBLISHER "Knight Witch"
@@ -16,9 +19,6 @@ InstallDirRegKey HKCU "${UNINSTALL_KEY}" "InstallLocation"
 RequestExecutionLevel user
 SetCompressor /SOLID lzma
 SetCompressorDictSize 32
-
-Icon "..\build\polymorph.ico"
-UninstallIcon "..\build\polymorph.ico"
 
 VIProductVersion "0.1.0.0"
 VIAddVersionKey /LANG=1033 "ProductName" "${APP_NAME}"

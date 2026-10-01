@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "polymorph-media"
 version = "0.1.0"
-description = "Simple high-quality animated WebP conversion and framing utility"
+description = "Simple high-quality animated WebP and MP4 conversion and framing utility"
 requires-python = ">=3.11"
 dependencies = [
   "PySide6==6.11.2",

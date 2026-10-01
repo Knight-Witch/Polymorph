@@ -5,6 +5,7 @@ from pathlib import Path
 
 from PySide6.QtWidgets import QApplication
 
+from .constants import SUPPORTED_INPUT_EXTENSIONS
 from .ui.visual_patch import install_visual_patch
 from .ui.button_motion_patch import install_button_motion_patch
 from .ui.button_motion import install_button_motion
@@ -16,6 +17,14 @@ install_button_motion_patch()
 install_button_motion()
 install_compact_status_patch()
 install_final_polish_patch()
+
+from .gif_fidelity import install_gif_fidelity_patch
+
+install_gif_fidelity_patch()
+
+from .ui.media_input import install_media_input_support
+
+install_media_input_support()
 
 from .ui.adaptive_main_window import MainWindow
 from .ui.branded_layout import rebuild_brand_layout
@@ -32,7 +41,11 @@ def main() -> int:
     rebuild_brand_layout(window)
     apply_brand_skin(window)
     window.show()
-    cli_files = [Path(arg) for arg in sys.argv[1:] if Path(arg).suffix.lower() == ".webp"]
+    cli_files = [
+        Path(arg)
+        for arg in sys.argv[1:]
+        if Path(arg).suffix.lower() in SUPPORTED_INPUT_EXTENSIONS
+    ]
     if cli_files:
         window._add_files(cli_files)
     return app.exec()

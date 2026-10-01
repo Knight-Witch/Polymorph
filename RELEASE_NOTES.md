@@ -1,11 +1,12 @@
 # Polymorph 0.1.0
 
-Polymorph 0.1.0 is the first public release of Knight Witch's Windows media-conversion utility for animated WebP workflows.
+Polymorph 0.1.0 is the first public release of Knight Witch's Windows media-conversion utility for animated WebP and MP4 workflows.
 
 ## Highlights
 
-- Animated WebP input.
+- Animated WebP and MP4 input.
 - High-quality GIF output with preserved source timing by default.
+- High-fidelity MP4-to-GIF color handling for source-consistent output.
 - MP4 output for platforms that support video.
 - File-size targeting using spatial-resolution adjustment rather than silently lowering quality.
 - Optional **Favor Resolution** GIF mode that may retain fewer original source frames only when measured results show a worthwhile resolution gain.
