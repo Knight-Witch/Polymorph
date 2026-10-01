@@ -1,23 +1,29 @@
 # Polymorph
 
-**Media conversion magic by Knight Witch™**
+**Polymorph 0.1.0** is the first public release of Knight Witch's Windows media-conversion utility for animated WebP workflows. This project was created with the primary intent to serve the _Heroforge_ community and provide users with a tool to convert high res WebP captures into near-lossless GIF and MP4 conversions. While Heroforge was the initial spark to making this, the app can be used for anything you like. 
+- **Reddit** treats animated WebP as static images once you hit the submit button on a post. As a result, only GIF or MP4 options are available for sharing spinny captures, and only GIFs come with the autoplay / looping function in Reddit's native post embed/previewer.
+- **Discord** converts animated WebP into GIFs upon upload and the end-result is something that looks like it was converted into potato salad.
 
-Polymorph is a Windows desktop utility for converting animated WebP and MP4 media into high-quality GIF or MP4 output, with file-size targeting, framing controls, and a live animated preview.
+Online converters do not have the capability to produce true high-quality GIFs with minimal colour fidelity and resolution scale/clarity loss. Results are often highly blotchy.
+Likewise, offline converts also seem to lack GIF output achieving a suitable / near-losseless quality, so I wanted to fix that.
+- This application is designed for minimal user effort, maximum results.
+  - No editing experience or technical know-how required.
+  - Simply drop in your WebP, tell it what you want the end-result to be, and receive exactly that.
 
 Everything runs locally on your PC. Polymorph does not upload your media to a cloud service and does not include telemetry.
 
-## What Polymorph does
+## Highlights
 
-- Accepts animated WebP and MP4 input and converts either to GIF or MP4.
-- Preserves source animation timing by default.
-- Offers an optional **Favor Resolution** GIF mode that can retain fewer original source frames only when measured encoding results show a worthwhile resolution gain.
-- Targets a maximum output size in decimal MB or lets you choose exact output dimensions.
-- Supports Original, Crop, and Fit framing.
-- Preserves aspect ratio; Crop and Fit do not stretch the source.
-- Supports Crop positioning and 100–300% Crop zoom.
-- Shows a live animated preview of the selected framing.
-- Processes a batch queue one file at a time.
-- Checks the official Polymorph GitHub Releases page for newer versions.
+- Animated WebP and/or MP4 input.
+- High-quality GIF output with preserved source timing by default.
+- MP4 output for platforms that support video.
+- File-size targeting using spatial-resolution adjustment rather than silently lowering quality.
+- Optional **Favor Resolution** GIF mode that may retain fewer original source frames only when measured results show a worthwhile resolution gain.
+- Original, Crop, and Fit framing with shared preview/export geometry.
+- Aspect-ratio presets and Crop zoom/repositioning.
+- Live animated preview and queue-based batch processing.
+- Local-only media processing with no telemetry or cloud upload service.
+- Self-contained Windows installer.
 
 ## Platform
 
@@ -36,7 +42,7 @@ Polymorph 0.1.0 is currently unsigned, so Windows SmartScreen may show an **Unkn
 
 ## Basic use
 
-1. Add one or more animated WebP or MP4 files.
+1. Add one or more animated WebP files.
 2. Choose GIF or MP4.
 3. Choose a sizing mode:
    - **Fit under file size** — Polymorph adjusts spatial resolution to stay under the requested limit.
