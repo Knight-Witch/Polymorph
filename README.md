@@ -1,5 +1,7 @@
 # Polymorph
 
+## [[Click Here to Download & Install]](https://github.com/Knight-Witch/Polymorph/releases/download/v0.1.0/Polymorph_Setup_v0.1.0.exe)
+
 **Polymorph 0.1.0** is the first public release of Knight Witch's Windows media-conversion utility for animated WebP workflows. This project was created with the primary intent to serve the _Heroforge_ community and provide users with a tool to convert high res WebP captures into near-lossless GIF and MP4 conversions. While Heroforge was the initial spark to making this, the app can be used for anything you like. 
 - **Reddit** treats animated WebP as static images once you hit the submit button on a post. As a result, only GIF or MP4 options are available for sharing spinny captures, and only GIFs come with the autoplay / looping function in Reddit's native post embed/previewer.
 - **Discord** converts animated WebP into GIFs upon upload and the end-result is something that looks like it was converted into potato salad.
