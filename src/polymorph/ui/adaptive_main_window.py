@@ -44,7 +44,7 @@ class AdaptiveConversionWorker(ConversionWorker):
                     fps = result.frames / result.duration_s
                     fps_text = f"{fps:.2f}".rstrip("0").rstrip(".")
                     summary += f" • {fps_text} FPS"
-                self.fileFinished.emit(str(path), summary)
+                self.fileFinished.emit(str(path), summary, str(result.output))
             except ConversionCancelled:
                 self.failed.emit(str(path), "Cancelled")
                 break
@@ -184,6 +184,9 @@ class MainWindow(BaseMainWindow):
                 self.mp4_radio,
                 "Create a high-quality H.264 MP4. Looping is controlled by the player or platform.",
             ),
+            (self.webp_radio, "Create static WebP from images, or animated WebP from GIF/video with source timing and alpha preservation."),
+            (self.png_radio, "Create lossless PNG images at the selected pixel dimensions."),
+            (self.native_radio, "Keep exactly the original image pixel dimensions."),
             (
                 self.size_radio,
                 "Keep encoder quality fixed and adjust image dimensions to stay under the file-size limit.",
@@ -245,7 +248,7 @@ class MainWindow(BaseMainWindow):
             widget.setToolTip(text)
 
         button_tooltips = {
-            "Add Files": "Add one or more animated WebP files to the conversion queue.",
+            "Add Files": "Add static images, GIFs, animated WebP, or MP4 media to the queue.",
             "Remove Selected": "Remove the selected item from the queue. The source file is not deleted.",
             "Cancel": "Stop the current conversion.",
         }
@@ -266,6 +269,8 @@ class MainWindow(BaseMainWindow):
         )
         self.motion_preserve_radio.setEnabled(enabled)
         self.motion_favor_radio.setEnabled(enabled)
+        if hasattr(self, "_brand_priority_card") and self._still_mode is False:
+            self._brand_priority_card.setVisible(self.gif_radio.isChecked())
         self._sync_crop_zoom_state()
 
     def _make_settings(self):
@@ -281,6 +286,8 @@ class MainWindow(BaseMainWindow):
     def _start_conversion(self) -> None:
         if not self.converter or not self.files:
             return
+        self._saved_files = 0
+        self._failed_files = 0
         self.worker = AdaptiveConversionWorker(
             self.converter,
             list(self.files),
@@ -298,6 +305,8 @@ class MainWindow(BaseMainWindow):
         self.arcane_progress.set_progress(0)
         self.arcane_progress.setVisible(True)
         self.arcane_progress.set_active(True)
+        if hasattr(self, "status_ring"):
+            self.status_ring.set_active(True)
         self.cancel_btn.setVisible(True)
         self.worker.start()
         self._sync_enabled_state()

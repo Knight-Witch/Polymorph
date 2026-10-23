@@ -103,9 +103,23 @@ def probe_media(ffprobe: Path, path: Path) -> MediaInfo:
     path = Path(path)
     if not path.exists():
         raise ProbeError(f"Input does not exist: {path}")
+    # Still images have dimensions but no animation duration or FPS.
+    from .static_image import is_still_image, probe_still_image
+    if is_still_image(path):
+        return probe_still_image(path)
 
     riff_width = riff_height = 0
     riff_durations: list[int] = []
+    gif_durations: list[int] = []
+    if path.suffix.lower() == ".gif":
+        from PIL import Image
+        try:
+            with Image.open(path) as image:
+                for index in range(getattr(image, "n_frames", 1)):
+                    image.seek(index)
+                    gif_durations.append(max(10, int(image.info.get("duration") or 10)))
+        except (OSError, ValueError) as exc:
+            raise ProbeError(f"Cannot read GIF frame durations: {exc}") from exc
     if path.suffix.lower() == ".webp":
         try:
             riff_width, riff_height, riff_durations = probe_webp_riff(path)
@@ -137,10 +151,14 @@ def probe_media(ffprobe: Path, path: Path) -> MediaInfo:
                 pass
     if not frame_count and riff_durations:
         frame_count = len(riff_durations)
+    if gif_durations:
+        frame_count = len(gif_durations)
 
     duration_s = 0.0
     if riff_durations:
         duration_s = sum(max(1, d) for d in riff_durations) / 1000.0
+    if gif_durations:
+        duration_s = sum(gif_durations) / 1000.0
     if duration_s <= 0:
         for candidate in (stream.get("duration"), fmt.get("duration")):
             try:
@@ -171,6 +189,6 @@ def probe_media(ffprobe: Path, path: Path) -> MediaInfo:
         height=height,
         frame_count=frame_count,
         duration_s=duration_s,
-        frame_durations_ms=riff_durations,
+        frame_durations_ms=riff_durations or gif_durations,
         nominal_fps=nominal_fps,
     )

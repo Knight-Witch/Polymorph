@@ -1,4 +1,4 @@
-# Building Polymorph 0.1.0
+# Building Polymorph 0.2.0
 
 The official Windows release is produced from the validated Knight Witch release toolchain. The public source is intentionally limited to the stable product and does not include private development diagnostics, historical test fixtures, or internal CI configuration.
 
@@ -8,7 +8,7 @@ The official Windows release is produced from the validated Knight Witch release
 - Python 3.12.10
 - PySide6 6.11.2
 - PyInstaller 6.22.3
-- Pillow 12.3.0 (build-only icon generation)
+- Pillow 12.3.0 (static image runtime and icon generation)
 - FFmpeg / ffprobe 9.0.1 Essentials build
 - gifski 1.32.0
 - NSIS 3.12.0 (installer compiler only)
@@ -76,7 +76,7 @@ makensis.exe Polymorph.nsi
 The installer is written as:
 
 ```text
-installer\Output\Polymorph_Setup_v0.1.0.exe
+installer\Output\Polymorph_Setup_v0.2.0.exe
 ```
 
 Generate a SHA-256 checksum for the installer before distribution.

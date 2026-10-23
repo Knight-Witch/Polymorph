@@ -9,6 +9,7 @@ from PySide6.QtGui import QColor, QDesktopServices, QDragEnterEvent, QDropEvent,
 from PySide6.QtWidgets import (
     QApplication,
     QButtonGroup,
+    QCheckBox,
     QColorDialog,
     QComboBox,
     QDoubleSpinBox,
@@ -47,8 +48,11 @@ from ..converter import ConversionCancelled, Converter
 from ..geometry import native_geometry
 from ..models import ConversionSettings, FramingMode, FramingSettings, OutputFormat, SizingMode
 from ..resources import asset_path
+from ..static_image import is_still_image
 from ..tools import find_toolchain
-from ..update_service import download_and_verify_installer, fetch_latest_release, is_newer, launch_installer
+from ..update_service import download_and_verify_installer, download_and_stage_public_delta, fetch_latest_for_channel, is_newer, launch_installer
+from ..delta_update import launch_staged_update
+from .whats_new import show_whats_new_once
 from .dialogs import AspectGuideDialog
 from .preview import AnimatedPreview
 from .progress_ring import ArcaneProgress
@@ -59,7 +63,7 @@ from .styles import BASE_STYLESHEET
 class ConversionWorker(QThread):
     progressChanged = Signal(float, str)
     fileStarted = Signal(str)
-    fileFinished = Signal(str, str)
+    fileFinished = Signal(str, str, str)
     failed = Signal(str, str)
 
     def __init__(self, converter: Converter, files: list[Path], settings: ConversionSettings, parent=None) -> None:
@@ -76,7 +80,7 @@ class ConversionWorker(QThread):
             try:
                 result = self.converter.convert(path, copy.deepcopy(self.settings), self._progress)
                 summary = f"{result.width}×{result.height} • {result.size_bytes / (1024*1024):.1f} MB"
-                self.fileFinished.emit(str(path), summary)
+                self.fileFinished.emit(str(path), summary, str(result.output))
             except ConversionCancelled:
                 self.failed.emit(str(path), "Cancelled")
                 break
@@ -104,8 +108,12 @@ class MainWindow(QMainWindow):
         self.settings_store = QSettings(APP_ORG, APP_NAME)
         self.files: list[Path] = []
         self.media_cache = {}
+        self._still_mode: bool | None = None
+        self._animated_ratio = "16:9"
         self.framing = FramingSettings()
         self.worker: ConversionWorker | None = None
+        self._saved_files = 0
+        self._failed_files = 0
         self.converter: Converter | None = None
 
         try:
@@ -176,23 +184,32 @@ class MainWindow(QMainWindow):
         format_row = QHBoxLayout()
         self.gif_radio = QRadioButton("GIF")
         self.mp4_radio = QRadioButton("MP4")
+        self.webp_radio = QRadioButton("WebP")
+        self.png_radio = QRadioButton("PNG")
+        self.webp_lossless = QCheckBox("Lossless WebP")
+        self.webp_lossless.setToolTip("Preserve exact pixels; standard WebP uses quality 95.")
         self.gif_radio.setChecked(True)
         format_group = QButtonGroup(self)
-        format_group.addButton(self.gif_radio)
-        format_group.addButton(self.mp4_radio)
-        format_row.addWidget(self.gif_radio)
-        format_row.addWidget(self.mp4_radio)
+        for radio in (self.gif_radio, self.mp4_radio, self.webp_radio, self.png_radio):
+            format_group.addButton(radio)
+            radio.toggled.connect(self._sync_enabled_state)
+            format_row.addWidget(radio)
         format_row.addStretch(1)
         controls_layout.addLayout(format_row)
+        controls_layout.addWidget(self.webp_lossless)
+        self.webp_radio.hide()
+        self.png_radio.hide()
+        self.webp_lossless.hide()
 
         controls_layout.addWidget(self._section("Sizing"))
         self.size_radio = QRadioButton("Fit under file size")
         self.res_radio = QRadioButton("Set resolution")
+        self.native_radio = QRadioButton("Original resolution")
         self.size_radio.setChecked(True)
         size_group = QButtonGroup(self)
-        size_group.addButton(self.size_radio)
-        size_group.addButton(self.res_radio)
-        self.size_radio.toggled.connect(self._sync_enabled_state)
+        for radio in (self.size_radio, self.res_radio, self.native_radio):
+            size_group.addButton(radio)
+            radio.toggled.connect(self._sync_enabled_state)
         controls_layout.addWidget(self.size_radio)
         size_row = QHBoxLayout()
         self.max_mb = QDoubleSpinBox()
@@ -218,6 +235,8 @@ class MainWindow(QMainWindow):
         res_row.addWidget(QLabel("×"))
         res_row.addWidget(self.height_spin)
         controls_layout.addLayout(res_row)
+        controls_layout.addWidget(self.native_radio)
+        self.native_radio.hide()
 
         controls_layout.addWidget(self._section("Framing"))
         self.frame_mode = QComboBox()
@@ -350,19 +369,22 @@ class MainWindow(QMainWindow):
         self._add_files([Path(p) for p in paths])
 
     def _add_files(self, paths: list[Path]) -> None:
+        mixed = False
         for path in paths:
             path = path.resolve()
-            if (
-                path.suffix.lower() not in SUPPORTED_INPUT_EXTENSIONS
-                or not path.is_file()
-                or path in self.files
-            ):
+            if (path.suffix.lower() not in SUPPORTED_INPUT_EXTENSIONS
+                    or not path.is_file() or path in self.files):
+                continue
+            if self.files and is_still_image(path) != is_still_image(self.files[0]):
+                mixed = True
                 continue
             self.files.append(path)
             self.file_list.addItem(QListWidgetItem(path.name))
         if self.files and self.file_list.currentRow() < 0:
             self.file_list.setCurrentRow(0)
         self._sync_enabled_state()
+        if mixed:
+            self.status_label.setText("Add still images and animations in separate batches.")
 
     def _remove_selected(self) -> None:
         row = self.file_list.currentRow()
@@ -373,14 +395,53 @@ class MainWindow(QMainWindow):
         if not self.files:
             self.preview.set_source(None)
             self.dimensions_label.setText("No file selected")
+            self._set_media_mode(None)
         self._sync_enabled_state()
 
     def _selection_changed(self, row: int) -> None:
         if row < 0 or row >= len(self.files):
             return
         path = self.files[row]
+        self._set_media_mode(is_still_image(path))
         self.preview.set_source(path)
         self._update_probe_label(path)
+
+    def _set_media_mode(self, still: bool | None) -> None:
+        if self._still_mode is still:
+            return
+        was_static = self._still_mode is True
+        self._still_mode = still
+        static = still is True
+        for radio in (self.gif_radio, self.mp4_radio):
+            radio.setVisible(not static)
+        self.webp_radio.setVisible(still is not None)
+        self.png_radio.setVisible(static)
+        self.native_radio.setVisible(static)
+        if static:
+            self._animated_ratio = self.ratio_combo.currentText()
+            self.ratio_combo.setCurrentText("1:1")
+            self.webp_radio.setChecked(True)
+            self.webp_lossless.setChecked(True)
+            self.native_radio.setChecked(True)
+            self.max_mb.setValue(20.0)
+        else:
+            if was_static:
+                self.ratio_combo.setCurrentText(self._animated_ratio)
+            self.gif_radio.setChecked(True)
+            self.webp_lossless.setChecked(False)
+            self.size_radio.setChecked(True)
+            self.max_mb.setValue(DEFAULT_MAX_MB)
+        for widget in getattr(self, "_brand_animated_format_notes", ()):
+            widget.setVisible(not static)
+        for widget in getattr(self, "_brand_still_format_notes", ()):
+            widget.setVisible(static)
+        if hasattr(self, "_brand_webp_animation_note"):
+            self._brand_webp_animation_note.setVisible(not static and still is False)
+        if hasattr(self, "_brand_priority_card"):
+            self._brand_priority_card.setVisible(not static)
+        for widget in getattr(self, "_brand_playback_controls", ()):
+            widget.setVisible(not static)
+        self._sync_enabled_state()
 
     def _update_probe_label(self, path: Path) -> None:
         if not self.converter:
@@ -393,8 +454,10 @@ class MainWindow(QMainWindow):
             self.media_cache[path] = info
             native = native_geometry(info, self.framing)
             self.dimensions_label.setText(
-                f"Source {info.width}×{info.height} • {info.frame_count} frames • "
-                f"framed max {native.width}×{native.height}"
+                (f"Source {info.width}×{info.height} • still image • "
+                 f"framed max {native.width}×{native.height}" if info.is_still
+                 else f"Source {info.width}×{info.height} • {info.frame_count} frames • "
+                 f"framed max {native.width}×{native.height}")
             )
             self.resolution_linker.set_native(native.width, native.height)
         except Exception as exc:
@@ -440,11 +503,21 @@ class MainWindow(QMainWindow):
         if folder:
             self.output_path.setText(folder)
 
+    def _open_output_folder(self) -> None:
+        folder = Path(self.output_path.text())
+        if not folder.is_dir():
+            QMessageBox.warning(self, "Output folder unavailable", f"Folder does not exist: {folder}")
+            return
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder.resolve())))
+
     def _sync_enabled_state(self) -> None:
         busy = self.worker is not None and self.worker.isRunning()
         self.max_mb.setEnabled(self.size_radio.isChecked() and not busy)
         self.width_spin.setEnabled(self.res_radio.isChecked() and not busy)
         self.height_spin.setEnabled(self.res_radio.isChecked() and not busy)
+        self.native_radio.setEnabled(not busy)
+        self.webp_lossless.setVisible(self._still_mode is not None and self.webp_radio.isChecked())
+        self.webp_lossless.setEnabled(not busy)
         framing_enabled = self.frame_mode.currentData() is not FramingMode.ORIGINAL
         self.ratio_combo.setEnabled(framing_enabled and not busy)
         self.center_btn.setEnabled(framing_enabled and not busy)
@@ -462,8 +535,13 @@ class MainWindow(QMainWindow):
 
     def _make_settings(self) -> ConversionSettings:
         return ConversionSettings(
-            output_format=OutputFormat.GIF if self.gif_radio.isChecked() else OutputFormat.MP4,
+            output_format=(
+                OutputFormat.WEBP if self.webp_radio.isChecked() else
+                OutputFormat.PNG if self.png_radio.isChecked() else
+                OutputFormat.GIF if self.gif_radio.isChecked() else OutputFormat.MP4
+            ),
             sizing_mode=(
+                SizingMode.NATIVE if self.native_radio.isChecked() else
                 SizingMode.FILE_SIZE if self.size_radio.isChecked() else SizingMode.RESOLUTION
             ),
             max_mb=self.max_mb.value(),
@@ -471,11 +549,14 @@ class MainWindow(QMainWindow):
             requested_height=self.height_spin.value() if self.res_radio.isChecked() else None,
             output_dir=Path(self.output_path.text()),
             framing=copy.deepcopy(self.framing),
+            webp_lossless=self.webp_lossless.isChecked(),
         )
 
     def _start_conversion(self) -> None:
         if not self.converter or not self.files:
             return
+        self._saved_files = 0
+        self._failed_files = 0
         self.worker = ConversionWorker(
             self.converter, list(self.files), self._make_settings(), self
         )
@@ -490,6 +571,8 @@ class MainWindow(QMainWindow):
         self.arcane_progress.set_progress(0)
         self.arcane_progress.setVisible(True)
         self.arcane_progress.set_active(True)
+        if hasattr(self, "status_ring"):
+            self.status_ring.set_active(True)
         self.cancel_btn.setVisible(True)
         self.worker.start()
         self._sync_enabled_state()
@@ -501,19 +584,39 @@ class MainWindow(QMainWindow):
         self.arcane_progress.set_progress(fraction)
         self.status_label.setText(f"{label}… {percent}%")
 
-    def _file_finished(self, path: str, summary: str) -> None:
-        self.status_label.setText(f"Finished {Path(path).name} • {summary}")
+    def _file_finished(self, path: str, summary: str, output: str) -> None:
+        self._saved_files += 1
+        saved = Path(output)
+        self.status_label.setText(f"Saved {saved.name} • {summary}")
+        self.status_label.setToolTip(str(saved))
+        if hasattr(self, "_brand_status_detail"):
+            self._brand_status_detail.setText(f"Output: {saved}")
+            self._brand_status_detail.setToolTip(str(saved))
 
     def _file_failed(self, path: str, reason: str) -> None:
-        self.status_label.setText(f"{Path(path).name}: {reason}")
+        self._failed_files += 1
+        self.status_label.setText(f"Failed {Path(path).name}: {reason}")
+        self.status_label.setToolTip(reason)
+        if hasattr(self, "_brand_status_detail"):
+            self._brand_status_detail.setText("No output created for this file. Check the error above.")
+            self._brand_status_detail.setToolTip(reason)
 
     def _conversion_finished(self) -> None:
         self.arcane_progress.set_active(False)
+        if hasattr(self, "status_ring"):
+            self.status_ring.set_result(
+                "error" if self._failed_files else "success" if self._saved_files else "idle"
+            )
         self.arcane_progress.setVisible(False)
         self.cancel_btn.setVisible(False)
-        self.progress.setValue(100 if self.files else 0)
+        self.progress.setValue(100 if self._saved_files and not self._failed_files else 0)
         if self.status_label.text().startswith(("Encoding", "Optimizing", "Polymorphing")):
-            self.status_label.setText("Complete")
+            self.status_label.setText("Conversion ended without an output.")
+        if self._saved_files and self._failed_files:
+            self.status_label.setText(
+                f"Partial success: {self._saved_files} saved, {self._failed_files} failed. "
+                "See output folder and errors."
+            )
         worker = self.worker
         self.worker = None
         if worker:
@@ -525,6 +628,9 @@ class MainWindow(QMainWindow):
             self.status_label.setText("Cancelling…")
             self.worker.stop()
 
+    def show_whats_new_if_needed(self):
+        return show_whats_new_once(self)
+
     def _manual_check_updates(self) -> None:
         self._check_updates(manual=True)
 
@@ -533,7 +639,7 @@ class MainWindow(QMainWindow):
 
     def _check_updates(self, manual: bool) -> None:
         def task() -> None:
-            release = fetch_latest_release()
+            release = fetch_latest_for_channel()
             self.updateCheckCompleted.emit(release, manual)
 
         threading.Thread(target=task, daemon=True).start()
@@ -542,7 +648,8 @@ class MainWindow(QMainWindow):
         if not release:
             if manual:
                 QMessageBox.information(
-                    self, "Updates", "No Polymorph release information is available yet."
+                    self, "Updates",
+                    "No Polymorph release information is available yet."
                 )
             return
         if not is_newer(release.version):
@@ -573,8 +680,13 @@ class MainWindow(QMainWindow):
 
         def task() -> None:
             try:
-                installer = download_and_verify_installer(release)
-                self.updateDownloadCompleted.emit(installer, None)
+                if release.kind == "stable_delta":
+                    import sys
+                    stage = download_and_stage_public_delta(release, Path(sys.executable).parent)
+                    self.updateDownloadCompleted.emit(("delta", str(stage)), None)
+                else:
+                    installer = download_and_verify_installer(release)
+                    self.updateDownloadCompleted.emit(installer, None)
             except Exception as exc:
                 self.updateDownloadCompleted.emit(None, str(exc))
 
@@ -585,7 +697,16 @@ class MainWindow(QMainWindow):
         if error:
             QMessageBox.warning(self, "Update failed", str(error))
             return
-        self._launch_verified_update(Path(installer))
+        if isinstance(installer, tuple) and installer[0] == "delta":
+            import sys
+            try:
+                launch_staged_update(Path(installer[1]), Path(sys.executable).parent)
+            except Exception as exc:
+                QMessageBox.warning(self, "Update failed", str(exc))
+                return
+            QApplication.quit()
+        else:
+            self._launch_verified_update(Path(installer))
 
     def _launch_verified_update(self, installer: Path) -> None:
         try:

@@ -282,7 +282,7 @@ def install_gif_fidelity_patch() -> None:
         return
 
     # Lazy import avoids touching Qt/UI modules and keeps startup ordering
-    # independent from the visual preload repair.
+    # independent from the previous revision visual preload repair.
     from .adaptive_converter import AdaptiveConverter
 
     _ORIGINAL_ADAPTIVE_ENCODE_GIF = AdaptiveConverter._encode_gif

@@ -161,7 +161,7 @@ class TexturedFrame(QFrame):
 
 
 class PolymorphButton(QPushButton):
-    """Branded action surface matching the branded primary action surface."""
+    """Branded action surface matching the approved concept; animation comes later."""
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
@@ -309,7 +309,7 @@ class ScaleRegistry:
                         # Compact-only rail budget: six vertical card rows need to fit
                         # above the protected two-line primary action at 920x640.
                         scaled_t = max(0, scaled_t - 2)
-                        scaled_b = max(0, scaled_b - 4)
+                        scaled_b = max(0, scaled_b - 5)
 
             layout.setContentsMargins(scaled_l, scaled_t, scaled_r, scaled_b)
             layout.setSpacing(scaled_spacing)

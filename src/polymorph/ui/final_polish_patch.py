@@ -91,7 +91,7 @@ def _final_visual(window) -> None:
 
 
 def install_final_polish_patch() -> None:
-    """Apply the narrow post-stable release human-review corrections."""
+    """Apply the narrow post-earlier revision human-review corrections."""
     global _INSTALLED, _previous_palette, _previous_visual
     if _INSTALLED:
         return

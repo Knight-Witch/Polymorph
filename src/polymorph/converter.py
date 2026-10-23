@@ -73,12 +73,30 @@ class Converter:
         progress: ProgressCallback | None = None,
     ) -> ConversionResult:
         self.reset_cancel()
+        # Static PNG/WebP exports are isolated from the validated GIF/MP4 paths.
+        from .static_image import StillImageCancelled, convert_still_image, is_still_image
+        source = Path(source)
+        if is_still_image(source):
+            if settings.output_format not in (OutputFormat.PNG, OutputFormat.WEBP):
+                raise ConversionError("Still-image inputs require PNG or WebP output.")
+            output_dir = Path(settings.output_dir or source.parent)
+            output = self._available_output_path(output_dir, source.stem, settings.output_format.value)
+            try:
+                return convert_still_image(source, settings, output, self._cancel, progress)
+            except StillImageCancelled as exc:
+                raise ConversionCancelled() from exc
+        if settings.output_format is OutputFormat.PNG:
+            raise ConversionError("Animated inputs cannot be saved as static PNG.")
         info = self.probe(source)
         native = native_geometry(info, settings.framing)
         output_dir = Path(settings.output_dir or source.parent)
         output_dir.mkdir(parents=True, exist_ok=True)
         extension = settings.output_format.value
         output = self._available_output_path(output_dir, source.stem, extension)
+
+        if settings.sizing_mode is SizingMode.NATIVE:
+            self._encode_once(info, settings, output, native.width, native.height, progress, "Encoding")
+            return self._result(info, output, native.width, native.height, 1)
 
         if settings.sizing_mode is SizingMode.RESOLUTION:
             if not settings.requested_width or not settings.requested_height:
@@ -113,7 +131,8 @@ class Converter:
         max_bytes: int,
         progress: ProgressCallback | None,
     ) -> ConversionResult:
-        if settings.output_format is OutputFormat.GIF:
+        if settings.output_format in (OutputFormat.GIF, OutputFormat.WEBP):
+            # Both motion codecs preserve frames; size fitting adjusts pixels.
             return self._encode_gif_to_size(
                 info,
                 settings,
@@ -172,7 +191,7 @@ class Converter:
                     width -= width % 2
                     height -= height % 2
 
-                candidate = temp_dir / f"candidate-{pass_index}.gif"
+                candidate = temp_dir / f"candidate-{pass_index}.{settings.output_format.value}"
                 label = "Encoding" if pass_index == 0 else "Optimizing size"
                 passes += 1
                 self._encode_once(info, settings, candidate, width, height, progress, label)
@@ -221,7 +240,7 @@ class Converter:
                     height = max(2, int(round(native_height * scale)))
                     width -= width % 2
                     height -= height % 2
-                    candidate = temp_dir / f"emergency-{emergency_index}.gif"
+                    candidate = temp_dir / f"emergency-{emergency_index}.{settings.output_format.value}"
                     emergency_index += 1
                     passes += 1
                     self._encode_once(
@@ -337,6 +356,8 @@ class Converter:
     ) -> None:
         if settings.output_format is OutputFormat.GIF:
             self._encode_gif(info, settings, output, width, height, progress, label)
+        elif settings.output_format is OutputFormat.WEBP:
+            self._encode_webp(info, settings, output, width, height, progress, label)
         else:
             self._encode_mp4(info, settings, output, width, height, progress, label)
 
@@ -478,6 +499,55 @@ class Converter:
                 gifski_log_path.unlink(missing_ok=True)
             except OSError:
                 pass
+
+    def _encode_webp(
+        self,
+        info: MediaInfo,
+        settings: ConversionSettings,
+        output: Path,
+        width: int,
+        height: int,
+        progress: ProgressCallback | None,
+        label: str,
+    ) -> None:
+        """Animation WebP: full source cadence, alpha support and loop forever."""
+        from .animated_webp import finalize_webp_timing
+        filter_graph, _ = build_video_filter(info, settings.framing, width, height)
+        cmd = self._base_ffmpeg(info, filter_graph) + [
+            "-fps_mode", "passthrough",
+            "-c:v", "libwebp_anim",
+            # BGRA avoids lossy YUV chroma conversion when Lossless is selected;
+            # yuva420p keeps the normal high-quality output compact.
+            "-pix_fmt", "bgra" if settings.webp_lossless else "yuva420p",
+            "-lossless", "1" if settings.webp_lossless else "0",
+            "-quality", "95",
+            "-compression_level", "6",
+            "-loop", "0",
+            "-progress", "pipe:2",
+            "-y", str(output),
+        ]
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.DEVNULL,
+            creationflags=self._creation_flags(),
+        )
+        self._register(proc)
+        try:
+            self._consume_progress(proc, info.duration_s, progress, label)
+            rc = proc.wait()
+        finally:
+            self._unregister(proc)
+        if self._cancel.is_set():
+            raise ConversionCancelled()
+        if rc != 0 or not output.is_file():
+            raise ConversionError(f"Animated WebP encoding failed (ffmpeg={rc})")
+        try:
+            finalize_webp_timing(output, info.duration_s, info.frame_durations_ms)
+        except (OSError, ProbeError) as exc:
+            output.unlink(missing_ok=True)
+            raise ConversionError(f"Animated WebP timing verification failed: {exc}") from exc
 
     def _encode_mp4(
         self,

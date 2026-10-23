@@ -29,7 +29,7 @@ class AdaptiveConverter(Converter):
 
     Preserve-motion conversions call the production Converter unchanged. Favor
     resolution first produces the proven full-FPS result, then tests exact source-
-    frame decimation. No synthetic intermediate frames are created.
+    frame decimation. No synthetic intermediate frames are created in previous revision.
     """
 
     def __init__(self, tools) -> None:
@@ -120,7 +120,7 @@ class AdaptiveConverter(Converter):
             slot_span = 0.70 / len(candidates)
 
             # Important: do not stop after a predicted candidate fails its full fit.
-            # Earlier development builds could select a higher-FPS probe, fail the final gain veto,
+            # previous revision-previous revision could select a higher-FPS probe, fail the final gain veto,
             # then immediately return the baseline without ever testing deeper plans.
             # Each candidate now gets its own measured probe and, when justified, a
             # full fit before the next lower-motion plan is considered.
@@ -360,7 +360,7 @@ class AdaptiveConverter(Converter):
 
             # A source loop is not always divisible by the decimation stride. Keep
             # every retained image at its exact source position, then shorten only
-            # the final GIF delay to the source-frame remainder. For an odd source-frame-count stride,
+            # the final GIF delay to the source-frame remainder. For Viper stride 2,
             # this means 187 x 80 ms intervals plus one 40 ms closure interval: the
             # original 15.0 s rotation and constant angular speed are preserved.
             try:

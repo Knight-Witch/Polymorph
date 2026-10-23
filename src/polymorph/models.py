@@ -8,11 +8,14 @@ from pathlib import Path
 class OutputFormat(str, Enum):
     GIF = "gif"
     MP4 = "mp4"
+    PNG = "png"
+    WEBP = "webp"
 
 
 class SizingMode(str, Enum):
     FILE_SIZE = "file_size"
     RESOLUTION = "resolution"
+    NATIVE = "native"
 
 
 class FramingMode(str, Enum):
@@ -35,6 +38,7 @@ class MediaInfo:
     duration_s: float
     frame_durations_ms: list[int] = field(default_factory=list)
     nominal_fps: float = 0.0
+    is_still: bool = False
 
     @property
     def fps(self) -> float:
@@ -65,6 +69,7 @@ class ConversionSettings:
     output_dir: Path | None = None
     framing: FramingSettings = field(default_factory=FramingSettings)
     gif_motion_mode: GifMotionMode = GifMotionMode.PRESERVE
+    webp_lossless: bool = False
 
 
 @dataclass(slots=True)

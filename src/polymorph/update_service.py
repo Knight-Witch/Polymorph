@@ -30,6 +30,11 @@ class ReleaseInfo:
     installer_url: str | None
     checksum_url: str | None
     notes: str
+    kind: str = "installer"
+    run_id: int | None = None
+    artifact_name: str | None = None
+    delta_url: str | None = None
+    delta_checksum_url: str | None = None
 
 
 def _version_tuple(value: str) -> tuple[int, int, int]:
@@ -38,6 +43,12 @@ def _version_tuple(value: str) -> tuple[int, int, int]:
 
 
 def is_newer(candidate: str, current: str = APP_VERSION) -> bool:
+    # Prerelease revisions share a three-part base version; compare the Dev
+    # counter rather than treating every prerelease build as equal.
+    dev = re.compile(r"^(\d+)\.(\d+)\.(\d+)-dev\.(\d+)$")
+    newer_dev, old_dev = dev.fullmatch(candidate), dev.fullmatch(current)
+    if newer_dev and old_dev:
+        return tuple(map(int, newer_dev.groups())) > tuple(map(int, old_dev.groups()))
     return _version_tuple(candidate) > _version_tuple(current)
 
 
@@ -79,6 +90,22 @@ def _select_release_assets(payload: dict, version: str) -> tuple[str | None, str
     return installer_url, checksum_url
 
 
+def _select_release_delta_assets(payload: dict, current: str, target: str) -> tuple[str | None, str | None]:
+    # Only an exact-version pair hosted on the official public Release is valid.
+    archive = f"Polymorph_Update_from-{current}_to-{target}.zip"
+    desired = {archive.casefold(): None, (archive + ".sha256").casefold(): None}
+    for asset in payload.get("assets") or []:
+        name = str(asset.get("name") or "").casefold()
+        url = str(asset.get("browser_download_url") or "")
+        # Match both the public release *tag* and the exact asset basename.
+        # Never accept a similarly named asset from a different release.
+        expected_path = f"/Knight-Witch/Polymorph/releases/download/v{target}/{asset.get('name')}"
+        if (name in desired and _is_allowed_release_asset_url(url)
+                and urlsplit(url).path.casefold() == expected_path.casefold()):
+            desired[name] = url
+    return desired[archive.casefold()], desired[(archive + ".sha256").casefold()]
+
+
 def fetch_latest_release(timeout: float = 5.0) -> ReleaseInfo | None:
     request = urllib.request.Request(
         LATEST_RELEASE_API,
@@ -98,6 +125,8 @@ def fetch_latest_release(timeout: float = 5.0) -> ReleaseInfo | None:
         return None
     version = ".".join(version_match.groups())
     installer_url, checksum_url = _select_release_assets(payload, version)
+    delta_url, delta_checksum = (None, None)
+    delta_url, delta_checksum = _select_release_delta_assets(payload, APP_VERSION, version)
 
     return ReleaseInfo(
         version=version,
@@ -105,6 +134,9 @@ def fetch_latest_release(timeout: float = 5.0) -> ReleaseInfo | None:
         installer_url=installer_url,
         checksum_url=checksum_url,
         notes=str(payload.get("body") or ""),
+        kind="stable_delta" if delta_url and delta_checksum else "installer",
+        delta_url=delta_url,
+        delta_checksum_url=delta_checksum,
     )
 
 
@@ -216,7 +248,33 @@ def download_and_verify_installer(release: ReleaseInfo) -> Path:
         raise
 
 
+def download_and_stage_public_delta(release: ReleaseInfo, install_dir: Path) -> Path:
+    """Use official public release SHA-256 pair; never fetch from private Dev."""
+    if release.kind != "stable_delta" or not release.delta_url or not release.delta_checksum_url:
+        raise RuntimeError("No verified official public incremental update is available")
+    from .delta_update import sha256, stage_delta
+    archive_name = f"Polymorph_Update_from-{APP_VERSION}_to-{release.version}.zip"
+    work = Path(tempfile.mkdtemp(prefix="polymorph-public-patch-"))
+    try:
+        checksum_file = work / (archive_name + ".sha256")
+        package = work / archive_name
+        _download_to_path(release.delta_checksum_url, checksum_file, max_bytes=_MAX_CHECKSUM_BYTES)
+        expected = _parse_checksum(checksum_file.read_text(encoding="utf-8"), archive_name)
+        _download_to_path(release.delta_url, package, max_bytes=100_000_000)
+        if sha256(package) != expected:
+            raise RuntimeError("Public incremental update SHA-256 mismatch")
+        return stage_delta(package, install_dir, APP_VERSION, channel="stable")
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+
+
 def launch_installer(installer: Path) -> None:
     if os.name != "nt":
         raise RuntimeError("Automatic installation is currently Windows-only.")
     subprocess.Popen([str(installer)], close_fds=True)
+
+
+
+def fetch_latest_for_channel() -> ReleaseInfo | None:
+    """Stable checks only the official public GitHub Release."""
+    return fetch_latest_release()

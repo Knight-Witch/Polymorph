@@ -1,0 +1,220 @@
+name: Publish Polymorph v0.2.0 (Approved Release)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/publish-v0.2.0.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  public-release:
+    if: contains(github.event.head_commit.message, '[publish-v0.2.0]')
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12.10"
+
+      - name: Install Python build dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install . pyinstaller==6.22.3 pillow==12.3.0
+
+      - name: Verify public-only source and stable metadata
+        shell: pwsh
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m compileall -q src run_polymorph.py
+          if ($LASTEXITCODE -ne 0) { throw "Public source syntax verification failed" }
+          python -c "from polymorph.constants import APP_VERSION, LATEST_RELEASE_API; assert APP_VERSION == '0.2.0'; assert LATEST_RELEASE_API == 'https://api.github.com/repos/Knight-Witch/Polymorph/releases/latest'; from polymorph.ui.whats_new import FEATURE_ID; from polymorph.animated_webp import finalize_webp_timing; from polymorph.delta_update import stage_delta; print('PASS public 0.2.0 imports and update feed')"
+          if ($LASTEXITCODE -ne 0) { throw "Public import/update-feed verification failed" }
+          $private = Get-ChildItem src -Recurse -File -Include *.py | Select-String -Pattern 'Polymorph\.Dev','dev_update_service','DiagnosticAdaptiveConverter','_ADAPTIVE_DIAGNOSTIC'
+          if ($private) { throw "Private source reference found in public application" }
+          if (Test-Path src/polymorph/dev_update_service.py) { throw "Private Dev updater must never publish" }
+          if (Test-Path src/polymorph/smoke_test.py) { throw "Private packaged smoke module must never publish" }
+      - name: Prepare pinned Polymorph UI fonts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force src\polymorph\assets\fonts | Out-Null
+          $cinzel = "https://raw.githubusercontent.com/google/fonts/45071f07c63e863a539442ef3562b71ab1f147a6/ofl/cinzel/Cinzel%5Bwght%5D.ttf"
+          $inter = "https://raw.githubusercontent.com/google/fonts/e1d6480102fed30739fead0faee463101f892c8f/ofl/inter/Inter%5Bopsz%2Cwght%5D.ttf"
+          Invoke-WebRequest $cinzel -OutFile src\polymorph\assets\fonts\Cinzel-wght.ttf
+          Invoke-WebRequest $inter -OutFile src\polymorph\assets\fonts\Inter-opsz-wght.ttf
+          Invoke-WebRequest "https://raw.githubusercontent.com/google/fonts/45071f07c63e863a539442ef3562b71ab1f147a6/ofl/cinzel/OFL.txt" -OutFile src\polymorph\assets\fonts\OFL-Cinzel.txt
+          Invoke-WebRequest "https://raw.githubusercontent.com/google/fonts/e1d6480102fed30739fead0faee463101f892c8f/ofl/inter/OFL.txt" -OutFile src\polymorph\assets\fonts\OFL-Inter.txt
+          python build\verify_font_assets.py src\polymorph\assets\fonts
+
+      - name: Prepare packaged license texts
+        shell: pwsh
+        run: |
+          function Get-WithRetry {
+            param(
+              [Parameter(Mandatory=$true)][string]$Url,
+              [Parameter(Mandatory=$true)][string]$OutFile
+            )
+            $lastError = $null
+            for ($attempt = 1; $attempt -le 4; $attempt++) {
+              try {
+                Invoke-WebRequest $Url -OutFile $OutFile -ErrorAction Stop
+                return
+              }
+              catch {
+                $lastError = $_
+                if ($attempt -lt 4) { Start-Sleep -Seconds (2 * $attempt) }
+              }
+            }
+            throw $lastError
+          }
+
+          New-Item -ItemType Directory -Force legal | Out-Null
+          $spdx = "31ba1a50e5397e00a304dbadc76531740e89ee48"
+          Get-WithRetry "https://raw.githubusercontent.com/spdx/license-list-data/$spdx/text/GPL-3.0-only.txt" "legal\GPL-3.0.txt"
+          Get-WithRetry "https://raw.githubusercontent.com/spdx/license-list-data/$spdx/text/AGPL-3.0-only.txt" "legal\AGPL-3.0-gifski.txt"
+          Get-WithRetry "https://raw.githubusercontent.com/spdx/license-list-data/$spdx/text/LGPL-3.0-only.txt" "legal\LGPL-3.0-Qt.txt"
+          Get-WithRetry "https://raw.githubusercontent.com/python/cpython/v3.12.10/LICENSE" "legal\PYTHON-3.12.10.txt"
+          Get-WithRetry "https://raw.githubusercontent.com/openssl/openssl/openssl-3.0.16/LICENSE.txt" "legal\OPENSSL-3.0.16.txt"
+          Get-WithRetry "https://raw.githubusercontent.com/pyinstaller/pyinstaller/v6.22.3/COPYING.txt" "legal\PYINSTALLER-6.22.3.txt"
+          Get-WithRetry "https://raw.githubusercontent.com/python-pillow/Pillow/12.3.0/LICENSE" "legal\PILLOW-12.3.0.txt"
+
+      - name: Generate Polymorph application icon
+        shell: pwsh
+        run: python build\make_app_icon.py
+
+      - name: Fetch pinned FFmpeg 9.0.1 Essentials build
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force tools | Out-Null
+          $url = "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-9.0.1-essentials_build.7z"
+          $expected = "49a73bdf0850092a252ac4641d922f3048d63ed113e196cc65ce1e4f7fb33e85"
+          try {
+            Invoke-WebRequest $url -OutFile ffmpeg.7z -ErrorAction Stop
+          }
+          catch {
+            Write-Host "Pinned Gyan package URL is unavailable; retrieving the same checksum-pinned archive from the approved Chocolatey 9.0.1 package."
+            $packageUrl = "https://community.chocolatey.org/api/v2/package/ffmpeg/9.0.1"
+            Invoke-WebRequest $packageUrl -OutFile ffmpeg-9.0.1.nupkg -ErrorAction Stop
+            Copy-Item ffmpeg-9.0.1.nupkg ffmpeg-9.0.1.zip
+            Expand-Archive ffmpeg-9.0.1.zip -DestinationPath ffmpeg-package -Force
+            $embedded = Get-ChildItem ffmpeg-package -Recurse -Filter ffmpeg-release-essentials.7z | Select-Object -First 1
+            if (-not $embedded) { throw "Chocolatey FFmpeg 9.0.1 package did not contain the pinned essentials archive" }
+            Copy-Item $embedded.FullName ffmpeg.7z
+          }
+          $actual = (Get-FileHash ffmpeg.7z -Algorithm SHA256).Hash.ToLower()
+          if ($actual -ne $expected) { throw "FFmpeg archive checksum mismatch: $actual" }
+          & "C:\Program Files\7-Zip\7z.exe" x ffmpeg.7z -offmpeg-unpacked -y | Out-Null
+          $ffmpeg = Get-ChildItem ffmpeg-unpacked -Recurse -Filter ffmpeg.exe | Select-Object -First 1
+          $ffprobe = Get-ChildItem ffmpeg-unpacked -Recurse -Filter ffprobe.exe | Select-Object -First 1
+          if (-not $ffmpeg -or -not $ffprobe) { throw "FFmpeg binaries not found after extraction" }
+          Copy-Item $ffmpeg.FullName tools\ffmpeg.exe
+          Copy-Item $ffprobe.FullName tools\ffprobe.exe
+          .\tools\ffmpeg.exe -version | Select-Object -First 1
+
+      - name: Build gifski 1.32.0
+        shell: pwsh
+        run: |
+          cargo install gifski --version 1.32.0 --locked --root "$PWD\gifski-root"
+          Copy-Item gifski-root\bin\gifski.exe tools\gifski.exe
+          .\tools\gifski.exe --version
+
+      - name: Prepare corresponding source archives
+        shell: pwsh
+        run: |
+          function Get-WithRetry {
+            param(
+              [Parameter(Mandatory=$true)][string]$Url,
+              [Parameter(Mandatory=$true)][string]$OutFile
+            )
+            $lastError = $null
+            for ($attempt = 1; $attempt -le 4; $attempt++) {
+              try {
+                Invoke-WebRequest $Url -OutFile $OutFile -ErrorAction Stop
+                return
+              }
+              catch {
+                $lastError = $_
+                if ($attempt -lt 4) { Start-Sleep -Seconds (2 * $attempt) }
+              }
+            }
+            throw $lastError
+          }
+
+          New-Item -ItemType Directory -Force release-source | Out-Null
+          Get-WithRetry "https://github.com/FFmpeg/FFmpeg/archive/bf1b838f2a.tar.gz" "release-source\ffmpeg-bf1b838f2a.tar.gz"
+          Get-WithRetry "https://crates.io/api/v1/crates/gifski/1.32.0/download" "release-source\gifski-1.32.0.crate"
+
+      - name: Build Polymorph application
+        shell: pwsh
+        run: pyinstaller --noconfirm --clean build\Polymorph.spec
+
+      - name: Install NSIS 3.12.0
+        shell: pwsh
+        run: choco install nsis --version=3.12.0 -y --no-progress
+
+      - name: Compile installer
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force installer\Output | Out-Null
+          $makensis = Get-Command makensis.exe -ErrorAction SilentlyContinue
+          if (-not $makensis) {
+            $candidate = "${env:ProgramFiles(x86)}\NSIS\makensis.exe"
+            if (-not (Test-Path $candidate)) { throw "NSIS makensis.exe was not found" }
+            $makensisPath = $candidate
+          }
+          else {
+            $makensisPath = $makensis.Source
+          }
+          Push-Location installer
+          try {
+            & $makensisPath /V2 Polymorph.nsi
+            if ($LASTEXITCODE -ne 0) { throw "NSIS compilation failed with exit code $LASTEXITCODE" }
+          }
+          finally {
+            Pop-Location
+          }
+
+      - name: Generate SHA-256
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem installer\Output\Polymorph_Setup_*.exe | Select-Object -First 1
+          if (-not $installer) { throw "Installer was not generated" }
+          $hash = (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLower()
+          "$hash  $($installer.Name)" | Set-Content "$($installer.FullName).sha256" -Encoding ascii
+
+      - name: Retain official installer and checksum
+        uses: actions/upload-artifact@v4
+        with:
+          name: Polymorph-0.2.0-official-installer
+          path: |
+            installer/Output/Polymorph_Setup_v0.2.0.exe
+            installer/Output/Polymorph_Setup_v0.2.0.exe.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish the user-approved v0.2.0 GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if (gh release view v0.2.0 --repo Knight-Witch/Polymorph 2>$null) { throw "Release v0.2.0 already exists; refusing to replace its assets" }
+          $files = @(
+            "installer/Output/Polymorph_Setup_v0.2.0.exe",
+            "installer/Output/Polymorph_Setup_v0.2.0.exe.sha256",
+            "release-source/ffmpeg-bf1b838f2a.tar.gz",
+            "release-source/gifski-1.32.0.crate"
+          )
+          foreach ($file in $files) { if (!(Test-Path $file)) { throw "Missing release asset: $file" } }
+          gh release create v0.2.0 $files --repo Knight-Witch/Polymorph --target $env:GITHUB_SHA --title "Polymorph 0.2.0" --notes-file RELEASE_NOTES.md --latest
+          if ($LASTEXITCODE -ne 0) { throw "GitHub release publication failed" }
+          Write-Host "Published official v0.2.0 installer, checksum and corresponding source archives."

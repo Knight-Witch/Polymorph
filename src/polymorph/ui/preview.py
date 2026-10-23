@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import QPoint, QRect, QRectF, Qt, QUrl, Signal
-from PySide6.QtGui import QColor, QFont, QMovie, QPainter, QPen, QPixmap
+from PySide6.QtCore import QPoint, QRect, QRectF, QSize, Qt, QUrl, Signal
+from PySide6.QtGui import QColor, QFont, QImageReader, QMovie, QPainter, QPen, QPixmap
 from PySide6.QtMultimedia import QMediaPlayer, QVideoFrame, QVideoSink
 from PySide6.QtWidgets import QWidget
 
@@ -38,6 +38,7 @@ class AnimatedPreview(QWidget):
         self._frame_offsets_ms: list[int] = []
         self._current_frame = 0
         self._video_source = False
+        self._still_source = False
 
     def set_source(self, path: Path | None) -> None:
         if self._movie:
@@ -47,12 +48,26 @@ class AnimatedPreview(QWidget):
         self._player.stop()
         self._player.setSource(QUrl())
         self._video_source = False
+        self._still_source = False
         self._pixmap = QPixmap()
         self._current_frame = 0
 
         if path:
             path = Path(path)
-            if path.suffix.lower() == ".mp4":
+            from ..static_image import is_still_image
+            if is_still_image(path):
+                self._still_source = True
+                reader = QImageReader(str(path))
+                reader.setAutoTransform(True)
+                source_size = reader.size()
+                if source_size.isValid() and max(source_size.width(), source_size.height()) > 2048:
+                    scale = 2048 / max(source_size.width(), source_size.height())
+                    reader.setScaledSize(QSize(max(1, round(source_size.width() * scale)),
+                                               max(1, round(source_size.height() * scale))))
+                image = reader.read()
+                self._pixmap = QPixmap.fromImage(image) if not image.isNull() else QPixmap()
+                self._emit_playback()
+            elif path.suffix.lower() == ".mp4":
                 self._video_source = True
                 self._player.setSource(QUrl.fromLocalFile(str(path)))
                 self._player.play()
@@ -100,6 +115,8 @@ class AnimatedPreview(QWidget):
         self.update()
 
     def toggle_playback(self) -> None:
+        if self._still_source:
+            return
         if self._video_source:
             if self._player.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
                 self._player.pause()
@@ -120,6 +137,8 @@ class AnimatedPreview(QWidget):
         self._emit_playback()
 
     def seek_frame(self, frame_index: int) -> bool:
+        if self._still_source:
+            return False
         total = self.total_frames()
         if total <= 0:
             return False
@@ -183,6 +202,8 @@ class AnimatedPreview(QWidget):
         return 0.0
 
     def is_playing(self) -> bool:
+        if self._still_source:
+            return False
         if self._video_source:
             return self._player.playbackState() == QMediaPlayer.PlaybackState.PlayingState
         return self._movie is not None and self._movie.state() == QMovie.MovieState.Running
@@ -278,6 +299,8 @@ class AnimatedPreview(QWidget):
         self._draw_frame_readout(painter, display_rect)
 
     def _draw_frame_readout(self, painter: QPainter, display_rect: QRectF) -> None:
+        if self._still_source:
+            return
         total = self.total_frames()
         if total <= 0:
             return

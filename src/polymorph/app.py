@@ -3,6 +3,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication
 
 from .constants import SUPPORTED_INPUT_EXTENSIONS
@@ -41,6 +42,7 @@ def main() -> int:
     rebuild_brand_layout(window)
     apply_brand_skin(window)
     window.show()
+    QTimer.singleShot(2300, window.show_whats_new_if_needed)
     cli_files = [
         Path(arg)
         for arg in sys.argv[1:]

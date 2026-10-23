@@ -127,7 +127,7 @@ def _outward_pulse_emblem(
 
 
 class AnimatedPolymorphButton(_visual.RefinedPolymorphButton):
-    """Long-form arcane hover ambience plus the accepted tactile click motion."""
+    """Long-form arcane hover ambience plus the accepted earlier revision tactile click motion."""
 
     _FLECKS = (
         (0.03, 0.74, 0.34, -0.20, 2.8, 0.00),
@@ -457,7 +457,7 @@ class AnimatedPolymorphButton(_visual.RefinedPolymorphButton):
             glaze.setColorAt(1.0, QColor(0, 0, 0, 0))
             painter.fillPath(path, glaze)
 
-            # Softly suppress the static stable release center-right ghost while hovered so
+            # Softly suppress the static earlier revision center-right ghost while hovered so
             # the two animated geometry layers read as motion, not as a third static emblem.
             veil_center = QPointF(
                 rect.left() + rect.width() * 0.70,
@@ -552,7 +552,7 @@ class AnimatedPolymorphButton(_visual.RefinedPolymorphButton):
             sweep.setColorAt(1.0, QColor(255, 255, 255, 0))
             painter.fillPath(path, sweep)
 
-        # stable release click/press response is intentionally unchanged.
+        # earlier revision click/press response is intentionally unchanged.
         press = max(0.0, min(1.0, self._press_progress))
         if press > 0.001:
             pressed = QLinearGradient(rect.left(), rect.top(), rect.left(), rect.bottom())

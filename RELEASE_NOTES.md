@@ -1,69 +1,30 @@
-# Polymorph 0.1.0
+# Polymorph 0.2.0 — Static Images, Animated WebP and Efficient Updates
 
-Polymorph 0.1.0 is the first public release of Knight Witch's Windows media-conversion utility for animated WebP and MP4 workflows.
+Polymorph remains a Windows utility for high-quality, platform-ready local media conversion. This update adds static-image conversion, animated WebP output and a verified incremental-update system.
 
-## Highlights
+## New features
 
-- Animated WebP and MP4 input.
-- High-quality GIF output with preserved source timing by default.
-- High-fidelity MP4-to-GIF color handling for source-consistent output.
-- MP4 output for platforms that support video.
-- File-size targeting using spatial-resolution adjustment rather than silently lowering quality.
-- Optional **Favor Resolution** GIF mode that may retain fewer original source frames only when measured results show a worthwhile resolution gain.
-- Original, Crop, and Fit framing with shared preview/export geometry.
-- Aspect-ratio presets and Crop zoom/repositioning.
-- Live animated preview and queue-based batch processing.
-- Local-only media processing with no telemetry or cloud upload service.
-- Self-contained Windows installer.
+- **PNG → WebP:** Convert Hero Forge captures and other images, with alpha/ICC handling, optional pixel-preserving Lossless WebP and high-quality lossy compression.
+- **WebP → PNG:** Export compatible PNG images where WebP is unsupported.
+- **PNG → PNG:** Downsize resolution to meet a chosen file-size ceiling (for example, 16 MB → 10 MB), without reducing colors or silently dropping transparency.
+- **GIF or video → animated WebP:** Preserve frame sequence, GIF frame delays, transparency and looping. Choose compact high-quality encoding or lossless output.
+- **Static-image defaults:** Original resolution, 1:1 aspect-ratio selector and Lossless WebP enabled; Original framing does not crop unexpectedly.
+- **Conversion status:** Real animated activity indicator with clear success and failure states.
+- **First-launch What's New:** Feature overview and optional Ko-fi/PayPal support links, shown once.
+- **Incremental updates for future releases:** Changed-file patch packages keep unchanged FFmpeg/gifski/runtime components. Updates verify hashes and restore original files if an application step fails. An exact matching published patch is required; otherwise use the full installer.
 
-## Install
+## Existing features retained
 
-Download the official release assets:
-- `Polymorph_Setup_v0.1.0.exe`
-- `Polymorph_Setup_v0.1.0.exe.sha256`
+- High-fidelity animated WebP/MP4 → GIF, preserving source frames and timing by default using pinned FFmpeg and gifski.
+- Optional Favor Resolution GIF mode, H.264 MP4 output, source-aware colors, Original/Crop/Fit framing, live preview, batch queue and measured decimal-MB targeting.
+- Processing remains entirely local; there is no media upload or telemetry.
 
-Polymorph 0.1.0 is unsigned. Windows SmartScreen may therefore display an **Unknown Publisher** warning. Verify the installer against the SHA-256 file published alongside it if desired.
+## Upgrade from 0.1.0
 
-## Supported platform
-- 64-bit Windows 10
-- 64-bit Windows 11
+Existing users will be notified by the built-in launch-time update checker after this version is published. **The first upgrade uses the full installer** because v0.1.0 predates the incremental updater. Future releases may ship small version-specific patches.
 
-## GIF behavior
+## Installer and verification
 
-### Preserve Motion
+Download `Polymorph_Setup_v0.2.0.exe` and `Polymorph_Setup_v0.2.0.exe.sha256` from the official [v0.2.0 release](https://github.com/Knight-Witch/Polymorph/releases/tag/v0.2.0). The unsigned executable may display Windows SmartScreen **Unknown Publisher**; use the SHA-256 file to verify the download.
 
-This is the default GIF mode. Polymorph preserves the source frame sequence and timing and uses spatial resolution as the primary file-size tradeoff.
-
-### Favor Resolution
-
-When using GIF + Fit under file size, Favor Resolution may test lower source-frame cadences and keep one only when the measured encoded result provides a worthwhile increase in spatial resolution under the same size ceiling.
-
-Polymorph uses original source frames for this mode; it does not synthesize intermediate frames with optical flow or frame blending.
-
-## Framing
-
-- **Original** keeps the full source framing.
-- **Crop** trims to the selected aspect ratio without stretching and supports repositioning and Crop zoom.
-- **Fit** preserves the complete source aspect ratio and expands the canvas to the selected ratio.
-
-Preview and export use the same framing geometry.
-
-## Privacy
-
-Polymorph performs conversion locally on your computer. It does not upload source media, require an account, include telemetry or unnecessary bloat.
-- This program contains ONLY the Polymorph application and its required runtime/support components (codecs, UI loader/dist. framework, installer,  etc).
-- The update checker contacts the official GitHub Releases API for `Knight-Witch/Polymorph` only.
-
-## Source and licensing
-
-Polymorph source is available in this repository under the **Knight Witch Community Source License v1.0**. This is a source-available license, not an open-source license.
-
-Third-party runtime/build components retain their own licenses. See `THIRD_PARTY.md` and `THIRD_PARTY_SOURCE.md` for notices and corresponding-source information.
-
-## Integrity
-
-Each official installer release includes a SHA-256 checksum file with the same base filename plus `.sha256`.
-
-Official releases are published only from:
-
-https://github.com/Knight-Witch/Polymorph/releases
+Official Windows target: 64-bit Windows 10 and Windows 11. The bundle includes FFmpeg 9.0.1, gifski 1.32.0, PySide6 6.11.2 and Pillow 12.3.0. Their licenses are separate from the Knight Witch Community Source License; see `THIRD_PARTY.md` and `THIRD_PARTY_SOURCE.md`.

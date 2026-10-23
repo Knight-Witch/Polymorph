@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
 
 from ..constants import APP_VERSION, DISCORD_URL, KOFI_URL, PATREON_URL, REPO_URL
 from ..resources import asset_path
+from .progress_ring import StatusActivityRing
 from .brand_widgets import (
     BrandSigil,
     PolymorphButton,
@@ -99,6 +100,13 @@ class QueueRow(TexturedFrame):
     def _load_thumbnail(self) -> None:
         reader = QImageReader(str(self.path))
         reader.setAutoTransform(True)
+        from ..static_image import is_still_image
+        if is_still_image(self.path):
+            native = reader.size()
+            if native.isValid() and max(native.width(), native.height()) > 200:
+                ratio = 200 / max(native.width(), native.height())
+                reader.setScaledSize(QSize(max(1, round(native.width() * ratio)),
+                                           max(1, round(native.height() * ratio))))
         image = reader.read()
         if image.isNull():
             self.thumb.setText("WEBP")
@@ -125,6 +133,8 @@ class QueueRow(TexturedFrame):
                 info = self.window.converter.probe(self.path)
                 self.window.media_cache[self.path] = info
             if info is not None:
+                if info.is_still:
+                    return f"{size_text}   |   {info.width} × {info.height}   |   Still image"
                 return f"{size_text}   |   {info.width} × {info.height}   |   {info.duration_s:.1f}s"
         except Exception:
             pass
@@ -310,6 +320,7 @@ def rebuild_brand_layout(window) -> None:
         window.file_list.clear()
         window.files.clear()
         window.media_cache.clear()
+        window._set_media_mode(None)
         window.preview.set_source(None)
         window.dimensions_label.setText("No file selected")
         window._sync_enabled_state()
@@ -391,8 +402,7 @@ def rebuild_brand_layout(window) -> None:
             status_detail.setText("1 file imported. Choose your settings and begin.")
         else:
             status_detail.setText(f"{count} files imported. Choose your settings and begin.")
-        if window.worker is None or not window.worker.isRunning():
-            window.status_label.setText("Ready")
+        # Queue refreshes must not erase successful output paths or errors.
 
     registry.callback(lambda _scale: update_file_count())
     model = window.file_list.model()
@@ -439,6 +449,7 @@ def rebuild_brand_layout(window) -> None:
     time_label = QLabel("0:00.0 / 0:00.0")
     time_label.setObjectName("PlaybackTime")
     playback.addWidget(time_label)
+    window._brand_playback_controls = (play_btn, timeline, time_label)
     preview_layout.addLayout(playback)
 
     meta_separator = _line(False)
@@ -478,12 +489,17 @@ def rebuild_brand_layout(window) -> None:
     registry.callback(icon.refresh)
     window.gif_radio.setParent(card)
     window.mp4_radio.setParent(card)
+    window.webp_radio.setParent(card)
+    window.png_radio.setParent(card)
+    window.webp_lossless.setParent(card)
 
     format_grid = QGridLayout()
     registry.layout(format_grid, (0, 0, 0, 0), 0)
     format_grid.setVerticalSpacing(0)
     format_grid.addWidget(window.gif_radio, 0, 0, Qt.AlignmentFlag.AlignLeft)
     format_grid.addWidget(window.mp4_radio, 0, 1, Qt.AlignmentFlag.AlignLeft)
+    format_grid.addWidget(window.webp_radio, 2, 0, Qt.AlignmentFlag.AlignLeft)
+    format_grid.addWidget(window.png_radio, 2, 1, Qt.AlignmentFlag.AlignLeft)
 
     gif_note = _subtext("Best for animations")
     mp4_note = _subtext("Smaller files, wider support")
@@ -493,9 +509,25 @@ def rebuild_brand_layout(window) -> None:
     mp4_note.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
     format_grid.addWidget(gif_note, 1, 0, Qt.AlignmentFlag.AlignTop)
     format_grid.addWidget(mp4_note, 1, 1, Qt.AlignmentFlag.AlignTop)
+    webp_note = _subtext("Smaller static images")
+    png_note = _subtext("Lossless image output")
+    webp_note.setContentsMargins(19, 0, 0, 0)
+    png_note.setContentsMargins(19, 0, 0, 0)
+    format_grid.addWidget(webp_note, 3, 0, Qt.AlignmentFlag.AlignTop)
+    format_grid.addWidget(png_note, 3, 1, Qt.AlignmentFlag.AlignTop)
+    webp_anim_note = _subtext("Animated • loops forever")
+    webp_anim_note.setContentsMargins(19, 0, 0, 0)
+    format_grid.addWidget(webp_anim_note, 3, 0, Qt.AlignmentFlag.AlignTop)
+    window._brand_webp_animation_note = webp_anim_note
+    webp_anim_note.hide()
+    window._brand_animated_format_notes = (gif_note, mp4_note)
+    window._brand_still_format_notes = (webp_note, png_note)
+    webp_note.hide()
+    png_note.hide()
     format_grid.setColumnStretch(0, 1)
     format_grid.setColumnStretch(1, 1)
     layout.addLayout(format_grid)
+    layout.addWidget(window.webp_lossless)
     rail_layout.addWidget(card)
 
     # Sizing.
@@ -507,6 +539,7 @@ def rebuild_brand_layout(window) -> None:
         spin.setAlignment(Qt.AlignmentFlag.AlignCenter)
     window.size_radio.setParent(card)
     window.res_radio.setParent(card)
+    window.native_radio.setParent(card)
     window.max_mb.setSuffix("")
     registry.width(window.max_mb, 83)
     registry.width(window.width_spin, 78)
@@ -525,12 +558,14 @@ def rebuild_brand_layout(window) -> None:
     times.setObjectName("TimesLabel")
     sizing_grid.addWidget(times, 1, 2, Qt.AlignmentFlag.AlignCenter)
     sizing_grid.addWidget(window.height_spin, 1, 3)
+    sizing_grid.addWidget(window.native_radio, 2, 0, 1, 4)
     sizing_grid.setColumnStretch(0, 1)
     layout.addLayout(sizing_grid)
     rail_layout.addWidget(card)
 
     # GIF priority.
     card, layout, _, priority_icon = _card(registry, "GIF PRIORITY", "priority.png", separator=True)
+    window._brand_priority_card = card
     registry.callback(priority_icon.refresh)
     window.motion_preserve_radio.setParent(card)
     window.motion_favor_radio.setParent(card)
@@ -603,7 +638,7 @@ def rebuild_brand_layout(window) -> None:
     aspect_row.addWidget(guide_btn)
     aspect_layout.addLayout(aspect_row)
 
-    # Keep background color/center engine widgets alive but intentionally hidden in branded interface.
+    # Keep background color/center engine widgets alive but intentionally hidden in branded v1.
     window.color_btn.setParent(root)
     window.color_btn.hide()
     window.center_btn.setParent(root)
@@ -633,7 +668,7 @@ def rebuild_brand_layout(window) -> None:
     rail_layout.addWidget(zoom_card)
 
     # Output folder: intentionally no divider.
-    out_card, out_layout, _, folder_icon = _card(
+    out_card, out_layout, out_header, folder_icon = _card(
         registry, "OUTPUT FOLDER", "folder.png", separator=False
     )
     registry.callback(folder_icon.refresh)
@@ -642,6 +677,16 @@ def rebuild_brand_layout(window) -> None:
     output_row = QHBoxLayout()
     registry.layout(output_row, (0, 0, 0, 0), 6)
     output_row.addWidget(window.output_path, 1)
+    # Keep the path row at its previously accepted width/height: a second
+    # button here wraps the default Windows Downloads path and clips the
+    # primary action at minimum window size.
+    open_btn = QToolButton()
+    open_btn.setText("Open")
+    open_btn.setToolTip("Open the folder where converted files are saved.")
+    open_btn.clicked.connect(window._open_output_folder)
+    registry.size(open_btn, 44, 16)
+    out_header.addWidget(open_btn)
+    window.open_output_btn = open_btn
     browse_btn = QPushButton("Browse…")
     browse_btn.setObjectName("BrowseButton")
     browse_btn.setToolTip("Choose output folder")
@@ -675,10 +720,13 @@ def rebuild_brand_layout(window) -> None:
     top_row = QHBoxLayout()
     registry.layout(top_row, (0, 0, 0, 0), 7)
 
-    # Simple ring indicator.
-    ring = QLabel("◯")
-    ring.setStyleSheet("color:#c72831; background:transparent; font-weight:700;")
-    registry.width(ring, 24)
+    # Real status: no red spinner unless the worker is actually busy.
+    ring = StatusActivityRing(footer_panel)
+    window.status_ring = ring
+    registry.callback(lambda scale: ring.setFixedSize(
+        24 if scale <= 0.76 else max(34, round(45 * scale)),
+        24 if scale <= 0.76 else max(34, round(45 * scale)),
+    ))
     top_row.addWidget(ring)
 
     status_box = QVBoxLayout()

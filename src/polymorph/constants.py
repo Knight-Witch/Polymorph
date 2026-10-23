@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 APP_NAME = "Polymorph"
-APP_VERSION = "0.1.0"
+APP_VERSION = "0.2.0"
 APP_ORG = "Knight Witch"
 REPO_URL = "https://github.com/Knight-Witch/Polymorph"
 RELEASES_URL = f"{REPO_URL}/releases"
@@ -18,7 +18,7 @@ FILE_SIZE_HEADROOM = 0.97
 MAX_SIZE_PASSES = 6
 MIN_SCALE = 0.10
 
-SUPPORTED_INPUT_EXTENSIONS = {".webp", ".mp4"}
+SUPPORTED_INPUT_EXTENSIONS = {".webp", ".mp4", ".gif", ".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"}
 
 RATIO_PRESETS: list[tuple[str, float | None]] = [
     ("Original", None),

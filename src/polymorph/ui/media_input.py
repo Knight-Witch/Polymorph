@@ -16,7 +16,9 @@ def _choose_media_files(self) -> None:
         self,
         "Add media files",
         str(Path.home()),
-        "Supported media (*.webp *.mp4);;Animated WebP (*.webp);;MP4 video (*.mp4)",
+        "Supported media (*.webp *.gif *.mp4 *.png *.jpg *.jpeg *.bmp *.tif *.tiff);;"
+        "Still images (*.png *.jpg *.jpeg *.bmp *.tif *.tiff *.webp);;"
+        "Animations (*.webp *.gif *.mp4);;GIF animations (*.gif);;MP4 video (*.mp4)",
     )
     self._add_files([Path(path) for path in paths])
 
@@ -38,7 +40,7 @@ def _rebuild_with_media_labels(window) -> None:
     _ORIGINAL_REBUILD(window)
     for button in window.findChildren(QPushButton):
         if button.text() == "+ Add Files":
-            button.setToolTip("Add one or more animated WebP or MP4 files to the conversion queue.")
+            button.setToolTip("Add PNG/JPG images, GIF animations, animated WebP or MP4 videos.")
 
 
 def install_media_input_support() -> None:
@@ -49,7 +51,7 @@ def install_media_input_support() -> None:
 
     # These imports are intentionally lazy. Importing this module must never
     # preload branded_layout before app.py has installed the accepted visual
-    # class patches; doing so caused a prior stale-UI package regression.
+    # class patches; doing so caused the earlier revision ancient-UI package regression.
     from . import branded_layout as branded
     from .adaptive_main_window import MainWindow
 
