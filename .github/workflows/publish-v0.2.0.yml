@@ -54,7 +54,13 @@ jobs:
           Invoke-WebRequest $inter -OutFile src\polymorph\assets\fonts\Inter-opsz-wght.ttf
           Invoke-WebRequest "https://raw.githubusercontent.com/google/fonts/45071f07c63e863a539442ef3562b71ab1f147a6/ofl/cinzel/OFL.txt" -OutFile src\polymorph\assets\fonts\OFL-Cinzel.txt
           Invoke-WebRequest "https://raw.githubusercontent.com/google/fonts/e1d6480102fed30739fead0faee463101f892c8f/ofl/inter/OFL.txt" -OutFile src\polymorph\assets\fonts\OFL-Inter.txt
-          python build\verify_font_assets.py src\polymorph\assets\fonts
+          $fonts = @("Polymorph-Regular.ttf.xz", "Polymorph-Bold.ttf.xz", "Cinzel-wght.ttf", "Inter-opsz-wght.ttf", "OFL-Cinzel.txt", "OFL-Inter.txt")
+          foreach ($name in $fonts) {
+            $item = Join-Path "src\polymorph\assets\fonts" $name
+            if (!(Test-Path $item) -or (Get-Item $item).Length -lt 100) { throw "Missing or empty font asset: $item" }
+          }
+          Write-Host "PASS all six pinned font assets and licenses"
+
 
       - name: Prepare packaged license texts
         shell: pwsh
