@@ -149,7 +149,9 @@ def probe_media(ffprobe: Path, path: Path) -> MediaInfo:
                 break
             except ValueError:
                 pass
-    if not frame_count and riff_durations:
+    if riff_durations:
+        # RIFF ANMF count is authoritative; ffprobe can report one packet
+        # instead of the actual WebP animation frame count.
         frame_count = len(riff_durations)
     if gif_durations:
         frame_count = len(gif_durations)

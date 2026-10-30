@@ -598,7 +598,7 @@ class MainWindow(QMainWindow):
         self.status_label.setText(f"Failed {Path(path).name}: {reason}")
         self.status_label.setToolTip(reason)
         if hasattr(self, "_brand_status_detail"):
-            self._brand_status_detail.setText("No output created for this file. Check the error above.")
+            self._brand_status_detail.setText(f"Reason: {reason}")
             self._brand_status_detail.setToolTip(reason)
 
     def _conversion_finished(self) -> None:
@@ -630,6 +630,9 @@ class MainWindow(QMainWindow):
 
     def show_whats_new_if_needed(self):
         return show_whats_new_once(self)
+
+    def view_whats_new(self):
+        return show_whats_new_once(self, force=True)
 
     def _manual_check_updates(self) -> None:
         self._check_updates(manual=True)

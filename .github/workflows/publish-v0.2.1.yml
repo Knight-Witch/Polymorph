@@ -1,17 +1,17 @@
-name: Publish Polymorph v0.2.0 (Approved Release)
+name: Publish Polymorph v0.2.1 (Approved Release)
 
 on:
   push:
     branches: [main]
     paths:
-      - ".github/workflows/publish-v0.2.0.yml"
+      - ".github/workflows/publish-v0.2.1.yml"
 
 permissions:
   contents: write
 
 jobs:
   public-release:
-    if: contains(github.event.head_commit.message, '[publish-v0.2.0]')
+    if: contains(github.event.head_commit.message, '[publish-v0.2.1]')
     runs-on: windows-latest
     timeout-minutes: 45
     steps:
@@ -38,12 +38,21 @@ jobs:
         run: |
           python -m compileall -q src run_polymorph.py
           if ($LASTEXITCODE -ne 0) { throw "Public source syntax verification failed" }
-          python -c "from polymorph.constants import APP_VERSION, LATEST_RELEASE_API; assert APP_VERSION == '0.2.0'; assert LATEST_RELEASE_API == 'https://api.github.com/repos/Knight-Witch/Polymorph/releases/latest'; from polymorph.ui.whats_new import FEATURE_ID; from polymorph.animated_webp import finalize_webp_timing; from polymorph.delta_update import stage_delta; print('PASS public 0.2.0 imports and update feed')"
+          python -c "from polymorph.constants import APP_VERSION, LATEST_RELEASE_API; assert APP_VERSION == '0.2.1'; assert LATEST_RELEASE_API == 'https://api.github.com/repos/Knight-Witch/Polymorph/releases/latest'; from polymorph.ui.whats_new import FEATURE_ID; from polymorph.animated_webp import finalize_webp_timing; from polymorph.delta_update import stage_delta; print('PASS public 0.2.1 imports and update feed')"
           if ($LASTEXITCODE -ne 0) { throw "Public import/update-feed verification failed" }
           $private = Get-ChildItem src -Recurse -File -Include *.py | Select-String -Pattern 'Polymorph\.Dev','dev_update_service','DiagnosticAdaptiveConverter','_ADAPTIVE_DIAGNOSTIC'
           if ($private) { throw "Private source reference found in public application" }
           if (Test-Path src/polymorph/dev_update_service.py) { throw "Private Dev updater must never publish" }
           if (Test-Path src/polymorph/smoke_test.py) { throw "Private packaged smoke module must never publish" }
+      - name: Verify What's New message and donation preservation
+        shell: pwsh
+        run: |
+          $source = Get-Content src/polymorph/ui/whats_new.py -Raw
+          foreach ($needle in @("Fixed some failed conversion bugs!", "conversion-reliability-0.2.1", "Thank you so much for helping make it all possible!", "donation/kofi.webp", "donation/paypal.png", "paypalme/knightwitch")) {
+            if (-not $source.Contains($needle)) { throw "Missing required notice/support element: $needle" }
+          }
+          Write-Host "PASS What's New and unchanged donation presentation"
+
       - name: Prepare pinned Polymorph UI fonts
         shell: pwsh
         run: |
@@ -201,26 +210,26 @@ jobs:
       - name: Retain official installer and checksum
         uses: actions/upload-artifact@v4
         with:
-          name: Polymorph-0.2.0-official-installer
+          name: Polymorph-0.2.1-official-installer
           path: |
-            installer/Output/Polymorph_Setup_v0.2.0.exe
-            installer/Output/Polymorph_Setup_v0.2.0.exe.sha256
+            installer/Output/Polymorph_Setup_v0.2.1.exe
+            installer/Output/Polymorph_Setup_v0.2.1.exe.sha256
           if-no-files-found: error
           retention-days: 30
 
-      - name: Publish the user-approved v0.2.0 GitHub Release
+      - name: Publish the user-approved v0.2.1 GitHub Release
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if (gh release view v0.2.0 --repo Knight-Witch/Polymorph 2>$null) { throw "Release v0.2.0 already exists; refusing to replace its assets" }
+          if (gh release view v0.2.1 --repo Knight-Witch/Polymorph 2>$null) { throw "Release v0.2.1 already exists; refusing to replace its assets" }
           $files = @(
-            "installer/Output/Polymorph_Setup_v0.2.0.exe",
-            "installer/Output/Polymorph_Setup_v0.2.0.exe.sha256",
+            "installer/Output/Polymorph_Setup_v0.2.1.exe",
+            "installer/Output/Polymorph_Setup_v0.2.1.exe.sha256",
             "release-source/ffmpeg-bf1b838f2a.tar.gz",
             "release-source/gifski-1.32.0.crate"
           )
           foreach ($file in $files) { if (!(Test-Path $file)) { throw "Missing release asset: $file" } }
-          gh release create v0.2.0 $files --repo Knight-Witch/Polymorph --target $env:GITHUB_SHA --title "Polymorph 0.2.0" --notes-file RELEASE_NOTES.md --latest
+          gh release create v0.2.1 $files --repo Knight-Witch/Polymorph --target $env:GITHUB_SHA --title "Polymorph 0.2.1" --notes-file RELEASE_NOTES.md --latest
           if ($LASTEXITCODE -ne 0) { throw "GitHub release publication failed" }
-          Write-Host "Published official v0.2.0 installer, checksum and corresponding source archives."
+          Write-Host "Published official v0.2.1 installer, checksum and corresponding source archives."

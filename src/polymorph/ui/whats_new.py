@@ -5,11 +5,11 @@ from PySide6.QtCore import Qt, QUrl, QSize
 from PySide6.QtGui import QIcon, QDesktopServices
 from PySide6.QtWidgets import QDialog, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QFrame
 
-from ..constants import KOFI_URL
+from ..constants import APP_VERSION, KOFI_URL
 from ..resources import asset_path
 
 PAYPAL_URL = "https://www.paypal.com/paypalme/knightwitch"
-FEATURE_ID = "static-and-animated-webp-0.2.0"
+FEATURE_ID = "conversion-reliability-0.2.1"
 
 
 def _support_button(label: str, logo: str, url: str, name: str) -> QPushButton:
@@ -42,25 +42,12 @@ class WhatsNewDialog(QDialog):
         layout.setContentsMargins(25, 19, 25, 18)
         layout.setSpacing(9)
 
-        heading = QLabel("Polymorph now converts static image files!")
+        heading = QLabel("Fixed some failed conversion bugs!")
         heading.setObjectName("WhatsNewHeading")
         heading.setStyleSheet("font-size:17px;font-weight:bold;color:#d9b578;")
         heading.setWordWrap(True)
         layout.addWidget(heading)
-        for title, detail in (
-            ("PNG to WebP", "Share images more easily on platforms with smaller file-size limits."),
-            ("WebP to PNG", "Export a PNG for places that don't recognize WebP."),
-            ("PNG to PNG", "Shrink a PNG to a chosen maximum size, such as 16 MB down to 10 MB."),
-            ("GIF / video to animated WebP", "Create high-quality looping WebP animations for sharing."),
-        ):
-            line = QLabel(f"<b>{title}</b> — {detail}")
-            line.setTextFormat(Qt.TextFormat.RichText)
-            line.setWordWrap(True)
-            layout.addWidget(line)
 
-        note = QLabel("All conversions run locally on your computer.")
-        note.setStyleSheet("color:#ada59a")
-        layout.addWidget(note)
         divider = QFrame()
         divider.setFrameShape(QFrame.Shape.HLine)
         divider.setStyleSheet("background:#694b32;max-height:1px")
@@ -96,9 +83,21 @@ class WhatsNewDialog(QDialog):
         layout.addWidget(close, alignment=Qt.AlignmentFlag.AlignRight)
 
 
-def show_whats_new_once(window):
-    key = "announcements/" + FEATURE_ID
-    if window.settings_store.value(key, False, type=bool):
+def announcement_key(version: str | None = None, feature_id: str = FEATURE_ID) -> str:
+    """Keep Dev and Stable acknowledgements independent in shared QSettings."""
+    channel = "dev" if "-dev." in (version or APP_VERSION) else "stable"
+    return f"announcements/{channel}/{feature_id}"
+
+
+def show_whats_new_once(window, *, force: bool = False):
+    """Show automatically once; allow a manual reopen without duplicate dialogs."""
+    key = announcement_key()
+    current = getattr(window, "_whats_new_dialog", None)
+    if current is not None and current.isVisible():
+        current.raise_()
+        current.activateWindow()
+        return current
+    if not force and window.settings_store.value(key, False, type=bool):
         return None
     dialog = WhatsNewDialog(window)
     dialog.finished.connect(lambda _code: window.settings_store.setValue(key, True))

@@ -481,7 +481,7 @@ def rebuild_brand_layout(window) -> None:
     rail.setObjectName("ControlRailContent")
     rail.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
     rail_layout = QVBoxLayout(rail)
-    registry.layout(rail_layout, (0, 0, 0, 0), 6)
+    registry.layout(rail_layout, (0, 0, 0, 0), 5)  # 1px × inter-card gaps prevents the 920x640 footer-action clipping
     registry.width(rail, 404)
 
     # Output format.
@@ -795,6 +795,21 @@ def rebuild_brand_layout(window) -> None:
     creator = QLabel("Polymorph 2026, Knight Witch™")
     creator.setObjectName("FooterMeta")
     meta_row.addWidget(version)
+    whats_new_button = QToolButton()
+    whats_new_button.setObjectName("FooterWhatsNew")
+    whats_new_button.setText("What's New")
+    whats_new_button.setToolTip("Reopen the latest feature announcement and support links")
+    whats_new_button.setAccessibleName("View What's New")
+    whats_new_button.setCursor(Qt.CursorShape.PointingHandCursor)
+    whats_new_button.setFixedHeight(20)
+    whats_new_button.setStyleSheet(
+        "QToolButton{color:#c8aa78;background:transparent;border:none;"
+        "padding:1px 6px;font-size:10px;}"
+        "QToolButton:hover{color:#f0dcb2;text-decoration:underline;}"
+    )
+    whats_new_button.clicked.connect(window.view_whats_new)
+    window.whats_new_button = whats_new_button
+    meta_row.addWidget(whats_new_button)
     meta_row.addStretch(1)
     meta_row.addWidget(creator)
     footer_layout.addLayout(meta_row)

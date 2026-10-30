@@ -379,6 +379,11 @@ class Converter:
                 output_info,
                 expected_width=expected_width,
                 expected_height=expected_height,
+                allow_encoder_frame_merging=(
+                    output.suffix.lower() in {".gif", ".webp"}
+                    and source_info.path.suffix.lower() == ".mp4"
+                    and not source_info.frame_durations_ms
+                ),
             )
         except (ProbeError, IntegrityError) as exc:
             try:
@@ -513,39 +518,58 @@ class Converter:
         """Animation WebP: full source cadence, alpha support and loop forever."""
         from .animated_webp import finalize_webp_timing
         filter_graph, _ = build_video_filter(info, settings.framing, width, height)
-        cmd = self._base_ffmpeg(info, filter_graph) + [
-            "-fps_mode", "passthrough",
-            "-c:v", "libwebp_anim",
-            # BGRA avoids lossy YUV chroma conversion when Lossless is selected;
-            # yuva420p keeps the normal high-quality output compact.
-            "-pix_fmt", "bgra" if settings.webp_lossless else "yuva420p",
-            "-lossless", "1" if settings.webp_lossless else "0",
-            "-quality", "95",
-            "-compression_level", "6",
-            "-loop", "0",
-            "-progress", "pipe:2",
-            "-y", str(output),
-        ]
-        proc = subprocess.Popen(
-            cmd,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-            stdin=subprocess.DEVNULL,
-            creationflags=self._creation_flags(),
-        )
-        self._register(proc)
-        try:
-            self._consume_progress(proc, info.duration_s, progress, label)
-            rc = proc.wait()
-        finally:
-            self._unregister(proc)
-        if self._cancel.is_set():
-            raise ConversionCancelled()
-        if rc != 0 or not output.is_file():
-            raise ConversionError(f"Animated WebP encoding failed (ffmpeg={rc})")
+
+        def run_encoder(codec: str) -> None:
+            cmd = self._base_ffmpeg(info, filter_graph) + [
+                "-fps_mode", "passthrough",
+                "-c:v", codec,
+                "-pix_fmt", "bgra" if settings.webp_lossless else "yuva420p",
+                "-lossless", "1" if settings.webp_lossless else "0",
+                "-quality", "95",
+                "-compression_level", "6",
+                "-loop", "0",
+                "-progress", "pipe:2",
+                "-y", str(output),
+            ]
+            proc = subprocess.Popen(
+                cmd,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+                stdin=subprocess.DEVNULL,
+                creationflags=self._creation_flags(),
+            )
+            self._register(proc)
+            try:
+                self._consume_progress(proc, info.duration_s, progress, label)
+                rc = proc.wait()
+            finally:
+                self._unregister(proc)
+            if self._cancel.is_set():
+                raise ConversionCancelled()
+            if rc != 0 or not output.is_file():
+                raise ConversionError(f"Animated WebP encoding failed (ffmpeg={rc}, codec={codec})")
+
+        run_encoder("libwebp_anim")
         try:
             finalize_webp_timing(output, info.duration_s, info.frame_durations_ms)
-        except (OSError, ProbeError) as exc:
+        except ProbeError as exc:
+            if str(exc) != "Animated WebP has no animation frames" or info.frame_count < 2:
+                output.unlink(missing_ok=True)
+                raise ConversionError(f"Animated WebP timing verification failed: {exc}") from exc
+
+            # A wholly static recording may compress into a single VP8 still.
+            # Preserve an animated timeline using the per-frame encoder only
+            # in this edge case; normal optimized outputs remain unchanged.
+            output.unlink(missing_ok=True)
+            run_encoder("libwebp")
+            try:
+                finalize_webp_timing(output, info.duration_s, info.frame_durations_ms)
+            except (OSError, ProbeError) as fallback_exc:
+                output.unlink(missing_ok=True)
+                raise ConversionError(
+                    f"Animated WebP static-clip fallback verification failed: {fallback_exc}"
+                ) from fallback_exc
+        except OSError as exc:
             output.unlink(missing_ok=True)
             raise ConversionError(f"Animated WebP timing verification failed: {exc}") from exc
 

@@ -1,8 +1,8 @@
 # Polymorph
 
-## [[Click Here to Download & Install]](https://github.com/Knight-Witch/Polymorph/releases/download/v0.2.0/Polymorph_Setup_v0.2.0.exe)
+## [[Click Here to Download & Install]](https://github.com/Knight-Witch/Polymorph/releases/download/v0.2.1/Polymorph_Setup_v0.2.1.exe)
 
-**Polymorph 0.2.0** expands the original media converter of Knight Witch's Windows media-conversion utility for animated WebP workflows. This project was created with the primary intent to serve the _Heroforge_ community and provide users with a tool to convert high res WebP captures into near-lossless GIF and MP4 conversions. While Heroforge was the initial spark to making this, the app can be used for anything you like. 
+**Polymorph 0.2.1** expands the original media converter of Knight Witch's Windows media-conversion utility for animated WebP workflows. This project was created with the primary intent to serve the _Heroforge_ community and provide users with a tool to convert high res WebP captures into near-lossless GIF and MP4 conversions. While Heroforge was the initial spark to making this, the app can be used for anything you like. 
 - **Reddit** treats animated WebP as static images once you hit the submit button on a post. As a result, only GIF or MP4 options are available for sharing spinny captures, and only GIFs come with the autoplay / looping function in Reddit's native post embed/previewer.
 - **Discord** converts animated WebP into GIFs upon upload and the end-result is something that looks like it was converted into potato salad.
 
@@ -20,7 +20,8 @@ Everything runs locally on your PC. Polymorph does not upload your media to a cl
 - **NEW:** PNG → lossless WebP, WebP → PNG, and PNG → PNG resolution-downscaling for user-specified MB ceilings.
 - **NEW:** Animated GIF and video → looping animated WebP, with frame timing and transparency checks.
 - **NEW:** Fast, verified incremental updates for future versions when an exact compatible update is published; otherwise a full installer is offered.
-- **NEW:** One-time What's New announcement with optional Ko-fi and PayPal support buttons.
+- **FIXED:** Some failed MP4 → GIF and MP4 → animated WebP conversions when encoders consolidate repeated stored frames.
+- **What's New:** Updated notice with the existing optional Ko-fi and PayPal support buttons.
 
 - Animated WebP, animated GIF, MP4 and common still-image input.
 - High-quality GIF output with preserved source timing by default.
@@ -35,7 +36,7 @@ Everything runs locally on your PC. Polymorph does not upload your media to a cl
 
 ## Platform
 
-Polymorph 0.2.0 is intended for 64-bit Windows 10 and Windows 11.
+Polymorph 0.2.1 is intended for 64-bit Windows 10 and Windows 11.
 
 ## Install
 
@@ -43,10 +44,10 @@ Official Windows builds are published under this repository's **Releases** secti
 
 For the first release, download:
 
-- `Polymorph_Setup_v0.2.0.exe`
-- `Polymorph_Setup_v0.2.0.exe.sha256`
+- `Polymorph_Setup_v0.2.1.exe`
+- `Polymorph_Setup_v0.2.1.exe.sha256`
 
-Polymorph 0.2.0 is currently unsigned, so Windows SmartScreen may show an **Unknown Publisher** warning. The accompanying SHA-256 file lets you verify that the installer is the exact file published by Knight Witch.
+Polymorph 0.2.1 is currently unsigned, so Windows SmartScreen may show an **Unknown Publisher** warning. The accompanying SHA-256 file lets you verify that the installer is the exact file published by Knight Witch.
 
 ## Basic use
 
@@ -64,7 +65,7 @@ Polymorph 0.2.0 is currently unsigned, so Windows SmartScreen may show an **Unkn
 
 Polymorph performs media conversion locally. There is no media-upload service, account requirement, telemetry service, or background daemon.
 
-Update checks query only this repository's official public GitHub Releases endpoint. Starting in v0.2.0, later releases can provide small, SHA-256-verified changed-file packages. The existing v0.1.0 build requires one full-installer upgrade to v0.2.0.
+Update checks query only this repository's official public GitHub Releases endpoint. Starting in v0.2.0, compatible later releases may offer verified changed-file packages; otherwise the updater offers a checksum-verified full installer. Upgrading from v0.1.0 also requires a full installer.
 
 ## Source and license
 
