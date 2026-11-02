@@ -9,7 +9,7 @@ from ..constants import APP_VERSION, KOFI_URL
 from ..resources import asset_path
 
 PAYPAL_URL = "https://www.paypal.com/paypalme/knightwitch"
-FEATURE_ID = "conversion-reliability-0.2.1"
+FEATURE_ID = "batch-conversions-0.3.0"
 
 
 def _support_button(label: str, logo: str, url: str, name: str) -> QPushButton:
@@ -42,11 +42,31 @@ class WhatsNewDialog(QDialog):
         layout.setContentsMargins(25, 19, 25, 18)
         layout.setSpacing(9)
 
-        heading = QLabel("Fixed some failed conversion bugs!")
+        heading = QLabel("<b>Fixed:</b> Some conversion failure bugs")
         heading.setObjectName("WhatsNewHeading")
-        heading.setStyleSheet("font-size:17px;font-weight:bold;color:#d9b578;")
+        heading.setTextFormat(Qt.TextFormat.RichText)
+        heading.setStyleSheet("font-size:15px;color:#eae0d0;")
         heading.setWordWrap(True)
         layout.addWidget(heading)
+
+        feature = QLabel("NEW: Batch conversions!")
+        feature.setObjectName("WhatsNewBatchHeading")
+        feature.setStyleSheet("font-size:17px;font-weight:bold;color:#d9b578;")
+        feature.setWordWrap(True)
+        layout.addWidget(feature)
+
+        detail = QLabel("Upload multiple files &amp; batch convert, with options for:")
+        detail.setTextFormat(Qt.TextFormat.RichText)
+        detail.setWordWrap(True)
+        layout.addWidget(detail)
+        for item in (
+            "<b>Globally-applied settings</b> (e.g. specific resolution width, or file size)",
+            "<b>Individually-applied settings per-video</b> — <i>set them up, then convert the whole queue.</i>",
+        ):
+            bullet = QLabel("• " + item)
+            bullet.setTextFormat(Qt.TextFormat.RichText)
+            bullet.setWordWrap(True)
+            layout.addWidget(bullet)
 
         divider = QFrame()
         divider.setFrameShape(QFrame.Shape.HLine)

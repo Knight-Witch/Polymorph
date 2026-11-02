@@ -1,19 +1,21 @@
-# Polymorph 0.2.1 — Conversion reliability fixes
+# Polymorph 0.3.0 — Batch conversions
 
-This update fixes some failed MP4 conversions to GIF and animated WebP. Both encoders can consolidate redundant stored frames without shortening playback; the previous exact-count check sometimes rejected valid results.
+**Fixed:** Some conversion failure bugs
 
-- Validate dimensions and full playback duration even when encoders optimize redundant stored frames for MP4 → GIF/WebP.
-- Preserve both **Fit under file size** and **Set resolution**, default full source motion, image-quality policies and Original/Crop/Fit framing.
-- Handle entirely static MP4 clips when exporting an animated WebP.
-- Show clearer failure details when output verification legitimately fails.
-- Updated What's New message: **“Fixed some failed conversion bugs!”**. The existing Knight Witch support message, signature, Ko-fi and PayPal buttons and links are unchanged. View What's New remains available in the footer.
+**NEW: Batch conversions!**
 
-Media processing remains entirely local. Windows codec pins remain FFmpeg 9.0.1 and gifski 1.32.0.
+Upload multiple files and batch convert, with options for:
 
-## Updating
+- **Globally-applied settings:** Share output format, framing, file-size ceiling, or one width/height target. With Set resolution, each file retains its aspect ratio; its other dimension is calculated independently without upscaling.
+- **Individually-applied settings per-video:** Select each file, set output format, sizing, framing, aspect and crop, and move to the next without losing those settings. Then convert the whole queue.
+- Convert every loaded file or a Ctrl/Shift-selected subset with one action, tracked overall progress and a local per-file result/error log.
 
-The in-app updater reads official public releases. If an exact matching incremental update is published, it uses checksum verification; otherwise it offers the checksum-verified full installer. Close Polymorph before running the installer so Windows can replace the existing executable.
+Also includes improved conversion failure diagnostics, MP4→GIF/WebP integrity checks and typed widths such as 700 pixels. Still images and animations remain separate batch types.
 
-## Installer and verification
+The What's New dialog uses the requested batch message and retains the original Knight Witch support text, signature, Ko-fi and PayPal buttons and URLs. Media conversion remains entirely local. The high-fidelity GIF default, pinned FFmpeg 9.0.1 and gifski 1.32.0 are unchanged.
 
-Download `Polymorph_Setup_v0.2.1.exe` and `Polymorph_Setup_v0.2.1.exe.sha256` from the official [v0.2.1 release](https://github.com/Knight-Witch/Polymorph/releases/tag/v0.2.1). The unsigned executable may trigger SmartScreen **Unknown Publisher**. Windows 10/11 x64 is supported. Third-party licenses/source availability: `THIRD_PARTY.md` and `THIRD_PARTY_SOURCE.md`.
+## Updating and installing
+
+The in-app updater checks the [official public releases](https://github.com/Knight-Witch/Polymorph/releases). If no exact-compatible verified incremental patch is available, it offers the checksum-verified full installer. Close Polymorph before installing to release the existing EXE.
+
+Download `Polymorph_Setup_v0.3.0.exe` and its `.sha256` from [v0.3.0](https://github.com/Knight-Witch/Polymorph/releases/tag/v0.3.0). Windows 10/11 x64. This unsigned installer may trigger SmartScreen. Third-party licenses and corresponding FFmpeg/gifski source are documented in `THIRD_PARTY.md` and `THIRD_PARTY_SOURCE.md`.

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import threading
+import traceback
 from pathlib import Path
 
 from PySide6.QtCore import QSettings, QSize, QThread, QTimer, Qt, QUrl, Signal, Slot
@@ -45,6 +46,7 @@ from ..constants import (
     default_output_dir,
 )
 from ..converter import ConversionCancelled, Converter
+from ..conversion_log import ConversionLog, latest_log
 from ..geometry import native_geometry
 from ..models import ConversionSettings, FramingMode, FramingSettings, OutputFormat, SizingMode
 from ..resources import asset_path
@@ -54,6 +56,7 @@ from ..update_service import download_and_verify_installer, download_and_stage_p
 from ..delta_update import launch_staged_update
 from .whats_new import show_whats_new_once
 from .dialogs import AspectGuideDialog
+from .conversion_log_dialog import ConversionLogDialog
 from .preview import AnimatedPreview
 from .progress_ring import ArcaneProgress
 from .resolution_linker import ResolutionLinker
@@ -64,7 +67,7 @@ class ConversionWorker(QThread):
     progressChanged = Signal(float, str)
     fileStarted = Signal(str)
     fileFinished = Signal(str, str, str)
-    failed = Signal(str, str)
+    failed = Signal(str, str, str)
 
     def __init__(self, converter: Converter, files: list[Path], settings: ConversionSettings, parent=None) -> None:
         super().__init__(parent)
@@ -82,10 +85,10 @@ class ConversionWorker(QThread):
                 summary = f"{result.width}×{result.height} • {result.size_bytes / (1024*1024):.1f} MB"
                 self.fileFinished.emit(str(path), summary, str(result.output))
             except ConversionCancelled:
-                self.failed.emit(str(path), "Cancelled")
+                self.failed.emit(str(path), "Cancelled", "")
                 break
             except Exception as exc:
-                self.failed.emit(str(path), str(exc))
+                self.failed.emit(str(path), str(exc) or type(exc).__name__, traceback.format_exc())
 
     def _progress(self, fraction: float, label: str) -> None:
         self.progressChanged.emit(fraction, label)
@@ -114,6 +117,9 @@ class MainWindow(QMainWindow):
         self.worker: ConversionWorker | None = None
         self._saved_files = 0
         self._failed_files = 0
+        self._batch_failures: list[tuple[str, str]] = []
+        self._conversion_log: ConversionLog | None = None
+        self._conversion_log_dialog: ConversionLogDialog | None = None
         self.converter: Converter | None = None
 
         try:
@@ -319,6 +325,20 @@ class MainWindow(QMainWindow):
         footer.addWidget(version)
         footer.addStretch(1)
         footer.addWidget(self._footer_button("update.svg", "Check for updates", self._manual_check_updates))
+        whats_new_button = QToolButton()
+        whats_new_button.setObjectName("WhatsNewFooter")
+        whats_new_button.setText("What's New")
+        whats_new_button.setToolTip("View the latest feature announcement and support links")
+        whats_new_button.setAccessibleName("View What's New")
+        whats_new_button.clicked.connect(self.view_whats_new)
+        footer.addWidget(whats_new_button)
+        self.whats_new_button = whats_new_button
+        self.log_button = QToolButton()
+        self.log_button.setObjectName("ConversionLogFooter")
+        self.log_button.setText("View Log")
+        self.log_button.setToolTip("Open the locally saved per-file conversion errors")
+        self.log_button.clicked.connect(self.view_conversion_log)
+        footer.addWidget(self.log_button)
         footer.addWidget(self._footer_button("github.svg", "View source on GitHub", lambda: self._open_url(REPO_URL)))
         footer.addWidget(self._footer_button("kofi.svg", "Support me on Ko-fi", lambda: self._open_url(KOFI_URL), bool(KOFI_URL)))
         footer.addWidget(self._footer_button("patreon.svg", "Support me on Patreon", lambda: self._open_url(PATREON_URL), bool(PATREON_URL)))
@@ -557,13 +577,14 @@ class MainWindow(QMainWindow):
             return
         self._saved_files = 0
         self._failed_files = 0
+        self._batch_failures = []
+        settings = self._make_settings()
+        self._conversion_log = ConversionLog(list(self.files), settings, APP_VERSION)
         self.worker = ConversionWorker(
-            self.converter, list(self.files), self._make_settings(), self
+            self.converter, list(self.files), settings, self
         )
         self.worker.progressChanged.connect(self._progress_changed)
-        self.worker.fileStarted.connect(
-            lambda p: self.status_label.setText(f"Polymorphing {Path(p).name}…")
-        )
+        self.worker.fileStarted.connect(self._file_started)
         self.worker.fileFinished.connect(self._file_finished)
         self.worker.failed.connect(self._file_failed)
         self.worker.finished.connect(self._conversion_finished)
@@ -584,8 +605,15 @@ class MainWindow(QMainWindow):
         self.arcane_progress.set_progress(fraction)
         self.status_label.setText(f"{label}… {percent}%")
 
+    def _file_started(self, path: str) -> None:
+        self.status_label.setText(f"Polymorphing {Path(path).name}…")
+        if self._conversion_log:
+            self._conversion_log.started(path)
+
     def _file_finished(self, path: str, summary: str, output: str) -> None:
         self._saved_files += 1
+        if self._conversion_log:
+            self._conversion_log.saved(path, output, summary)
         saved = Path(output)
         self.status_label.setText(f"Saved {saved.name} • {summary}")
         self.status_label.setToolTip(str(saved))
@@ -593,8 +621,11 @@ class MainWindow(QMainWindow):
             self._brand_status_detail.setText(f"Output: {saved}")
             self._brand_status_detail.setToolTip(str(saved))
 
-    def _file_failed(self, path: str, reason: str) -> None:
+    def _file_failed(self, path: str, reason: str, trace: str = "") -> None:
         self._failed_files += 1
+        self._batch_failures.append((path, reason))
+        if self._conversion_log:
+            self._conversion_log.failed(path, reason, trace)
         self.status_label.setText(f"Failed {Path(path).name}: {reason}")
         self.status_label.setToolTip(reason)
         if hasattr(self, "_brand_status_detail"):
@@ -612,11 +643,23 @@ class MainWindow(QMainWindow):
         self.progress.setValue(100 if self._saved_files and not self._failed_files else 0)
         if self.status_label.text().startswith(("Encoding", "Optimizing", "Polymorphing")):
             self.status_label.setText("Conversion ended without an output.")
-        if self._saved_files and self._failed_files:
-            self.status_label.setText(
-                f"Partial success: {self._saved_files} saved, {self._failed_files} failed. "
-                "See output folder and errors."
+        if self._failed_files:
+            errors = "\n".join(f"{Path(path).name}: {reason}" for path, reason in self._batch_failures)
+            summary = (
+                f"Partial success: {self._saved_files} saved, {self._failed_files} failed."
+                if self._saved_files else f"Conversion failed: {self._failed_files} file(s)."
             )
+            self.status_label.setText(summary + " Click View Log for details.")
+            self.status_label.setToolTip(errors)
+            first_path, first_reason = self._batch_failures[0]
+            if hasattr(self, "_brand_status_detail"):
+                self._brand_status_detail.setText(
+                    f"First failure: {Path(first_path).name}: {first_reason}"
+                )
+                self._brand_status_detail.setToolTip(errors)
+            self.log_button.setToolTip(f"View details for {self._failed_files} failed file(s)")
+        if self._conversion_log:
+            self._conversion_log.finished(self._saved_files, self._failed_files)
         worker = self.worker
         self.worker = None
         if worker:
@@ -627,6 +670,20 @@ class MainWindow(QMainWindow):
         if self.worker:
             self.status_label.setText("Cancelling…")
             self.worker.stop()
+
+    def view_conversion_log(self) -> None:
+        if self._conversion_log is not None:
+            log = self._conversion_log
+            content = log.text
+            path = log.path if log.write_error is None else None
+        else:
+            path, content = latest_log()
+        if self._conversion_log_dialog is not None:
+            self._conversion_log_dialog.close()
+        dialog = ConversionLogDialog(content, path, self)
+        self._conversion_log_dialog = dialog
+        dialog.show()
+        dialog.raise_()
 
     def show_whats_new_if_needed(self):
         return show_whats_new_once(self)

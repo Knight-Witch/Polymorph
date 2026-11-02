@@ -6,7 +6,7 @@ Unicode true
 !define MUI_UNICON "..\build\polymorph.ico"
 
 !define APP_NAME "Polymorph"
-!define APP_VERSION "0.2.1"
+!define APP_VERSION "0.3.0"
 !define APP_PUBLISHER "Knight Witch"
 !define APP_URL "https://github.com/Knight-Witch/Polymorph"
 !define APP_EXE "Polymorph.exe"
@@ -20,7 +20,7 @@ RequestExecutionLevel user
 SetCompressor /SOLID lzma
 SetCompressorDictSize 32
 
-VIProductVersion "0.2.1.0"
+VIProductVersion "0.3.0.0"
 VIAddVersionKey /LANG=1033 "ProductName" "${APP_NAME}"
 VIAddVersionKey /LANG=1033 "ProductVersion" "${APP_VERSION}"
 VIAddVersionKey /LANG=1033 "CompanyName" "${APP_PUBLISHER}"

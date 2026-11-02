@@ -304,7 +304,10 @@ class ScaleRegistry:
                 parent = layout.parentWidget()
                 if parent is not None and parent.layout() is layout:
                     if parent.objectName() == "ControlRailContent":
-                        scaled_spacing = min(scaled_spacing, 1)
+                        # Reserve the full primary action at the 920x640
+                        # minimum even with extra footer controls/fonts.
+                        # Only compact vertical card gaps go to zero.
+                        scaled_spacing = 0
                     elif parent.objectName() == "ControlCard":
                         # Compact-only rail budget: six vertical card rows need to fit
                         # above the protected two-line primary action at 920x640.

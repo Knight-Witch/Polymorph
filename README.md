@@ -1,8 +1,8 @@
 # Polymorph
 
-## [[Click Here to Download & Install]](https://github.com/Knight-Witch/Polymorph/releases/download/v0.2.1/Polymorph_Setup_v0.2.1.exe)
+## [[Click Here to Download & Install]](https://github.com/Knight-Witch/Polymorph/releases/download/v0.3.0/Polymorph_Setup_v0.3.0.exe)
 
-**Polymorph 0.2.1** expands the original media converter of Knight Witch's Windows media-conversion utility for animated WebP workflows. This project was created with the primary intent to serve the _Heroforge_ community and provide users with a tool to convert high res WebP captures into near-lossless GIF and MP4 conversions. While Heroforge was the initial spark to making this, the app can be used for anything you like. 
+**Polymorph 0.3.0** adds batch conversions with shared or individual file settings to Knight Witch's local Windows media converter. This project was created with the primary intent to serve the _Heroforge_ community and provide users with a tool to convert high res WebP captures into near-lossless GIF and MP4 conversions. While Heroforge was the initial spark to making this, the app can be used for anything you like. 
 - **Reddit** treats animated WebP as static images once you hit the submit button on a post. As a result, only GIF or MP4 options are available for sharing spinny captures, and only GIFs come with the autoplay / looping function in Reddit's native post embed/previewer.
 - **Discord** converts animated WebP into GIFs upon upload and the end-result is something that looks like it was converted into potato salad.
 
@@ -21,7 +21,10 @@ Everything runs locally on your PC. Polymorph does not upload your media to a cl
 - **NEW:** Animated GIF and video → looping animated WebP, with frame timing and transparency checks.
 - **NEW:** Fast, verified incremental updates for future versions when an exact compatible update is published; otherwise a full installer is offered.
 - **FIXED:** Some failed MP4 → GIF and MP4 → animated WebP conversions when encoders consolidate repeated stored frames.
-- **What's New:** Updated notice with the existing optional Ko-fi and PayPal support buttons.
+- **NEW: Batch conversions!** Add multiple files, share output/framing and a width, height or maximum file size across them, or retain different settings per video.
+- **NEW:** Queue All/Selected using Ctrl/Shift, with per-file conversion logs accessible via View Log.
+- **FIXED:** Width/height entry for values such as 700 px; improved visibility of conversion errors.
+- **What's New:** New batch notice with original Knight Witch Ko-fi/PayPal support unchanged.
 
 - Animated WebP, animated GIF, MP4 and common still-image input.
 - High-quality GIF output with preserved source timing by default.
@@ -30,13 +33,13 @@ Everything runs locally on your PC. Polymorph does not upload your media to a cl
 - Optional **Favor Resolution** GIF mode that may retain fewer original source frames only when measured results show a worthwhile resolution gain.
 - Original, Crop, and Fit framing with shared preview/export geometry.
 - Aspect-ratio presets and Crop zoom/repositioning.
-- Live animated preview and queue-based batch processing.
+- Live animated preview, per-file conversion profiles, batch queue progress and local readable conversion error logs.
 - Local-only media processing with no telemetry or cloud upload service.
 - Self-contained Windows installer.
 
 ## Platform
 
-Polymorph 0.2.1 is intended for 64-bit Windows 10 and Windows 11.
+Polymorph 0.3.0 is intended for 64-bit Windows 10 and Windows 11.
 
 ## Install
 
@@ -44,10 +47,10 @@ Official Windows builds are published under this repository's **Releases** secti
 
 For the first release, download:
 
-- `Polymorph_Setup_v0.2.1.exe`
-- `Polymorph_Setup_v0.2.1.exe.sha256`
+- `Polymorph_Setup_v0.3.0.exe`
+- `Polymorph_Setup_v0.3.0.exe.sha256`
 
-Polymorph 0.2.1 is currently unsigned, so Windows SmartScreen may show an **Unknown Publisher** warning. The accompanying SHA-256 file lets you verify that the installer is the exact file published by Knight Witch.
+Polymorph 0.3.0 is currently unsigned, so Windows SmartScreen may show an **Unknown Publisher** warning. The accompanying SHA-256 file lets you verify that the installer is the exact file published by Knight Witch.
 
 ## Basic use
 
@@ -59,7 +62,9 @@ Polymorph 0.2.1 is currently unsigned, so Windows SmartScreen may show an **Unkn
 4. For GIF file-size mode, choose **Preserve Motion** or **Favor Resolution**.
 5. Choose Original, Crop, or Fit framing and an aspect ratio if needed.
 6. Choose an output folder.
-7. Press **POLYMORPH**.
+7. For batch conversion, leave **Apply settings to all** enabled and choose Match width/Match height for common resolution, or disable it and switch between files to edit their independent settings.
+8. Choose **Queue: All** or Ctrl/Shift-select a **Queue: Selected** subset.
+9. Press **POLYMORPH** to process the whole queue. Still images and animations must be queued separately.
 
 ## Privacy
 

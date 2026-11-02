@@ -16,6 +16,13 @@ class ResolutionLinker(QObject):
         self._native_width = max(2, width_spin.value())
         self._native_height = max(2, height_spin.value())
         self._syncing = False
+        # QSpinBox normally emits valueChanged on each typed character.
+        # Linked resolution immediately rounds odd intermediate input (e.g.
+        # the first "7" in "700") to even, rewriting the editor mid-entry.
+        # Commit typed values only on Return/focus loss; programmatic setValue
+        # still emits immediately, so the aspect-ratio link remains live.
+        width_spin.setKeyboardTracking(False)
+        height_spin.setKeyboardTracking(False)
         width_spin.valueChanged.connect(self._width_changed)
         height_spin.valueChanged.connect(self._height_changed)
 

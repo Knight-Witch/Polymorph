@@ -94,7 +94,7 @@ class QueueRow(TexturedFrame):
         self.update()
 
     def mousePressEvent(self, event) -> None:
-        self._select_callback()
+        self._select_callback(event.modifiers())
         super().mousePressEvent(event)
 
     def _load_thumbnail(self) -> None:
@@ -297,7 +297,7 @@ def rebuild_brand_layout(window) -> None:
 
     add_btn = QPushButton("+ Add Files")
     add_btn.setObjectName("HeaderAction")
-    add_btn.setToolTip("Add one or more animated WebP files to the conversion queue.")
+    add_btn.setToolTip("Add multiple compatible media files to the conversion queue.")
     add_btn.clicked.connect(window._choose_files)
     files_header.addWidget(add_btn)
 
@@ -317,13 +317,7 @@ def rebuild_brand_layout(window) -> None:
     files_header.addWidget(clear_btn)
 
     def clear_queue() -> None:
-        window.file_list.clear()
-        window.files.clear()
-        window.media_cache.clear()
-        window._set_media_mode(None)
-        window.preview.set_source(None)
-        window.dimensions_label.setText("No file selected")
-        window._sync_enabled_state()
+        window._clear_queue()
 
     clear_btn.clicked.connect(clear_queue)
 
@@ -334,6 +328,10 @@ def rebuild_brand_layout(window) -> None:
     window.file_list.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
     window.file_list.setSpacing(3)
     files_layout.addWidget(window.file_list)
+    window.batch_panel.setParent(files_card)
+    window.batch_dimension_panel.setParent(files_card)
+    files_layout.addWidget(window.batch_panel)
+    files_layout.addWidget(window.batch_dimension_panel)
 
     status_detail = QLabel()
     status_detail.setObjectName("StatusDetail")
@@ -353,7 +351,7 @@ def rebuild_brand_layout(window) -> None:
     def update_selection(*_args) -> None:
         current = window.file_list.currentRow()
         for row, widget in enumerate(queue_rows()):
-            widget.set_selected(row == current)
+            widget.set_selected(window.file_list.item(row).isSelected())
         trash_btn.setEnabled(current >= 0)
 
     def sync_preview_timing(row: int) -> None:
@@ -371,6 +369,29 @@ def rebuild_brand_layout(window) -> None:
         except Exception:
             pass
 
+    def select_queue_row(path: Path, modifiers) -> None:
+        if path not in window.files:
+            return
+        index = window.files.index(path)
+        from PySide6.QtCore import QItemSelectionModel
+        if modifiers & Qt.KeyboardModifier.ShiftModifier:
+            anchor = window.file_list.currentRow()
+            if anchor < 0:
+                anchor = index
+            window.file_list.clearSelection()
+            for row in range(min(index, anchor), max(index, anchor) + 1):
+                window.file_list.item(row).setSelected(True)
+            window.file_list.setCurrentItem(
+                window.file_list.item(index), QItemSelectionModel.SelectionFlag.NoUpdate
+            )
+        elif modifiers & Qt.KeyboardModifier.ControlModifier:
+            item = window.file_list.item(index)
+            item.setSelected(not item.isSelected())
+            window.file_list.setCurrentItem(item, QItemSelectionModel.SelectionFlag.NoUpdate)
+        else:
+            window.file_list.clearSelection()
+            window.file_list.setCurrentRow(index)
+
     def decorate_queue_rows(*_args) -> None:
         for row in range(window.file_list.count()):
             item = window.file_list.item(row)
@@ -380,9 +401,7 @@ def rebuild_brand_layout(window) -> None:
             widget = QueueRow(
                 window,
                 path,
-                select_callback=lambda p=path: window.file_list.setCurrentRow(
-                    window.files.index(p) if p in window.files else -1
-                ),
+                select_callback=lambda mods, p=path: select_queue_row(p, mods),
             )
             widget.apply_scale(float(window.property("brandScale") or 1.0))
             item.setSizeHint(QSize(100, widget.minimumHeight()))
@@ -394,18 +413,22 @@ def rebuild_brand_layout(window) -> None:
         files_count.setText(f"{count} file" if count == 1 else f"{count} files")
         scale = float(window.property("brandScale") or 1.0)
         row_height = max(44, round(61 * scale))
-        target = max(round(58 * scale), min(round(125 * scale), count * row_height + round(7 * scale)))
+        # Leave breathing room for batch controls above the 305px preview
+        # at the supported minimum desktop viewport.
+        max_queue_height = round((125 if scale > 0.76 else 65) * scale)
+        target = max(round(45 * scale), min(max_queue_height, count * row_height + round(5 * scale)))
         window.file_list.setFixedHeight(target)
         if count == 0:
             status_detail.setText("No files imported. Add media to begin.")
         elif count == 1:
             status_detail.setText("1 file imported. Choose your settings and begin.")
         else:
-            status_detail.setText(f"{count} files imported. Choose your settings and begin.")
+            status_detail.setText(f"{count} files queued. Ctrl/Shift-select for subset conversions.")
         # Queue refreshes must not erase successful output paths or errors.
 
     registry.callback(lambda _scale: update_file_count())
     model = window.file_list.model()
+    window.file_list.itemSelectionChanged.connect(update_selection)
     model.rowsInserted.connect(decorate_queue_rows)
     model.rowsInserted.connect(update_file_count)
     model.rowsRemoved.connect(update_file_count)
@@ -703,6 +726,9 @@ def rebuild_brand_layout(window) -> None:
     window.convert_btn = PolymorphButton()
     window.convert_btn.setToolTip("Start converting the queued files with the selected settings.")
     window.convert_btn.clicked.connect(window._start_conversion)
+    # The branded action already supports responsive sizing. Register its
+    # scale callback so adding footer utilities cannot clip it at 920x640.
+    registry.callback(window.convert_btn.apply_scale)
     rail_layout.addWidget(window.convert_btn)
     rail_layout.addStretch(1)
 
@@ -810,6 +836,20 @@ def rebuild_brand_layout(window) -> None:
     whats_new_button.clicked.connect(window.view_whats_new)
     window.whats_new_button = whats_new_button
     meta_row.addWidget(whats_new_button)
+    log_button = window.log_button
+    log_button.setParent(footer_panel)
+    log_button.setObjectName("FooterLog")
+    log_button.setText("View Log")
+    log_button.setAccessibleName("View Conversion Log")
+    log_button.setToolTip("Open saved per-file conversion errors and results")
+    log_button.setCursor(Qt.CursorShape.PointingHandCursor)
+    log_button.setFixedHeight(20)
+    log_button.setStyleSheet(
+        "QToolButton{color:#c8aa78;background:transparent;border:none;"
+        "padding:1px 6px;font-size:10px;}"
+        "QToolButton:hover{color:#f0dcb2;text-decoration:underline;}"
+    )
+    meta_row.addWidget(log_button)
     meta_row.addStretch(1)
     meta_row.addWidget(creator)
     footer_layout.addLayout(meta_row)
