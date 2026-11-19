@@ -41,6 +41,7 @@ class ConversionLog:
         directory: Path | None = None,
     ) -> None:
         self._lines: list[str] = []
+        self._last_progress_bucket = -1
         self.write_error: str | None = None
         root = directory if directory is not None else logs_directory()
         self.path = root / (
@@ -59,6 +60,8 @@ class ConversionLog:
         self._append(f"Framing: {settings.framing!r}")
         self._append(f"GIF motion mode: {settings.gif_motion_mode.value}")
         self._append(f"Lossless WebP: {settings.webp_lossless}")
+        self._append(f"Animated WebP quality: {settings.webp_quality}")
+        self._append(f"WebP fixed-resolution MB limit enabled: {settings.webp_limit_enabled}")
         self._append("Private local log: paths and error details are never uploaded.")
         for file in files:
             self._append(f"QUEUED {file}")
@@ -90,11 +93,20 @@ class ConversionLog:
             f"dimensions={settings.requested_width}x{settings.requested_height} "
             f"framing={settings.framing!r} "
             f"webp_lossless={settings.webp_lossless} "
+            f"webp_quality={settings.webp_quality} webp_limit={settings.webp_limit_enabled} "
             f"gif_motion={settings.gif_motion_mode.value}"
         )
 
     def started(self, path: str) -> None:
         self._append(f"START  {path}")
+
+    def progress(self, fraction: float, label: str) -> None:
+        """Persist coarse real progress without writing once per video frame."""
+        percent = max(0, min(100, round(fraction * 100)))
+        bucket = percent // 10
+        if percent > 0 and bucket > self._last_progress_bucket:
+            self._last_progress_bucket = bucket
+            self._append(f"PROGRESS {percent}%  {label}")
 
     def saved(self, source: str, output: str, summary: str) -> None:
         self._append(f"SAVED  {source}\n        -> {output} ({summary})")

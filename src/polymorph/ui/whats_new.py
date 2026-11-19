@@ -9,7 +9,7 @@ from ..constants import APP_VERSION, KOFI_URL
 from ..resources import asset_path
 
 PAYPAL_URL = "https://www.paypal.com/paypalme/knightwitch"
-FEATURE_ID = "batch-conversions-0.3.0"
+FEATURE_ID = "animated-webp-size-performance-0.3.1"
 
 
 def _support_button(label: str, logo: str, url: str, name: str) -> QPushButton:
@@ -42,31 +42,38 @@ class WhatsNewDialog(QDialog):
         layout.setContentsMargins(25, 19, 25, 18)
         layout.setSpacing(9)
 
-        heading = QLabel("<b>Fixed:</b> Some conversion failure bugs")
+        heading = QLabel("<b>Fixed:</b> Animated WebP size and conversion speed")
         heading.setObjectName("WhatsNewHeading")
         heading.setTextFormat(Qt.TextFormat.RichText)
         heading.setStyleSheet("font-size:15px;color:#eae0d0;")
         heading.setWordWrap(True)
         layout.addWidget(heading)
 
-        feature = QLabel("NEW: Batch conversions!")
-        feature.setObjectName("WhatsNewBatchHeading")
+        feature = QLabel("NEW: Better animated WebP controls!")
+        feature.setObjectName("WhatsNewWebpHeading")
         feature.setStyleSheet("font-size:17px;font-weight:bold;color:#d9b578;")
         feature.setWordWrap(True)
         layout.addWidget(feature)
 
-        detail = QLabel("Upload multiple files &amp; batch convert, with options for:")
-        detail.setTextFormat(Qt.TextFormat.RichText)
+        detail = QLabel("Smaller animated WebP files by default, with more control over quality and output size:")
         detail.setWordWrap(True)
         layout.addWidget(detail)
         for item in (
-            "<b>Globally-applied settings</b> (e.g. specific resolution width, or file size)",
-            "<b>Individually-applied settings per-video</b> — <i>set them up, then convert the whole queue.</i>",
+            "<b>Quality presets:</b> Compact (65), Balanced (75, default), High (85), Maximum (95).",
+            "<b>Limit MB:</b> Set a file-size ceiling even at a fixed resolution. "
+            "Polymorph adjusts quality without changing the selected resolution or motion timing.",
+            "<b>Better feedback:</b> Live WebP encoding progress, faster processing and "
+            "cleanup of incomplete conversions.",
         ):
             bullet = QLabel("• " + item)
             bullet.setTextFormat(Qt.TextFormat.RichText)
             bullet.setWordWrap(True)
             layout.addWidget(bullet)
+
+        note = QLabel("Note: MP4 can still produce much smaller files for long videos.")
+        note.setStyleSheet("color:#ada59a")
+        note.setWordWrap(True)
+        layout.addWidget(note)
 
         divider = QFrame()
         divider.setFrameShape(QFrame.Shape.HLine)

@@ -70,6 +70,8 @@ class ConversionSettings:
     framing: FramingSettings = field(default_factory=FramingSettings)
     gif_motion_mode: GifMotionMode = GifMotionMode.PRESERVE
     webp_lossless: bool = False
+    webp_quality: int = 75
+    webp_limit_enabled: bool = True
 
 
 @dataclass(slots=True)

@@ -193,7 +193,30 @@ class MainWindow(QMainWindow):
         self.webp_radio = QRadioButton("WebP")
         self.png_radio = QRadioButton("PNG")
         self.webp_lossless = QCheckBox("Lossless WebP")
-        self.webp_lossless.setToolTip("Preserve exact pixels; standard WebP uses quality 95.")
+        self.webp_lossless.setToolTip("Preserve exact pixels (potentially very large files).")
+        self.webp_quality = QComboBox()
+        self.webp_quality.setObjectName("AnimatedWebpQuality")
+        for title, quality in (
+            ("65 Compact", 65), ("75 Balanced", 75),
+            ("85 High", 85), ("95 Maximum", 95),
+        ):
+            self.webp_quality.addItem(title, quality)
+        self.webp_quality.setCurrentIndex(self.webp_quality.findData(75))
+        self.webp_quality.setToolTip(
+            "Animated WebP only. Higher quality substantially increases file size. "
+            "When Limit MB is enabled, quality may decrease to meet the limit."
+        )
+        self.webp_limit_mb = QCheckBox("Limit MB")
+        self.webp_limit_mb.setChecked(True)
+        self.webp_limit_mb.setObjectName("AnimatedWebpLimit")
+        self.webp_limit_mb.setToolTip(
+            "Also enforce the MB value in Sizing when using Set resolution. "
+            "Keep the exact resolution and full frame timing; reduce WebP quality "
+            "if required. If the limit cannot be met, report an error instead "
+            "of silently making an oversized file."
+        )
+        self.webp_lossless.toggled.connect(self._sync_enabled_state)
+        self.webp_limit_mb.toggled.connect(self._sync_enabled_state)
         self.gif_radio.setChecked(True)
         format_group = QButtonGroup(self)
         for radio in (self.gif_radio, self.mp4_radio, self.webp_radio, self.png_radio):
@@ -202,10 +225,18 @@ class MainWindow(QMainWindow):
             format_row.addWidget(radio)
         format_row.addStretch(1)
         controls_layout.addLayout(format_row)
-        controls_layout.addWidget(self.webp_lossless)
+        webp_options = QHBoxLayout()
+        webp_options.setContentsMargins(0, 0, 0, 0)
+        webp_options.setSpacing(7)
+        webp_options.addWidget(self.webp_lossless)
+        webp_options.addWidget(self.webp_quality)
+        webp_options.addWidget(self.webp_limit_mb)
+        controls_layout.addLayout(webp_options)
         self.webp_radio.hide()
         self.png_radio.hide()
         self.webp_lossless.hide()
+        self.webp_quality.hide()
+        self.webp_limit_mb.hide()
 
         controls_layout.addWidget(self._section("Sizing"))
         self.size_radio = QRadioButton("Fit under file size")
@@ -532,12 +563,28 @@ class MainWindow(QMainWindow):
 
     def _sync_enabled_state(self) -> None:
         busy = self.worker is not None and self.worker.isRunning()
-        self.max_mb.setEnabled(self.size_radio.isChecked() and not busy)
+        fixed_webp_cap = (
+            self._still_mode is False
+            and self.webp_radio.isChecked()
+            and self.webp_limit_mb.isChecked()
+        )
+        self.max_mb.setEnabled((self.size_radio.isChecked() or fixed_webp_cap) and not busy)
+        self.max_mb.setToolTip(
+            "Maximum animated WebP output size; enabled by Limit MB even "
+            "when Set resolution is selected."
+            if fixed_webp_cap else "Maximum output size in Fit under file size mode."
+        )
         self.width_spin.setEnabled(self.res_radio.isChecked() and not busy)
         self.height_spin.setEnabled(self.res_radio.isChecked() and not busy)
         self.native_radio.setEnabled(not busy)
-        self.webp_lossless.setVisible(self._still_mode is not None and self.webp_radio.isChecked())
+        show_webp = self._still_mode is not None and self.webp_radio.isChecked()
+        show_animated_webp = self._still_mode is False and self.webp_radio.isChecked()
+        self.webp_lossless.setVisible(show_webp)
         self.webp_lossless.setEnabled(not busy)
+        self.webp_quality.setVisible(show_animated_webp and not self.webp_lossless.isChecked())
+        self.webp_quality.setEnabled(not busy)
+        self.webp_limit_mb.setVisible(show_animated_webp)
+        self.webp_limit_mb.setEnabled(not busy)
         framing_enabled = self.frame_mode.currentData() is not FramingMode.ORIGINAL
         self.ratio_combo.setEnabled(framing_enabled and not busy)
         self.center_btn.setEnabled(framing_enabled and not busy)
@@ -570,6 +617,8 @@ class MainWindow(QMainWindow):
             output_dir=Path(self.output_path.text()),
             framing=copy.deepcopy(self.framing),
             webp_lossless=self.webp_lossless.isChecked(),
+            webp_quality=int(self.webp_quality.currentData()),
+            webp_limit_enabled=self.webp_limit_mb.isChecked(),
         )
 
     def _start_conversion(self) -> None:
@@ -604,6 +653,8 @@ class MainWindow(QMainWindow):
         self.progress.setValue(percent)
         self.arcane_progress.set_progress(fraction)
         self.status_label.setText(f"{label}… {percent}%")
+        if self._conversion_log:
+            self._conversion_log.progress(fraction, label)
 
     def _file_started(self, path: str) -> None:
         self.status_label.setText(f"Polymorphing {Path(path).name}…")
@@ -670,6 +721,18 @@ class MainWindow(QMainWindow):
         if self.worker:
             self.status_label.setText("Cancelling…")
             self.worker.stop()
+
+    def closeEvent(self, event) -> None:
+        # Closing the app while FFmpeg is running used to leave expensive
+        # orphaned encoders behind (observed on Windows with animated WebP).
+        worker = self.worker
+        if worker is not None and worker.isRunning():
+            worker.stop()
+            if not worker.wait(5000):
+                self.status_label.setText("Stopping active conversion before exit…")
+                event.ignore()
+                return
+        super().closeEvent(event)
 
     def view_conversion_log(self) -> None:
         if self._conversion_log is not None:

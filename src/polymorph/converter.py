@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import math
 import os
+import re
 import shutil
 import subprocess
 import tempfile
 import threading
+from dataclasses import replace
 from pathlib import Path
 from typing import Callable
 
@@ -95,6 +97,10 @@ class Converter:
         output = self._available_output_path(output_dir, source.stem, extension)
 
         if settings.sizing_mode is SizingMode.NATIVE:
+            if settings.output_format is OutputFormat.WEBP and settings.webp_limit_enabled:
+                return self._encode_webp_with_resolution_cap(
+                    info, settings, output, native.width, native.height, progress
+                )
             self._encode_once(info, settings, output, native.width, native.height, progress, "Encoding")
             return self._result(info, output, native.width, native.height, 1)
 
@@ -105,6 +111,10 @@ class Converter:
                 native, settings.requested_width, settings.requested_height
             )
             width, height = scaled_dimensions(native, scale)
+            if settings.output_format is OutputFormat.WEBP and settings.webp_limit_enabled:
+                return self._encode_webp_with_resolution_cap(
+                    info, settings, output, width, height, progress
+                )
             self._encode_once(info, settings, output, width, height, progress, "Encoding")
             return self._result(info, output, width, height, 1)
 
@@ -119,6 +129,65 @@ class Converter:
             native.height,
             max_bytes,
             progress,
+        )
+
+    def _encode_webp_with_resolution_cap(
+        self,
+        info: MediaInfo,
+        settings: ConversionSettings,
+        output: Path,
+        width: int,
+        height: int,
+        progress: ProgressCallback | None,
+    ) -> ConversionResult:
+        """Fit WebP quality to a cap while preserving exact resolution and cadence."""
+        max_bytes = mb_to_bytes(settings.max_mb)
+        if max_bytes <= 0:
+            raise ConversionError("Animated WebP size limit must be greater than zero.")
+        quality = max(45, min(95, int(settings.webp_quality)))
+        max_passes = 1 if settings.webp_lossless else 4
+
+        with tempfile.TemporaryDirectory(prefix="polymorph-webp-limit-") as folder:
+            for pass_index in range(max_passes):
+                if self._cancel.is_set():
+                    raise ConversionCancelled()
+                candidate = Path(folder) / f"webp-pass-{pass_index}.webp"
+                trial = replace(settings, webp_quality=quality)
+
+                def stage(fraction: float, stage_label: str) -> None:
+                    if progress:
+                        share = min(0.995, max(0.0, float(fraction)))
+                        suffix = "" if settings.webp_lossless else f" (quality {quality})"
+                        progress((pass_index + share) / max_passes, f"{stage_label}{suffix}")
+
+                label = "Encoding WebP" if pass_index == 0 else "Fitting WebP size"
+                self._encode_once(info, trial, candidate, width, height, stage, label)
+                size_bytes = candidate.stat().st_size
+                if size_bytes <= max_bytes:
+                    output.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(candidate, output)
+                    if progress:
+                        progress(1.0, "WebP size verified")
+                    return self._result(info, output, width, height, pass_index + 1)
+
+                if settings.webp_lossless or quality == 45:
+                    break
+                if pass_index == max_passes - 2:
+                    quality = 45
+                else:
+                    ratio = size_bytes / max_bytes
+                    reduction = 28 if ratio > 2.0 else 18 if ratio > 1.4 else 12 if ratio > 1.15 else 8
+                    quality = max(45, quality - reduction)
+
+        if settings.webp_lossless:
+            raise ConversionError(
+                f"Lossless WebP at {width}×{height} exceeds {settings.max_mb:.1f} MB. "
+                "Disable Lossless or choose Fit under file size."
+            )
+        raise ConversionError(
+            f"Animated WebP at {width}×{height} cannot fit under {settings.max_mb:.1f} MB "
+            "even after reducing quality. Choose Fit under file size to allow "
+            "resolution reduction, or raise the MB limit."
         )
 
     def _encode_to_size(
@@ -392,12 +461,12 @@ class Converter:
                 pass
             raise ConversionError(f"Output integrity verification failed. {exc}") from exc
 
-    def _base_ffmpeg(self, info: MediaInfo, filter_graph: str) -> list[str]:
+    def _base_ffmpeg(self, info: MediaInfo, filter_graph: str, *, loglevel: str = "error") -> list[str]:
         return [
             str(self.tools.ffmpeg),
             "-hide_banner",
             "-loglevel",
-            "error",
+            loglevel,
             "-i",
             str(info.path),
             "-map",
@@ -520,13 +589,20 @@ class Converter:
         filter_graph, _ = build_video_filter(info, settings.framing, width, height)
 
         def run_encoder(codec: str) -> None:
-            cmd = self._base_ffmpeg(info, filter_graph) + [
+            # libwebp_anim buffers the animation; packet/time progress stays at zero
+            # until assembly. showinfo reports real filtered input frames as they
+            # reach the encoder, with checksums disabled to avoid extra work.
+            cmd = self._base_ffmpeg(
+                info, f"{filter_graph},showinfo=checksum=0", loglevel="info"
+            ) + [
                 "-fps_mode", "passthrough",
                 "-c:v", codec,
                 "-pix_fmt", "bgra" if settings.webp_lossless else "yuva420p",
                 "-lossless", "1" if settings.webp_lossless else "0",
-                "-quality", "95",
-                "-compression_level", "6",
+                "-quality", str(max(45, min(95, int(settings.webp_quality)))),
+                # Level 6 is pathologically slow on animation; 5 keeps quality
+                # unchanged and measured size within ~1% while encoding far faster.
+                "-compression_level", "5",
                 "-loop", "0",
                 "-progress", "pipe:2",
                 "-y", str(output),
@@ -540,13 +616,18 @@ class Converter:
             )
             self._register(proc)
             try:
-                self._consume_progress(proc, info.duration_s, progress, label)
+                self._consume_progress(
+                    proc, info.duration_s, progress, label,
+                    frame_count=info.frame_count,
+                )
                 rc = proc.wait()
             finally:
                 self._unregister(proc)
             if self._cancel.is_set():
+                output.unlink(missing_ok=True)
                 raise ConversionCancelled()
             if rc != 0 or not output.is_file():
+                output.unlink(missing_ok=True)
                 raise ConversionError(f"Animated WebP encoding failed (ffmpeg={rc}, codec={codec})")
 
         run_encoder("libwebp_anim")
@@ -627,9 +708,27 @@ class Converter:
         duration_s: float,
         callback: ProgressCallback | None,
         label: str,
+        *,
+        frame_count: int = 0,
     ) -> None:
+        """Consume FFmpeg packet progress and, for WebP, encoder-input frames.
+
+        libwebp_anim often emits no packets until it assembles the full file.
+        showinfo (enabled only by the WebP caller) gives real frame telemetry;
+        cap that progress at 94% because final animation assembly and integrity
+        verification still have to succeed.
+        """
         if proc.stderr is None:
             return
+        reported = -1.0
+
+        def publish(fraction: float, stage: str) -> None:
+            nonlocal reported
+            fraction = max(0.0, fraction)
+            if callback and (fraction - reported >= 0.005 or (fraction >= 0.94 and reported < 0.94)):
+                reported = fraction
+                callback(fraction, stage)
+
         while True:
             if self._cancel.is_set():
                 try:
@@ -641,6 +740,16 @@ class Converter:
             if not raw:
                 break
             line = raw.decode("utf-8", errors="replace").strip()
+
+            if frame_count > 0 and "showinfo" in line:
+                match = re.search(r"\bn:\s*(\d+)\b", line)
+                if match:
+                    frames_seen = int(match.group(1)) + 1
+                    share = min(0.94, 0.94 * frames_seen / frame_count)
+                    stage = "Finalizing WebP animation" if frames_seen >= frame_count else "Encoding WebP frames"
+                    publish(share, stage)
+                    continue
+
             if "=" not in line:
                 continue
             key, value = line.split("=", 1)
@@ -651,8 +760,7 @@ class Converter:
             except ValueError:
                 continue
             fraction = min(0.995, seconds / duration_s) if duration_s > 0 else 0.0
-            if callback:
-                callback(max(0.0, fraction), label)
+            publish(fraction, "Finalizing WebP animation" if frame_count else label)
 
     def _register(self, *processes: subprocess.Popen) -> None:
         with self._process_lock:

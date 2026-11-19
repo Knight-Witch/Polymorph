@@ -412,6 +412,10 @@ class MainWindow(BaseMainWindow):
             modes[settings.sizing_mode].setChecked(True)
             self.max_mb.setValue(settings.max_mb)
             self.webp_lossless.setChecked(settings.webp_lossless)
+            quality_index = self.webp_quality.findData(settings.webp_quality)
+            if quality_index >= 0:
+                self.webp_quality.setCurrentIndex(quality_index)
+            self.webp_limit_mb.setChecked(settings.webp_limit_enabled)
             self.motion_favor_radio.setChecked(
                 settings.gif_motion_mode is GifMotionMode.FAVOR_RESOLUTION
             )

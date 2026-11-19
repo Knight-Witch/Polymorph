@@ -1,0 +1,296 @@
+name: Publish Polymorph v0.3.1 (Approved Release)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/publish-v0.3.1.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  public-release:
+    if: contains(github.event.head_commit.message, '[publish-v0.3.1]')
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12.10"
+
+      - name: Install Python build dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install . pyinstaller==6.22.3 pillow==12.3.0
+
+      - name: Verify public-only source and stable metadata
+        shell: pwsh
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m compileall -q src run_polymorph.py
+          if ($LASTEXITCODE -ne 0) { throw "Public source syntax verification failed" }
+          python -c "from polymorph.constants import APP_VERSION, LATEST_RELEASE_API; assert APP_VERSION == '0.3.1'; assert LATEST_RELEASE_API == 'https://api.github.com/repos/Knight-Witch/Polymorph/releases/latest'; from polymorph.ui.whats_new import FEATURE_ID; from polymorph.batch_queue import build_jobs; from polymorph.conversion_log import ConversionLog; from polymorph.ui.conversion_log_dialog import ConversionLogDialog; from polymorph.animated_webp import finalize_webp_timing; from polymorph.delta_update import stage_delta; print('PASS public 0.3.1 imports and update feed')"
+          if ($LASTEXITCODE -ne 0) { throw "Public import/update-feed verification failed" }
+          $private = Get-ChildItem src -Recurse -File -Include *.py | Select-String -Pattern 'Polymorph\.Dev','dev_update_service','DiagnosticAdaptiveConverter','_ADAPTIVE_DIAGNOSTIC'
+          if ($private) { throw "Private source reference found in public application" }
+          if (Test-Path src/polymorph/dev_update_service.py) { throw "Private Dev updater must never publish" }
+          if (Test-Path src/polymorph/smoke_test.py) { throw "Private packaged smoke module must never publish" }
+      - name: Verify What's New message and donation preservation
+        shell: pwsh
+        run: |
+          $source = Get-Content src/polymorph/ui/whats_new.py -Raw
+          foreach ($needle in @("Fixed:", "Animated WebP size and conversion speed", "NEW: Better animated WebP controls!", "Quality presets", "Compact (65)", "Balanced (75, default)", "High (85)", "Maximum (95)", "Limit MB", "Live WebP encoding progress", "animated-webp-size-performance-0.3.1", "Thank you so much for helping make it all possible!", "donation/kofi.webp", "donation/paypal.png", "paypalme/knightwitch")) {
+            if (-not $source.Contains($needle)) { throw "Missing required notice/support element: $needle" }
+          }
+          Write-Host "PASS What's New and unchanged donation presentation"
+
+      - name: Verify public batch planner and rendered announcement
+        shell: pwsh
+        env:
+          PYTHONPATH: src
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          python -c "from pathlib import Path; from polymorph.models import ConversionSettings,MediaInfo,SizingMode; from polymorph.batch_queue import build_jobs; p=Path('test.mp4'); s=ConversionSettings(sizing_mode=SizingMode.RESOLUTION); v=build_jobs([p],{},s,True,'width',700,lambda _:MediaInfo(p,2048,1152,60,2.0)); assert (v[0].settings.requested_width,v[0].settings.requested_height)==(700,394); print('PASS public batch plan')"
+          if ($LASTEXITCODE -ne 0) { throw "Public batch plan failed" }
+          python -c "from PySide6.QtWidgets import QApplication,QLabel; from polymorph.ui.whats_new import WhatsNewDialog,FEATURE_ID,announcement_key; app=QApplication([]); w=WhatsNewDialog(); text=' '.join(q.text() for q in w.findChildren(QLabel)); assert FEATURE_ID=='animated-webp-size-performance-0.3.1'; assert all(v in text for v in ('Animated WebP size and conversion speed','NEW: Better animated WebP controls!','Quality presets','Limit MB','Thank you so much for helping make it all possible!')); assert announcement_key()=='announcements/stable/animated-webp-size-performance-0.3.1'; print('PASS WebP release popup, acknowledgment and support')"
+          if ($LASTEXITCODE -ne 0) { throw "Public release popup failed" }
+
+      - name: Prepare pinned Polymorph UI fonts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force src\polymorph\assets\fonts | Out-Null
+          $cinzel = "https://raw.githubusercontent.com/google/fonts/45071f07c63e863a539442ef3562b71ab1f147a6/ofl/cinzel/Cinzel%5Bwght%5D.ttf"
+          $inter = "https://raw.githubusercontent.com/google/fonts/e1d6480102fed30739fead0faee463101f892c8f/ofl/inter/Inter%5Bopsz%2Cwght%5D.ttf"
+          Invoke-WebRequest $cinzel -OutFile src\polymorph\assets\fonts\Cinzel-wght.ttf
+          Invoke-WebRequest $inter -OutFile src\polymorph\assets\fonts\Inter-opsz-wght.ttf
+          Invoke-WebRequest "https://raw.githubusercontent.com/google/fonts/45071f07c63e863a539442ef3562b71ab1f147a6/ofl/cinzel/OFL.txt" -OutFile src\polymorph\assets\fonts\OFL-Cinzel.txt
+          Invoke-WebRequest "https://raw.githubusercontent.com/google/fonts/e1d6480102fed30739fead0faee463101f892c8f/ofl/inter/OFL.txt" -OutFile src\polymorph\assets\fonts\OFL-Inter.txt
+          $fonts = @("Polymorph-Regular.ttf.xz", "Polymorph-Bold.ttf.xz", "Cinzel-wght.ttf", "Inter-opsz-wght.ttf", "OFL-Cinzel.txt", "OFL-Inter.txt")
+          foreach ($name in $fonts) {
+            $item = Join-Path "src\polymorph\assets\fonts" $name
+            if (!(Test-Path $item) -or (Get-Item $item).Length -lt 100) { throw "Missing or empty font asset: $item" }
+          }
+          Write-Host "PASS all six pinned font assets and licenses"
+
+
+      - name: Prepare packaged license texts
+        shell: pwsh
+        run: |
+          function Get-WithRetry {
+            param(
+              [Parameter(Mandatory=$true)][string]$Url,
+              [Parameter(Mandatory=$true)][string]$OutFile
+            )
+            $lastError = $null
+            for ($attempt = 1; $attempt -le 4; $attempt++) {
+              try {
+                Invoke-WebRequest $Url -OutFile $OutFile -ErrorAction Stop
+                return
+              }
+              catch {
+                $lastError = $_
+                if ($attempt -lt 4) { Start-Sleep -Seconds (2 * $attempt) }
+              }
+            }
+            throw $lastError
+          }
+
+          New-Item -ItemType Directory -Force legal | Out-Null
+          $spdx = "31ba1a50e5397e00a304dbadc76531740e89ee48"
+          Get-WithRetry "https://raw.githubusercontent.com/spdx/license-list-data/$spdx/text/GPL-3.0-only.txt" "legal\GPL-3.0.txt"
+          Get-WithRetry "https://raw.githubusercontent.com/spdx/license-list-data/$spdx/text/AGPL-3.0-only.txt" "legal\AGPL-3.0-gifski.txt"
+          Get-WithRetry "https://raw.githubusercontent.com/spdx/license-list-data/$spdx/text/LGPL-3.0-only.txt" "legal\LGPL-3.0-Qt.txt"
+          Get-WithRetry "https://raw.githubusercontent.com/python/cpython/v3.12.10/LICENSE" "legal\PYTHON-3.12.10.txt"
+          Get-WithRetry "https://raw.githubusercontent.com/openssl/openssl/openssl-3.0.16/LICENSE.txt" "legal\OPENSSL-3.0.16.txt"
+          Get-WithRetry "https://raw.githubusercontent.com/pyinstaller/pyinstaller/v6.22.3/COPYING.txt" "legal\PYINSTALLER-6.22.3.txt"
+          Get-WithRetry "https://raw.githubusercontent.com/python-pillow/Pillow/12.3.0/LICENSE" "legal\PILLOW-12.3.0.txt"
+
+      - name: Generate Polymorph application icon
+        shell: pwsh
+        run: python build\make_app_icon.py
+
+      - name: Fetch pinned FFmpeg 9.0.1 Essentials build
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force tools | Out-Null
+          $url = "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-9.0.1-essentials_build.7z"
+          $expected = "49a73bdf0850092a252ac4641d922f3048d63ed113e196cc65ce1e4f7fb33e85"
+          try {
+            Invoke-WebRequest $url -OutFile ffmpeg.7z -ErrorAction Stop
+          }
+          catch {
+            Write-Host "Pinned Gyan package URL is unavailable; retrieving the same checksum-pinned archive from the approved Chocolatey 9.0.1 package."
+            $packageUrl = "https://community.chocolatey.org/api/v2/package/ffmpeg/9.0.1"
+            Invoke-WebRequest $packageUrl -OutFile ffmpeg-9.0.1.nupkg -ErrorAction Stop
+            Copy-Item ffmpeg-9.0.1.nupkg ffmpeg-9.0.1.zip
+            Expand-Archive ffmpeg-9.0.1.zip -DestinationPath ffmpeg-package -Force
+            $embedded = Get-ChildItem ffmpeg-package -Recurse -Filter ffmpeg-release-essentials.7z | Select-Object -First 1
+            if (-not $embedded) { throw "Chocolatey FFmpeg 9.0.1 package did not contain the pinned essentials archive" }
+            Copy-Item $embedded.FullName ffmpeg.7z
+          }
+          $actual = (Get-FileHash ffmpeg.7z -Algorithm SHA256).Hash.ToLower()
+          if ($actual -ne $expected) { throw "FFmpeg archive checksum mismatch: $actual" }
+          & "C:\Program Files\7-Zip\7z.exe" x ffmpeg.7z -offmpeg-unpacked -y | Out-Null
+          $ffmpeg = Get-ChildItem ffmpeg-unpacked -Recurse -Filter ffmpeg.exe | Select-Object -First 1
+          $ffprobe = Get-ChildItem ffmpeg-unpacked -Recurse -Filter ffprobe.exe | Select-Object -First 1
+          if (-not $ffmpeg -or -not $ffprobe) { throw "FFmpeg binaries not found after extraction" }
+          Copy-Item $ffmpeg.FullName tools\ffmpeg.exe
+          Copy-Item $ffprobe.FullName tools\ffprobe.exe
+          .\tools\ffmpeg.exe -version | Select-Object -First 1
+
+      - name: Build gifski 1.32.0
+        shell: pwsh
+        run: |
+          cargo install gifski --version 1.32.0 --locked --root "$PWD\gifski-root"
+          Copy-Item gifski-root\bin\gifski.exe tools\gifski.exe
+          .\tools\gifski.exe --version
+
+      - name: Verify animated WebP exact-resolution size cap and controls
+        shell: pwsh
+        env:
+          PYTHONPATH: src
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          New-Item -ItemType Directory -Force smoke | Out-Null
+          & .\tools\ffmpeg.exe -hide_banner -loglevel error -f lavfi -i "testsrc2=size=640x480:rate=15" -t 2 -c:v libx264 -pix_fmt yuv420p -y "smoke\fixture.mp4"
+          if ($LASTEXITCODE -ne 0) { throw "Failed to generate animated WebP validation fixture" }
+          $env:POLYMORPH_TOOLS_DIR = (Resolve-Path tools).Path
+          @'
+          from pathlib import Path
+          from polymorph.adaptive_converter import AdaptiveConverter
+          from polymorph.models import ConversionSettings, OutputFormat, SizingMode, FramingSettings, FramingMode
+          from polymorph.tools import find_toolchain
+          source = Path("smoke/fixture.mp4")
+          settings = ConversionSettings(output_format=OutputFormat.WEBP, sizing_mode=SizingMode.RESOLUTION,
+              requested_width=320, requested_height=320, max_mb=2.0, output_dir=Path("smoke"),
+              framing=FramingSettings(mode=FramingMode.CROP, ratio=1.0),
+              webp_quality=75, webp_limit_enabled=True)
+          result = AdaptiveConverter(find_toolchain()).convert(source, settings)
+          assert result.output.is_file() and result.output.stat().st_size < 2_000_000
+          assert result.width == 320 and result.height == 320
+          assert settings.webp_quality == 75 and settings.webp_limit_enabled
+          print(f"PASS animated WebP 320x320 size cap: {result.size_bytes} bytes")
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { throw "Real animated WebP size-cap validation failed" }
+          @'
+          from PySide6.QtWidgets import QApplication, QComboBox
+          from polymorph.app import main
+          from polymorph.ui.adaptive_main_window import MainWindow
+          from polymorph.ui.branded_layout import rebuild_brand_layout
+          from polymorph.ui.styles import apply_brand_skin
+          from polymorph.ui.fonts import load_brand_fonts
+          app = QApplication([])
+          load_brand_fonts(app)
+          w = MainWindow()
+          rebuild_brand_layout(w)
+          apply_brand_skin(w)
+          assert w.webp_quality.currentData() == 75
+          assert w.webp_limit_mb.isChecked()
+          w.webp_radio.setChecked(True)
+          settings = w._make_settings()
+          assert settings.webp_quality == 75 and settings.webp_limit_enabled
+          assert w.findChild(QComboBox, "AnimatedWebpQuality") is w.webp_quality
+          print("PASS branded quality/size controls and settings wiring")
+          w.close()
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { throw "Branded WebP settings GUI validation failed" }
+
+      - name: Prepare corresponding source archives
+        shell: pwsh
+        run: |
+          function Get-WithRetry {
+            param(
+              [Parameter(Mandatory=$true)][string]$Url,
+              [Parameter(Mandatory=$true)][string]$OutFile
+            )
+            $lastError = $null
+            for ($attempt = 1; $attempt -le 4; $attempt++) {
+              try {
+                Invoke-WebRequest $Url -OutFile $OutFile -ErrorAction Stop
+                return
+              }
+              catch {
+                $lastError = $_
+                if ($attempt -lt 4) { Start-Sleep -Seconds (2 * $attempt) }
+              }
+            }
+            throw $lastError
+          }
+
+          New-Item -ItemType Directory -Force release-source | Out-Null
+          Get-WithRetry "https://github.com/FFmpeg/FFmpeg/archive/bf1b838f2a.tar.gz" "release-source\ffmpeg-bf1b838f2a.tar.gz"
+          Get-WithRetry "https://crates.io/api/v1/crates/gifski/1.32.0/download" "release-source\gifski-1.32.0.crate"
+
+      - name: Build Polymorph application
+        shell: pwsh
+        run: pyinstaller --noconfirm --clean build\Polymorph.spec
+
+      - name: Install NSIS 3.12.0
+        shell: pwsh
+        run: choco install nsis --version=3.12.0 -y --no-progress
+
+      - name: Compile installer
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force installer\Output | Out-Null
+          $makensis = Get-Command makensis.exe -ErrorAction SilentlyContinue
+          if (-not $makensis) {
+            $candidate = "${env:ProgramFiles(x86)}\NSIS\makensis.exe"
+            if (-not (Test-Path $candidate)) { throw "NSIS makensis.exe was not found" }
+            $makensisPath = $candidate
+          }
+          else {
+            $makensisPath = $makensis.Source
+          }
+          Push-Location installer
+          try {
+            & $makensisPath /V2 Polymorph.nsi
+            if ($LASTEXITCODE -ne 0) { throw "NSIS compilation failed with exit code $LASTEXITCODE" }
+          }
+          finally {
+            Pop-Location
+          }
+
+      - name: Generate SHA-256
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem installer\Output\Polymorph_Setup_*.exe | Select-Object -First 1
+          if (-not $installer) { throw "Installer was not generated" }
+          $hash = (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLower()
+          "$hash  $($installer.Name)" | Set-Content "$($installer.FullName).sha256" -Encoding ascii
+
+      - name: Retain official installer and checksum
+        uses: actions/upload-artifact@v4
+        with:
+          name: Polymorph-0.3.1-official-installer
+          path: |
+            installer/Output/Polymorph_Setup_v0.3.1.exe
+            installer/Output/Polymorph_Setup_v0.3.1.exe.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish the user-approved v0.3.1 GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if (gh release view v0.3.1 --repo Knight-Witch/Polymorph 2>$null) { throw "Release v0.3.1 already exists; refusing to replace its assets" }
+          $files = @(
+            "installer/Output/Polymorph_Setup_v0.3.1.exe",
+            "installer/Output/Polymorph_Setup_v0.3.1.exe.sha256",
+            "release-source/ffmpeg-bf1b838f2a.tar.gz",
+            "release-source/gifski-1.32.0.crate"
+          )
+          foreach ($file in $files) { if (!(Test-Path $file)) { throw "Missing release asset: $file" } }
+          gh release create v0.3.1 $files --repo Knight-Witch/Polymorph --target $env:GITHUB_SHA --title "Polymorph 0.3.1" --notes-file RELEASE_NOTES.md --latest
+          if ($LASTEXITCODE -ne 0) { throw "GitHub release publication failed" }
+          Write-Host "Published official v0.3.1 installer, checksum and corresponding source archives."

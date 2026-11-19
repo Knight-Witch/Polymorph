@@ -515,6 +515,8 @@ def rebuild_brand_layout(window) -> None:
     window.webp_radio.setParent(card)
     window.png_radio.setParent(card)
     window.webp_lossless.setParent(card)
+    window.webp_quality.setParent(card)
+    window.webp_limit_mb.setParent(card)
 
     format_grid = QGridLayout()
     registry.layout(format_grid, (0, 0, 0, 0), 0)
@@ -550,7 +552,13 @@ def rebuild_brand_layout(window) -> None:
     format_grid.setColumnStretch(0, 1)
     format_grid.setColumnStretch(1, 1)
     layout.addLayout(format_grid)
-    layout.addWidget(window.webp_lossless)
+    webp_options = QHBoxLayout()
+    registry.layout(webp_options, (0, 0, 0, 0), 4)
+    webp_options.addWidget(window.webp_lossless)
+    webp_options.addWidget(window.webp_quality)
+    webp_options.addWidget(window.webp_limit_mb)
+    webp_options.addStretch(1)
+    layout.addLayout(webp_options)
     rail_layout.addWidget(card)
 
     # Sizing.

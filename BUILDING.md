@@ -1,4 +1,4 @@
-# Building Polymorph 0.3.0
+# Building Polymorph 0.3.1
 
 The official Windows release is produced from the validated Knight Witch release toolchain. The public source is intentionally limited to the stable product and does not include private development diagnostics, historical test fixtures, or internal CI configuration.
 
@@ -76,7 +76,7 @@ makensis.exe Polymorph.nsi
 The installer is written as:
 
 ```text
-installer\Output\Polymorph_Setup_v0.3.0.exe
+installer\Output\Polymorph_Setup_v0.3.1.exe
 ```
 
 Generate a SHA-256 checksum for the installer before distribution.
